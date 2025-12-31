@@ -87,18 +87,38 @@
 		audio.src = '沒醉.mp3';
 		audio.crossOrigin = "anonymous";
 		
-		// --- 新增：Media Session 設定 ---
+		// --- 關鍵：開啟循環播放 ---
+		audio.loop = true;
+		
+		// --- 修改後的 Media Session 設定 ---
 		if ('mediaSession' in navigator) {
 			navigator.mediaSession.metadata = new MediaMetadata({
 				title: '沒醉',
 				album: 'feel',
 			});
 
+			// 監聽 audio 標籤本身的事件來更新面板狀態
+			audio.addEventListener('play', () => {
+				navigator.mediaSession.playbackState = 'playing';
+			});
+			audio.addEventListener('pause', () => {
+				navigator.mediaSession.playbackState = 'paused';
+			});
+			audio.addEventListener('timeupdate', () => {
+				if ('setPositionState' in navigator.mediaSession) {
+					navigator.mediaSession.setPositionState({
+						duration: audio.duration || 0,
+						playbackRate: audio.playbackRate,
+						position: audio.currentTime
+					});
+				}
+			});
+
 			// 讓鎖屏面板的按鈕可以運作
 			navigator.mediaSession.setActionHandler('play', () => audio.play());
 			navigator.mediaSession.setActionHandler('pause', () => audio.pause());
 		}
-		// ------------------------------
+		// ----------------------------------
 
 		const source = audioContext.createMediaElementSource(audio);
 		analyser = audioContext.createAnalyser();
@@ -109,7 +129,6 @@
 
 		dataArray = new Uint8Array(analyser.frequencyBinCount);
 		
-		// 確保在播放前 AudioContext 是啟動狀態
 		if (audioContext.state === 'suspended') {
 			await audioContext.resume();
 		}
