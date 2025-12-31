@@ -86,37 +86,47 @@
 		const audio = new Audio();
 		audio.src = '沒醉.mp3';
 		audio.crossOrigin = "anonymous";
-		
-		// --- 關鍵：開啟循環播放 ---
-		audio.loop = true;
-		
-		// --- 修改後的 Media Session 設定 ---
-		if ('mediaSession' in navigator) {
-			navigator.mediaSession.metadata = new MediaMetadata({
-				title: '沒醉',
-				album: 'feel',
-			});
+		audio.loop = true; // 確保循環播放
 
-			// 監聽 audio 標籤本身的事件來更新面板狀態
+		if ('mediaSession' in navigator) {
+			// 1. 定義更新 Metadata 的函式
+			const updateMetadata = () => {
+				navigator.mediaSession.metadata = new MediaMetadata({
+					title: '沒醉',
+					album: 'feel'
+				});
+			};
+
+			updateMetadata();
+
+			// 2. 強制同步播放狀態 (關鍵！)
+			// 當 audio 標籤播放時，告訴系統「正在播放」
 			audio.addEventListener('play', () => {
 				navigator.mediaSession.playbackState = 'playing';
 			});
+
+			// 當 audio 標籤暫停時，告訴系統「只是暫停，別把資訊拿掉」
 			audio.addEventListener('pause', () => {
 				navigator.mediaSession.playbackState = 'paused';
 			});
-			audio.addEventListener('timeupdate', () => {
-				if ('setPositionState' in navigator.mediaSession) {
-					navigator.mediaSession.setPositionState({
-						duration: audio.duration || 0,
-						playbackRate: audio.playbackRate,
-						position: audio.currentTime
-					});
-				}
+
+			// 3. 設定控制按鈕
+			navigator.mediaSession.setActionHandler('play', async () => {
+				if (audioContext.state === 'suspended') await audioContext.resume();
+				audio.play();
 			});
 
-			// 讓鎖屏面板的按鈕可以運作
-			navigator.mediaSession.setActionHandler('play', () => audio.play());
-			navigator.mediaSession.setActionHandler('pause', () => audio.pause());
+			navigator.mediaSession.setActionHandler('pause', () => {
+				audio.pause();
+			});
+
+			// 處理快進與回放 (讓按鈕亮起來並有作用)
+			navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+				audio.currentTime = Math.max(audio.currentTime - (details.seekOffset || 10), 0);
+			});
+			navigator.mediaSession.setActionHandler('seekforward', (details) => {
+				audio.currentTime = Math.min(audio.currentTime + (details.seekOffset || 10), audio.duration);
+			});
 		}
 		// ----------------------------------
 
