@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Quantum Voice - Three.js Expression</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: sans-serif; }
+        #hint {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: #444; letter-spacing: 5px; pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="hint">CLICK TO OBSERVE</div>
+
+    <script type="module">
+        import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.min.js';
+
+        let scene, camera, renderer, analyser, particleSystem;
+        const particleCount = 15000; // 1.5萬個點，GPU 跑這個完全沒壓力
+
+        function init() {
+            // 1. 場景與相機
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 5;
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // 2. 建立粒子幾何體 (BufferGeometry)
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            const colors = new Float32Array(particleCount * 3);
+
+            for (let i = 0; i < particleCount; i++) {
+                // 初始化為一個球狀分佈
+                const r = 2;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+                
+                positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+                positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+                positions[i * 3 + 2] = r * Math.cos(phi);
+
+                colors[i * 3] = 0.5; // R
+                colors[i * 3 + 1] = 0.8; // G
+                colors[i * 3 + 2] = 1.0; // B
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            const material = new THREE.PointsMaterial({
+                size: 0.015,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending // 讓重疊處發光
+            });
+
+            particleSystem = new THREE.Points(geometry, material);
+            scene.add(particleSystem);
+
+            // 3. 視窗調整
+            window.addEventListener('resize', onWindowResize);
+            document.addEventListener('click', initAudio);
+            
+            animate();
+			
+			// 在 init 函式結尾處加入
+			// 備份初始位置，用於 animate 中的跳動基準
+			particleSystem.userData.initialPositions = positions.slice();
+        }
+
+        async function initAudio() {
+			if (analyser) return;
+			document.getElementById('hint').style.display = 'none';
+
+			// 1. 建立音訊環境
+			const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+			
+			// 2. 建立 Audio 物件並載入你的 Suno MP3 連結
+			const audio = new Audio();
+			audio.src = '沒醉.mp3';
+			audio.crossOrigin = "anonymous"; // 避免跨域報錯
+			
+			const source = audioContext.createMediaElementSource(audio);
+			console.log(source);
+			
+			// 3. 串接分析器
+			analyser = audioContext.createAnalyser();
+			analyser.fftSize = 512;
+			source.connect(analyser);
+			analyser.connect(audioContext.destination); // 讓聲音從喇叭出來
+
+			audio.play();
+		}
+
+        function animate() {
+			requestAnimationFrame(animate);
+
+			if (analyser) {
+				const dataArray = new Uint8Array(analyser.frequencyBinCount);
+				analyser.getByteFrequencyData(dataArray);
+
+				const positions = particleSystem.geometry.attributes.position.array;
+				const colors = particleSystem.geometry.attributes.color.array;
+				const initial = particleSystem.userData.initialPositions; // 取得原始球體座標
+
+				for (let i = 0; i < particleCount; i++) {
+					const i3 = i * 3;
+					// 取得對應頻率，增加一個係數讓它更靈敏
+					const freqIdx = i % dataArray.length;
+					const frequency = dataArray[freqIdx] / 255.0; 
+
+					// --- 波動邏輯改進 ---
+					// 這裡不再使用 *= 0.98，而是根據頻率在原始位置上做「縮放」
+					// 1.0 是基數，frequency * 1.5 是震盪幅度
+					const scale = 1.0 + (frequency * 1.5); 
+					
+					positions[i3] = initial[i3] * scale;
+					positions[i3 + 1] = initial[i3 + 1] * scale;
+					positions[i3 + 2] = initial[i3 + 2] * scale;
+
+					// --- 顏色增強 ---
+					colors[i3] = 0.1 + frequency * 0.9;     // 能量高 -> 紅/紫
+					colors[i3 + 1] = 0.4 - frequency * 0.3; // 能量高 -> 綠色減少
+					colors[i3 + 2] = 0.6 + frequency * 0.4; // 能量高 -> 藍色增加
+				}
+				particleSystem.geometry.attributes.position.needsUpdate = true;
+				particleSystem.geometry.attributes.color.needsUpdate = true;
+			}
+
+			// 緩慢旋轉
+			particleSystem.rotation.y += 0.002;
+			particleSystem.rotation.x += 0.001;
+
+			renderer.render(scene, camera);
+		}
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        init();
+    </script>
+</body>
+</html>
