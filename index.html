@@ -82,35 +82,38 @@
     async function initAudio() {
 		overlay.style.display = 'none';
 
-		const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+		// 1. 強制設定 SampleRate 解決音速偏差問題 (常見於行動裝置)
+		const audioContext = new (window.AudioContext || window.webkitAudioContext)({
+			sampleRate: 44100 
+		});
+
 		const audio = new Audio();
 		audio.src = '沒醉.mp3';
 		audio.crossOrigin = "anonymous";
-		audio.loop = true; // 確保循環播放
+		audio.loop = true; // 開啟單曲循環
 
+		const transparentPixel = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+
+		// 2. Media Session (鎖屏控制面板) 設定
 		if ('mediaSession' in navigator) {
-			// 1. 定義更新 Metadata 的函式
-			const updateMetadata = () => {
-				navigator.mediaSession.metadata = new MediaMetadata({
-					title: '沒醉',
-					album: 'feel'
-				});
+			navigator.mediaSession.metadata = new MediaMetadata({
+				title: '沒醉',
+				album: 'feel',
+				artwork: [
+					{ src: transparentPixel, sizes: '1x1', type: 'image/png' }
+				]
+			});
+
+			// 定義狀態同步邏輯
+			const syncState = (state) => {
+				navigator.mediaSession.playbackState = state;
 			};
 
-			updateMetadata();
+			// 監聽播放事件 (不論是網頁按或是鎖屏按都能同步)
+			audio.addEventListener('play', () => syncState("playing"));
+			audio.addEventListener('pause', () => syncState("paused"));
 
-			// 2. 強制同步播放狀態 (關鍵！)
-			// 當 audio 標籤播放時，告訴系統「正在播放」
-			audio.addEventListener('play', () => {
-				navigator.mediaSession.playbackState = 'playing';
-			});
-
-			// 當 audio 標籤暫停時，告訴系統「只是暫停，別把資訊拿掉」
-			audio.addEventListener('pause', () => {
-				navigator.mediaSession.playbackState = 'paused';
-			});
-
-			// 3. 設定控制按鈕
+			// 控制面板：播放與暫停
 			navigator.mediaSession.setActionHandler('play', async () => {
 				if (audioContext.state === 'suspended') await audioContext.resume();
 				audio.play();
@@ -120,16 +123,18 @@
 				audio.pause();
 			});
 
-			// 處理快進與回放 (讓按鈕亮起來並有作用)
-			navigator.mediaSession.setActionHandler('seekbackward', (details) => {
-				audio.currentTime = Math.max(audio.currentTime - (details.seekOffset || 10), 0);
+			// 控制面板：如果你想顯示「上一首/下一首」按鈕，解開註解並放入邏輯
+			/*
+			navigator.mediaSession.setActionHandler('previoustrack', () => { 
+				 // 這裡放入切換歌曲的邏輯
 			});
-			navigator.mediaSession.setActionHandler('seekforward', (details) => {
-				audio.currentTime = Math.min(audio.currentTime + (details.seekOffset || 10), audio.duration);
+			navigator.mediaSession.setActionHandler('nexttrack', () => { 
+				 // 這裡放入切換歌曲的邏輯
 			});
+			*/
 		}
-		// ----------------------------------
 
+		// 3. Web Audio API 節點連接
 		const source = audioContext.createMediaElementSource(audio);
 		analyser = audioContext.createAnalyser();
 		analyser.fftSize = 256;
@@ -138,7 +143,17 @@
 		analyser.connect(audioContext.destination);
 
 		dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+		// 4. 處理「切換分頁/切回網頁」的音訊重啟機制
+		document.addEventListener('visibilitychange', () => {
+			if (document.visibilityState === 'visible') {
+				if (audioContext.state === 'suspended') {
+					audioContext.resume();
+				}
+			}
+		});
 		
+		// 確保 AudioContext 啟動並播放
 		if (audioContext.state === 'suspended') {
 			await audioContext.resume();
 		}
