@@ -3,10 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Negative Glow</title>
+    <title>SOBER</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #ffffff; font-family: 'Courier New', Courier, monospace; cursor: crosshair; }
-        #canvas-container { width: 100vw; height: 100vh; }
+        #canvas-container { position: fixed; /* 改用 fixed 確保不會隨網頁滾動 */
+			top: 0;
+			left: 0;
+			width: 100vw;
+			height: 100vh;
+			display: block; 
+		}
         
         /* 極簡 Slider 樣式 */
         #ui-layer {
@@ -319,8 +325,8 @@
 			// 3. 永遠盯著中心點，這會產生強烈的立體透視感
 			camera.lookAt(0, 0, 0);
 			
-            particleSystem.rotation.y += 0.002 - (gyroX * 0.01); // 隨左右傾斜加速旋轉
-			particleSystem.rotation.x += 0.001 - (gyroY * 0.01); // 隨前後傾斜加速旋轉
+            particleSystem.rotation.y += 0.002 - (gyroX * 0.05); // 隨左右傾斜加速旋轉
+			particleSystem.rotation.x += 0.001 - (gyroY * 0.05); // 隨前後傾斜加速旋轉
 
             // 如果音樂超響，背景變稍微深一點點來強調「黑光」
             if (boost > 0.42) scene.background.set(darkGlowMode ? 0xf0f0f0 : 0xfbfbfb);
