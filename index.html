@@ -109,16 +109,17 @@
 
 		// 3. 初始化節點與數據空間 (確保 dataArray 在這裡被定義)
 		source = audioContext.createMediaElementSource(audio);
-		analyser = audioContext.createAnalyser();
-		analyser.fftSize = 256;
-		dataArray = new Uint8Array(analyser.frequencyBinCount); // 這裡初始化！
+		//analyser = audioContext.createAnalyser();
+		//analyser.fftSize = 256;
+		//dataArray = new Uint8Array(analyser.frequencyBinCount); // 這裡初始化！
 
 		// 預設連接
-		source.connect(analyser);
-		analyser.connect(audioContext.destination);
+		//source.connect(analyser);
+		source.connect(audioContext.destination);
+		//analyser.connect(audioContext.destination);
 
 		// 4. 背景切換的正規處理
-		document.addEventListener('visibilitychange', () => {
+		/*document.addEventListener('visibilitychange', () => {
 			if (document.visibilityState === 'hidden') {
 				// 背景：斷開分析器避免 iOS 靜音，停止動畫節省效能
 				analyser.disconnect();
@@ -134,14 +135,14 @@
 				audio.play();
 				animate(); // 重新啟動循環
 			}
-		});
+		});*/
 
 		audio.onplay = () => { navigator.mediaSession.playbackState = "playing"; };
 		audio.onpause = () => { navigator.mediaSession.playbackState = "paused"; };
 
-		await audioContext.resume();
+		//await audioContext.resume();
 		audio.play();
-		animate(); // 第一次啟動動畫
+		//animate(); // 第一次啟動動畫
 	}
 
     function onWindowResize() {
@@ -185,7 +186,7 @@
 
             // 如果音樂超響，背景稍微閃爍灰色，模擬過曝感
             if (boost > 0.42) {
-                scene.background = new THREE.Color(0xdddddd);
+                scene.background = new THREE.Color(0xeeeeee);
             } else {
                 scene.background = new THREE.Color(0xffffff);
             }
