@@ -159,7 +159,6 @@
     function init() {
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0xffffff);
-		const axesHelper = new THREE.AxesHelper(2); // 參數 2 是線的長度
 		const cubeGeo = new THREE.BoxGeometry(2, 2, 2);
 
 		// 2. 提取邊緣線
@@ -176,7 +175,22 @@
 		// 4. 建立線段物件並加入場景
 		const cage = new THREE.LineSegments(edges, lineMaterial);
 		scene.add(cage);
-		//scene.add(axesHelper);
+		
+		window.cage = cage;
+		
+		// 建立內部背景
+		const innerBoxGeo = new THREE.BoxGeometry(1.98, 1.98, 1.98); // 比邊框 2.0 稍微小一點
+		const innerBoxMat = new THREE.MeshBasicMaterial({
+			color: 0xffffff,
+			side: THREE.BackSide, // 關鍵：讓顏色渲染在內壁，才不會擋住粒子
+			transparent: true,
+			opacity: 0.5
+		});
+		const innerBox = new THREE.Mesh(innerBoxGeo, innerBoxMat);
+		scene.add(innerBox);
+
+		// 為了讓 animate 能存取，記得把它設為全域變數
+		window.innerBox = innerBox;
 
         camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         camera.position.z = 3;
@@ -326,11 +340,18 @@
 			camera.lookAt(0, 0, 0);
 			
             particleSystem.rotation.y += 0.002 - (gyroX * 0.05); // 隨左右傾斜加速旋轉
-			particleSystem.rotation.x += 0.001 - (-gyroY * 0.05); // 隨前後傾斜加速旋轉
+			particleSystem.rotation.x += 0.001 - (gyroY * 0.05); // 隨前後傾斜加速旋轉
 
             // 如果音樂超響，背景變稍微深一點點來強調「黑光」
-            if (boost > 0.42) scene.background.set(darkGlowMode ? 0xf0f0f0 : 0xfbfbfb);
-            else scene.background.set(0xffffff);
+            if (boost > 0.42) {
+				// 閃動時：黑光模式下變深灰，普通模式下變淺灰
+				innerBox.material.color.set(darkGlowMode ? 0xcccccc : 0xeeeeee);
+				cage.scale.set(1.02, 1.02, 1.02); // 框稍微震大一點
+			} else {
+				// 平時：盒子內部也是白色
+				innerBox.material.color.set(0xffffff);
+				cage.scale.set(1, 1, 1);
+			}
         } else {
             particleSystem.rotation.y += 0.002;
 			particleSystem.rotation.x += 0.001;
