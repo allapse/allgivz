@@ -2,21 +2,69 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>Negative Space - Hardcore Visualizer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Negative Space - Dark Glow Edition</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #ffffff; font-family: sans-serif; }
+        body { margin: 0; overflow: hidden; background-color: #ffffff; font-family: 'Courier New', Courier, monospace; cursor: crosshair; }
         #canvas-container { width: 100vw; height: 100vh; }
+        
+        /* 極簡 Slider 樣式 */
+        #ui-layer {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 20; color: #999; display: none;
+        }
+        .control-group { margin-bottom: 20px; }
+        label { font-size: 9px; display: block; margin-bottom: 8px; text-transform: uppercase;}
+        
+        input[type=range] {
+            -webkit-appearance: none; width: 180px; background: transparent;
+        }
+        input[type=range]:focus { outline: none; }
+        /* 軌道 */
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 1px; background: #999; border: none;
+        }
+        /* 拉桿 */
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 12px; width: 12px; 
+            background: #999; cursor: pointer; margin-top: -5.5px;
+            border-radius: 0; border: 1px solid #fff;
+        }
+
         #overlay {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             text-align: center; color: #999; cursor: pointer; z-index: 10;
-            padding: 20px; border: 0px solid #000; transition: 0.3s;
+            padding: 30px; border: 0px solid #000; transition: 0.4s; letter-spacing: 4px; font-size: 12px;
+			background: rgba(255, 255, 255, 0.2);
         }
         #overlay:hover { background: rgba(0, 0, 0, 0.5); color: #fff; }
+
+        #mode-hint {
+            position: absolute; bottom: 20px; right: 20px; font-size: 9px; color: #999;
+            letter-spacing: 1px; pointer-events: none; display: none;
+        }
     </style>
 </head>
 <body>
 
-<div id="overlay">CLICK TO UNLEASH THE NOISE</div>
+<div id="overlay">INITIATE_SYSTEM</div>
+<div id="mode-hint">TAP TO GLOW</div>
+
+<div id="ui-layer">
+    <div class="control-group">
+        <label>Distortion</label>
+        <input type="range" id="slider-intensity" min="0" max="2" step="0.02">
+    </div>
+    <div class="control-group">
+        <label>Complexity</label>
+        <input type="range" id="slider-freq" min="0.1" max="10" step="0.1">
+    </div>
+    <div class="control-group">
+        <label>Evolution</label>
+        <input type="range" id="slider-speed" min="0" max="0.01" step="0.0001">
+    </div>
+</div>
+
 <div id="canvas-container"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -24,13 +72,42 @@
 <script>
     let scene, camera, renderer, particleSystem, analyser, dataArray;
     let particleCount = 15000;
-    let positions, initialPositions;
+    let initialPositions, positionsArr;
+    let time = 0;
+    let darkGlowMode = false;
 
-    const overlay = document.getElementById('overlay');
+    let params = { intensity: 0.3, frequency: 2.0, speed: 0.002 };
+
+    // Slider 監聽
+	const overlay = document.getElementById('overlay');
     overlay.addEventListener('click', initAudio);
+    document.getElementById('slider-intensity').oninput = (e) => params.intensity = parseFloat(e.target.value);
+    document.getElementById('slider-freq').oninput = (e) => params.frequency = parseFloat(e.target.value);
+    document.getElementById('slider-speed').oninput = (e) => params.speed = parseFloat(e.target.value);
+
+    // 切換模式：點擊畫面
+    window.addEventListener('mousedown', (e) => {
+        if (e.target.tagName === 'INPUT' || document.getElementById('overlay').style.display !== 'none') return;
+        toggleDarkGlow();
+    });
+
+    function toggleDarkGlow() {
+        darkGlowMode = !darkGlowMode;
+        if (darkGlowMode) {
+            // 黑光模式：使用相乘混合，粒子稍微加大加深
+            particleSystem.material.blending = THREE.MultiplyBlending;
+            particleSystem.material.opacity = 0.9;
+            particleSystem.material.size = 0.02; 
+        } else {
+            // 普通模式
+            particleSystem.material.blending = THREE.NormalBlending;
+            particleSystem.material.opacity = 0.6;
+            particleSystem.material.size = 0.015;
+        }
+        particleSystem.material.needsUpdate = true;
+    }
 
     function init() {
-        // 1. 場景與渲染器 (純白底)
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0xffffff);
 
@@ -39,37 +116,31 @@
 
         renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-        // 2. 建立粒子 (純黑)
         const geometry = new THREE.BufferGeometry();
-        positions = new Float32Array(particleCount * 3);
+        const positions = new Float32Array(particleCount * 3);
         initialPositions = new Float32Array(particleCount * 3);
 
         for (let i = 0; i < particleCount; i++) {
             let i3 = i * 3;
-            // 初始分佈：稍微不規則的球體
             const r = 0.8;
             const theta = Math.acos(2 * Math.random() - 1);
             const phi = 2 * Math.PI * Math.random();
-
             positions[i3] = r * Math.sin(theta) * Math.cos(phi);
             positions[i3 + 1] = r * Math.sin(theta) * Math.sin(phi);
             positions[i3 + 2] = r * Math.cos(theta);
-
             initialPositions[i3] = positions[i3];
             initialPositions[i3 + 1] = positions[i3 + 1];
             initialPositions[i3 + 2] = positions[i3 + 2];
         }
 
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        positionsArr = geometry.attributes.position.array;
 
         const material = new THREE.PointsMaterial({
-            color: 0x000000,
-            size: 0.015,
-            transparent: true,
-            opacity: 0.6,
-            blending: THREE.NormalBlending // 白底下正常的混合模式
+            color: 0x000000, size: 0.015, transparent: true, opacity: 0.6, blending: THREE.NormalBlending
         });
 
         particleSystem = new THREE.Points(geometry, material);
@@ -80,77 +151,68 @@
     }
 
     async function initAudio() {
-        overlay.style.display = 'none';
+        document.getElementById('overlay').style.display = 'none';
+        document.getElementById('ui-layer').style.display = 'block';
+		document.getElementById('mode-hint').style.display = 'block';
 
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const audio = new Audio();
-        audio.src = '沒醉.mp3'; // 確保檔案名稱完全正確
+        audio.src = '沒醉.mp3'; 
         audio.crossOrigin = "anonymous";
+        audio.loop = true;
         
         const source = audioContext.createMediaElementSource(audio);
         analyser = audioContext.createAnalyser();
-        analyser.fftSize = 256; // 較小的 FFT 讓視覺更硬核、跳動更尖銳
-        
+        analyser.fftSize = 256;
         source.connect(analyser);
         analyser.connect(audioContext.destination);
 
         dataArray = new Uint8Array(analyser.frequencyBinCount);
+        if (audioContext.state === 'suspended') await audioContext.resume();
         audio.play();
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        time += params.speed * 100;
+
+        if (analyser) {
+            analyser.getByteFrequencyData(dataArray);
+            let sum = 0;
+            for (let j = 0; j < dataArray.length; j++) sum += dataArray[j];
+            const boost = (sum / dataArray.length) / 255;
+
+            const posAttribute = particleSystem.geometry.attributes.position;
+            const freqLen = dataArray.length;
+
+            for (let i = 0; i < particleCount; i++) {
+                const i3 = i * 3;
+                const freqVal = dataArray[i % freqLen] / 255.0;
+                const noise = Math.sin(initialPositions[i3] * params.frequency + time) * params.intensity;
+                const scale = 1.0 + (freqVal * 3.0) + (boost * 1.0);
+
+                positionsArr[i3]     = initialPositions[i3] * scale + noise;
+                positionsArr[i3 + 1] = initialPositions[i3 + 1] * scale + noise;
+                positionsArr[i3 + 2] = initialPositions[i3 + 2] * scale + noise;
+            }
+            posAttribute.needsUpdate = true;
+            
+            particleSystem.rotation.y += 0.005;
+            particleSystem.rotation.x += 0.002;
+
+            // 如果音樂超響，背景變稍微深一點點來強調「黑光」
+            if (boost > 0.42) scene.background.set(darkGlowMode ? 0xeeeeee : 0xfcfcfc);
+            else scene.background.set(0xffffff);
+        } else {
+            particleSystem.rotation.y += 0.002;
+        }
+        renderer.render(scene, camera);
     }
 
     function onWindowResize() {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
-    }
-
-    function animate() {
-        requestAnimationFrame(animate);
-
-        if (analyser) {
-            analyser.getByteFrequencyData(dataArray);
-            
-            // 抓取低頻強度作為整體縮放
-            const averageFreq = dataArray.reduce((a, b) => a + b) / dataArray.length;
-            const boost = averageFreq / 255;
-
-            const posAttribute = particleSystem.geometry.attributes.position;
-            const time = Date.now() * 0.002;
-
-            for (let i = 0; i < particleCount; i++) {
-                let i3 = i * 3;
-                let freqVal = dataArray[i % dataArray.length] / 255.0;
-
-                // 數學混亂邏輯：結合 Sine 波與頻率造成的空間扭曲
-                // 當頻率高時，粒子會沿著法線方向劇烈噴射
-                let noise = Math.sin(initialPositions[i3] * 2 + time) * 0.3;
-                let scale = 1.0 + (freqVal * 3) + (boost * 1);
-
-                posAttribute.array[i3] = initialPositions[i3] * scale + noise;
-                posAttribute.array[i3+1] = initialPositions[i3+1] * scale + noise;
-                posAttribute.array[i3+2] = initialPositions[i3+2] * scale + noise;
-            }
-            
-            posAttribute.needsUpdate = true;
-            
-            // 讓球體緩慢旋轉
-            particleSystem.rotation.y += 0.005;
-            particleSystem.rotation.x += 0.002;
-
-            // 如果音樂超響，背景稍微閃爍灰色，模擬過曝感
-            if (boost > 0.42) {
-                scene.background = new THREE.Color(0xfcfcfc);
-            } else {
-                scene.background = new THREE.Color(0xffffff);
-            }
-        }
-		else {
-			// 讓球體緩慢旋轉
-			particleSystem.rotation.y += 0.002;
-			particleSystem.rotation.x += 0.001;
-		}
-
-        renderer.render(scene, camera);
     }
 
     init();
