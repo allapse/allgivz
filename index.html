@@ -9,7 +9,7 @@
         #overlay {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             text-align: center; color: #999; cursor: pointer; z-index: 10;
-            padding: 20px; border: 0px solid #CCC; transition: 0.3s;
+            padding: 20px; border: 0px solid #000; transition: 0.3s;
         }
         #overlay:hover { background: rgba(0, 0, 0, 0.5); color: #fff; }
     </style>
@@ -79,109 +79,24 @@
         animate();
     }
 
-	// 1. 將關鍵變數提升到全域
-	let audioContext, audio, source;
-	let animationId; // 用來控制動畫循環
+    async function initAudio() {
+        overlay.style.display = 'none';
 
-	const audioSrc = '沒醉.mp3';
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const audio = new Audio();
+        audio.src = '沒醉.mp3'; // 確保檔案名稱完全正確
+        audio.crossOrigin = "anonymous";
+        
+        const source = audioContext.createMediaElementSource(audio);
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256; // 較小的 FFT 讓視覺更硬核、跳動更尖銳
+        
+        source.connect(analyser);
+        analyser.connect(audioContext.destination);
 
-	async function initAudio() {
-		overlay.style.display = 'none';
-		
-		// 初始進入：直接啟動視覺化模式
-		await switchMode(true);
-		
-		// 監聽背景/前台切換
-		document.addEventListener('visibilitychange', async () => {
-			const currentTime = audio.currentTime;
-			const isPaused = audio.paused;
-
-			if (document.visibilityState === 'hidden') {
-				console.log("切換至：純音訊模式 (背景播放)");
-				await switchMode(false, currentTime, isPaused);
-			} else {
-				console.log("切換至：視覺化模式");
-				await switchMode(true, currentTime, isPaused);
-			}
-		});
-	}
-
-	/**
-	 * 核心切換邏輯
-	 * @param {boolean} useVisualizer - 是否啟用視覺化 (AudioContext)
-	 * @param {number} startTime - 續播時間點
-	 * @param {boolean} wasPaused - 切換前是否為暫停狀態
-	 */
-	async function switchMode(useVisualizer, startTime = 0, wasPaused = false) {
-		// 1. 清理舊資源：停止動畫與銷毀舊 Audio 物件
-		if (animationId) cancelAnimationFrame(animationId);
-		
-		if (audio) {
-			audio.pause();
-			audio.src = ""; // 強制釋放
-			audio.remove();
-		}
-
-		// 2. 建立全新 Audio 物件 (這是繞過 iOS 限制的關鍵)
-		audio = new Audio();
-		audio.src = audioSrc;
-		audio.crossOrigin = "anonymous";
-		audio.loop = true;
-		audio.currentTime = startTime;
-
-		// 重新綁定 MediaSession (每次建立新的 Audio 都需要)
-		setupMediaSession();
-
-		if (useVisualizer) {
-			// --- 視覺化模式 ---
-			if (!audioContext || audioContext.state === 'closed') {
-				audioContext = new (window.AudioContext || window.webkitAudioContext)({
-					sampleRate: 44100
-				});
-			}
-			await audioContext.resume();
-
-			// 重新建立分析管線
-			source = audioContext.createMediaElementSource(audio);
-			analyser = audioContext.createAnalyser();
-			analyser.fftSize = 256;
-			dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-			source.connect(analyser);
-			analyser.connect(audioContext.destination);
-
-			if (!wasPaused) {
-				audio.play().catch(e => console.log("Autoplay blocked"));
-				animate(); // 啟動動畫
-			}
-		} else {
-			// --- 純音訊模式 ---
-			// 關鍵：絕對不要呼叫 createMediaElementSource
-			// 並且關閉 AudioContext 以釋放 iOS 的硬體佔用
-			if (audioContext && audioContext.state !== 'closed') {
-				await audioContext.close();
-			}
-
-			if (!wasPaused) {
-				audio.play().catch(e => console.log("Autoplay blocked"));
-			}
-		}
-	}
-
-	function setupMediaSession() {
-		if ('mediaSession' in navigator) {
-			navigator.mediaSession.metadata = new MediaMetadata({
-				title: '沒醉',
-				album: 'feel',
-				artwork: [{ src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=", sizes: '1x1', type: 'image/png' }]
-			});
-			navigator.mediaSession.setActionHandler('play', () => audio.play());
-			navigator.mediaSession.setActionHandler('pause', () => audio.pause());
-			
-			audio.onplay = () => { navigator.mediaSession.playbackState = "playing"; };
-			audio.onpause = () => { navigator.mediaSession.playbackState = "paused"; };
-		}
-	}
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+        audio.play();
+    }
 
     function onWindowResize() {
         camera.aspect = window.innerWidth / window.innerHeight;
@@ -190,7 +105,7 @@
     }
 
     function animate() {
-        animationId = requestAnimationFrame(animate);
+        requestAnimationFrame(animate);
 
         if (analyser) {
             analyser.getByteFrequencyData(dataArray);
@@ -208,8 +123,8 @@
 
                 // 數學混亂邏輯：結合 Sine 波與頻率造成的空間扭曲
                 // 當頻率高時，粒子會沿著法線方向劇烈噴射
-                let noise = Math.sin(initialPositions[i3] * 2 + time) * 0.1;
-                let scale = 1.0 + (freqVal * 1.5) + (boost * 0.5);
+                let noise = Math.sin(initialPositions[i3] * 2 + time) * 0.3;
+                let scale = 1.0 + (freqVal * 3) + (boost * 1);
 
                 posAttribute.array[i3] = initialPositions[i3] * scale + noise;
                 posAttribute.array[i3+1] = initialPositions[i3+1] * scale + noise;
@@ -224,16 +139,15 @@
 
             // 如果音樂超響，背景稍微閃爍灰色，模擬過曝感
             if (boost > 0.42) {
-                scene.background = new THREE.Color(0xfefefe);
+                scene.background = new THREE.Color(0xfcfcfc);
             } else {
                 scene.background = new THREE.Color(0xffffff);
             }
         }
-		else
-		{
+		else {
 			// 讓球體緩慢旋轉
-            particleSystem.rotation.y += 0.002;
-            particleSystem.rotation.x += 0.001;
+			particleSystem.rotation.y += 0.002;
+			particleSystem.rotation.x += 0.001;
 		}
 
         renderer.render(scene, camera);
@@ -243,4 +157,3 @@
 </script>
 </body>
 </html>
-
