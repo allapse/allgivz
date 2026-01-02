@@ -91,6 +91,7 @@
 	let baseBeta = null, baseGamma = null; // 用來紀錄啟動時的手機姿勢
 
     let params = { intensity: 0.3, frequency: 2.0, speed: 0.002 };
+	let visualBoost = 0;
 
     // Slider 監聽
 	const overlay = document.getElementById('overlay');
@@ -140,20 +141,32 @@
 		particleSystem.material.needsUpdate = true;
     }
 	
+	// 儲存前一幀的平均頻率
+	let audioMappings = []; 
+	let prevAverages = {};
+
 	function syncSliders() {
-	    const sliders = [
-	        { id: 'slider-intensity', key: 'intensity' },
-	        { id: 'slider-freq', key: 'frequency' },
-	        { id: 'slider-speed', key: 'speed' }
-	    ];
-    
-    	sliders.forEach(s => {
-	        const el = document.getElementById(s.id);
-	        // 自動計算該 slider 範圍的 20%
-	        const val = parseFloat(el.min) + (parseFloat(el.max) - parseFloat(el.min)) * 0.2;
-	        el.value = val;
-	        params[s.key] = val;
-	    });
+		const sliders = [
+			{ id: 'slider-intensity', key: 'intensity', range: [61, 100] }, 
+			{ id: 'slider-freq', key: 'frequency', range: [0, 40] },    
+			{ id: 'slider-speed', key: 'speed', range: [41, 60] }       
+		];
+
+		audioMappings = sliders.map(s => {
+			const el = document.getElementById(s.id);
+			
+			// 監聽手動操作
+			el.addEventListener('mousedown', () => el.dataset.isDragging = "true");
+			el.addEventListener('touchstart', () => el.dataset.isDragging = "true");
+			window.addEventListener('mouseup', () => el.dataset.isDragging = "false");
+			window.addEventListener('touchend', () => el.dataset.isDragging = "false");
+
+			return { 
+				...s, 
+				el: el,
+				peak: 100 // 初始預期的最高強度，之後會自動調整
+			};
+		});
 	}
 
     function init() {
@@ -179,7 +192,7 @@
 		window.cage = cage;
 		
 		// 建立內部背景
-		const innerBoxGeo = new THREE.BoxGeometry(1.98, 1.98, 1.98); // 比邊框 2.0 稍微小一點
+		const innerBoxGeo = new THREE.BoxGeometry(1.99, 1.99, 1.99); // 比邊框 2.0 稍微小一點
 		const innerBoxMat = new THREE.MeshBasicMaterial({
 			color: 0xffffff,
 			side: THREE.BackSide, // 關鍵：讓顏色渲染在內壁，才不會擋住粒子
@@ -297,6 +310,46 @@
 
         if (analyser) {
             analyser.getByteFrequencyData(dataArray);
+			
+			audioMappings.forEach(mapping => {
+				const el = mapping.el;
+				if (el.dataset.isDragging === "true") return;
+
+				// 1. 計算平均值
+				let sum = 0;
+				for (let i = mapping.range[0]; i <= mapping.range[1]; i++) {
+					sum += dataArray[i];
+				}
+				let currentAvg = sum / (mapping.range[1] - mapping.range[0] + 1);
+
+				// 2. 強化：扣除底噪門檻 (讓數值更有「空間」呼吸)
+				const noiseFloor = 30; 
+				currentAvg = Math.max(0, currentAvg - noiseFloor);
+
+				// 3. 強化：動態峰值 (快速上升，極慢下降)
+				if (currentAvg > mapping.peak) {
+					// 即使聲音變大，也不要立刻更新 peak，用一點緩衝
+					mapping.peak += (currentAvg - mapping.peak) * 0.2; 
+				} else {
+					mapping.peak *= 0.99999; // 維持在一個適中的下降速度
+				}
+
+				// 4. 【核心關鍵】：非線性縮放 (加上 Power 函數)
+				// 透過 Math.pow(ratio, 2)，小聲音會更小，大聲音才有爆發感
+				let ratio = currentAvg / (Math.max(mapping.peak, 50));
+				ratio = Math.pow(ratio, 1.5); // 數值越大，Slider 越難衝到頂 (1.5 ~ 2.0 效果最佳)
+
+				// 5. 映射與 Lerp
+				const min = parseFloat(el.min);
+				const max = parseFloat(el.max);
+				const targetVal = min + (max - min) * ratio;
+
+				// 降低靈敏度 (從 0.1 降到 0.05)，增加絲滑感
+				params[mapping.key] += (targetVal - params[mapping.key]) * 0.1;
+				
+				el.value = params[mapping.key];
+			});
+			
             let sum = 0;
             for (let j = 0; j < dataArray.length; j++) sum += dataArray[j];
             const boost = (sum / dataArray.length) / 255;
@@ -342,15 +395,31 @@
             particleSystem.rotation.y += 0.002 - (gyroX * 0.05); // 隨左右傾斜加速旋轉
 			particleSystem.rotation.x += 0.001 - (gyroY * 0.05); // 隨前後傾斜加速旋轉
 
-            // 如果音樂超響，背景變稍微深一點點來強調「黑光」
-            if (boost > 0.42) {
-				// 閃動時：黑光模式下變深灰，普通模式下變淺灰
-				innerBox.material.color.set(darkGlowMode ? 0xcccccc : 0xeeeeee);
-				cage.scale.set(1.02, 1.02, 1.02); // 框稍微震大一點
+            // 1. 設定一個觸發門檻 (例如 0.4，你可以根據音樂調整)
+			const boostThreshold = 0.42; 
+			// 只計算超過門檻的部分，並放大它的倍率
+			let activeBoost = Math.max(0, boost - boostThreshold) * 2.0;
+
+			// 2. 更新視覺衝擊變數
+			if (activeBoost > visualBoost) {
+				visualBoost = activeBoost; // 瞬間衝高
 			} else {
-				// 平時：盒子內部也是白色
-				innerBox.material.color.set(0xffffff);
+				visualBoost *= 0.85; // 稍微加快回歸速度，讓閃爍更俐落
+			}
+
+			// 3. 只有當 visualBoost 真的有值時才改變顏色與縮放
+			if (visualBoost > 0.01) {
+				const colorIntensity = 1.0 - (visualBoost * 0.4); 
+				innerBox.material.color.setRGB(colorIntensity, colorIntensity, colorIntensity);
+				
+				const s = 1.0 + (visualBoost * 0.05);
+				cage.scale.set(s, s, s);
+				cage.material.opacity = 0.3 + (visualBoost * 0.6);
+			} else {
+				// 平時回歸初始狀態
+				innerBox.material.color.setRGB(1, 1, 1);
 				cage.scale.set(1, 1, 1);
+				cage.material.opacity = 0.3;
 			}
         } else {
             particleSystem.rotation.y += 0.002;
