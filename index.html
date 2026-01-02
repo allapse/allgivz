@@ -35,7 +35,7 @@
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             text-align: center; color: #999; cursor: pointer; z-index: 10;
             padding: 30px; border: 0px solid #000; transition: 0.4s; letter-spacing: 4px; font-size: 12px;
-			background: rgba(255, 255, 255, 0.2);
+			background: rgba(0, 0, 0, 0.1);
         }
         #overlay:hover { background: rgba(0, 0, 0, 0.5); color: #fff; }
 
@@ -43,6 +43,12 @@
             position: absolute; bottom: 20px; right: 20px; font-size: 9px; color: #999;
             letter-spacing: 1px; pointer-events: none; display: none;
         }
+		
+		#canvas-container { 
+			width: 100vw; 
+			height: 100vh; 
+			touch-action: none; /* 重要：防止瀏覽器攔截觸控事件 */
+		}
     </style>
 </head>
 <body>
@@ -87,9 +93,14 @@
     document.getElementById('slider-speed').oninput = (e) => params.speed = parseFloat(e.target.value);
 
     // 切換模式：點擊畫面
-    window.addEventListener('mousedown', (e) => {
-        if (e.target.tagName === 'INPUT' || document.getElementById('overlay').style.display !== 'none') return;
-        toggleDarkGlow();
+    window.addEventListener('click', (e) => {
+        // 如果點擊的是 UI 介面、或是 Overlay 本身、或是 Overlay 還顯示著，就跳出
+		if (e.target.closest('#ui-layer') || 
+			e.target.id === 'overlay' || 
+			document.getElementById('overlay').style.display !== 'none') {
+			return;
+		}
+		toggleDarkGlow();
     });
 
     function toggleDarkGlow() {
@@ -238,8 +249,8 @@
             }
             posAttribute.needsUpdate = true;
             
-            particleSystem.rotation.y += 0.005 + (gyroX * 0.1); // 隨左右傾斜加速旋轉
-			particleSystem.rotation.x += 0.002 + (gyroY * 0.1); // 隨前後傾斜加速旋轉
+            particleSystem.rotation.y += 0.005 - (gyroX * 0.2); // 隨左右傾斜加速旋轉
+			particleSystem.rotation.x += 0.002 - (gyroY * 0.2); // 隨前後傾斜加速旋轉
 
             // 如果音樂超響，背景變稍微深一點點來強調「黑光」
             if (boost > 0.42) scene.background.set(darkGlowMode ? 0xeeeeee : 0xfcfcfc);
