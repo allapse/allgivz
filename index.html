@@ -83,20 +83,92 @@
 	let audioContext, audio, source;
 	let animationId; // 用來控制動畫循環
 
+	const audioSrc = '沒醉.mp3';
+
 	async function initAudio() {
 		overlay.style.display = 'none';
+		
+		// 初始進入：直接啟動視覺化模式
+		await switchMode(true);
+		
+		// 監聽背景/前台切換
+		document.addEventListener('visibilitychange', async () => {
+			const currentTime = audio.currentTime;
+			const isPaused = audio.paused;
 
-		audioContext = new (window.AudioContext || window.webkitAudioContext)({
-			sampleRate: 44100,
-			latencyHint: 'playback'
+			if (document.visibilityState === 'hidden') {
+				console.log("切換至：純音訊模式 (背景播放)");
+				await switchMode(false, currentTime, isPaused);
+			} else {
+				console.log("切換至：視覺化模式");
+				await switchMode(true, currentTime, isPaused);
+			}
 		});
+	}
 
+	/**
+	 * 核心切換邏輯
+	 * @param {boolean} useVisualizer - 是否啟用視覺化 (AudioContext)
+	 * @param {number} startTime - 續播時間點
+	 * @param {boolean} wasPaused - 切換前是否為暫停狀態
+	 */
+	async function switchMode(useVisualizer, startTime = 0, wasPaused = false) {
+		// 1. 清理舊資源：停止動畫與銷毀舊 Audio 物件
+		if (animationId) cancelAnimationFrame(animationId);
+		
+		if (audio) {
+			audio.pause();
+			audio.src = ""; // 強制釋放
+			audio.remove();
+		}
+
+		// 2. 建立全新 Audio 物件 (這是繞過 iOS 限制的關鍵)
 		audio = new Audio();
-		audio.src = '沒醉.mp3';
+		audio.src = audioSrc;
 		audio.crossOrigin = "anonymous";
 		audio.loop = true;
+		audio.currentTime = startTime;
 
-		// 2. 初始化 MediaSession
+		// 重新綁定 MediaSession (每次建立新的 Audio 都需要)
+		setupMediaSession();
+
+		if (useVisualizer) {
+			// --- 視覺化模式 ---
+			if (!audioContext || audioContext.state === 'closed') {
+				audioContext = new (window.AudioContext || window.webkitAudioContext)({
+					sampleRate: 44100
+				});
+			}
+			await audioContext.resume();
+
+			// 重新建立分析管線
+			source = audioContext.createMediaElementSource(audio);
+			analyser = audioContext.createAnalyser();
+			analyser.fftSize = 256;
+			dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+			source.connect(analyser);
+			analyser.connect(audioContext.destination);
+
+			if (!wasPaused) {
+				audio.play().catch(e => console.log("Autoplay blocked"));
+				animate(); // 啟動動畫
+			}
+		} else {
+			// --- 純音訊模式 ---
+			// 關鍵：絕對不要呼叫 createMediaElementSource
+			// 並且關閉 AudioContext 以釋放 iOS 的硬體佔用
+			if (audioContext && audioContext.state !== 'closed') {
+				await audioContext.close();
+			}
+
+			if (!wasPaused) {
+				audio.play().catch(e => console.log("Autoplay blocked"));
+			}
+		}
+	}
+
+	function setupMediaSession() {
 		if ('mediaSession' in navigator) {
 			navigator.mediaSession.metadata = new MediaMetadata({
 				title: '沒醉',
@@ -105,44 +177,10 @@
 			});
 			navigator.mediaSession.setActionHandler('play', () => audio.play());
 			navigator.mediaSession.setActionHandler('pause', () => audio.pause());
+			
+			audio.onplay = () => { navigator.mediaSession.playbackState = "playing"; };
+			audio.onpause = () => { navigator.mediaSession.playbackState = "paused"; };
 		}
-
-		// 3. 初始化節點與數據空間 (確保 dataArray 在這裡被定義)
-		source = audioContext.createMediaElementSource(audio);
-		//analyser = audioContext.createAnalyser();
-		//analyser.fftSize = 256;
-		//dataArray = new Uint8Array(analyser.frequencyBinCount); // 這裡初始化！
-
-		// 預設連接
-		//source.connect(analyser);
-		source.connect(audioContext.destination);
-		//analyser.connect(audioContext.destination);
-
-		// 4. 背景切換的正規處理
-		/*document.addEventListener('visibilitychange', () => {
-			if (document.visibilityState === 'hidden') {
-				// 背景：斷開分析器避免 iOS 靜音，停止動畫節省效能
-				analyser.disconnect();
-				source.disconnect();
-				source.connect(audioContext.destination);
-				cancelAnimationFrame(animationId); 
-			} else {
-				// 前台：重新連接並啟動動畫
-				source.disconnect();
-				source.connect(analyser);
-				analyser.connect(audioContext.destination);
-				audioContext.resume();
-				audio.play();
-				animate(); // 重新啟動循環
-			}
-		});*/
-
-		audio.onplay = () => { navigator.mediaSession.playbackState = "playing"; };
-		audio.onpause = () => { navigator.mediaSession.playbackState = "paused"; };
-
-		//await audioContext.resume();
-		audio.play();
-		//animate(); // 第一次啟動動畫
 	}
 
     function onWindowResize() {
