@@ -105,19 +105,21 @@
     });
 
     function toggleDarkGlow() {
+		if (navigator.vibrate) {
+			navigator.vibrate(50); 
+		}
         darkGlowMode = !darkGlowMode;
-        if (darkGlowMode) {
-            // 黑光模式：使用相乘混合，粒子稍微加大加深
-            particleSystem.material.blending = THREE.MultiplyBlending;
-            particleSystem.material.opacity = 0.9;
-            particleSystem.material.size = 0.02; 
-        } else {
-            // 普通模式
-            particleSystem.material.blending = THREE.NormalBlending;
-            particleSystem.material.opacity = 0.6;
-            particleSystem.material.size = 0.015;
-        }
-        particleSystem.material.needsUpdate = true;
+
+		if (darkGlowMode) {
+			particleSystem.material.blending = THREE.MultiplyBlending;
+			particleSystem.material.opacity = 0.8;
+			particleSystem.material.size = 0.03; 
+		} else {
+			particleSystem.material.blending = THREE.NormalBlending;
+			particleSystem.material.opacity = 0.6;
+			particleSystem.material.size = 0.015;
+		}
+		particleSystem.material.needsUpdate = true;
     }
 	
 	function syncSliders() {
@@ -276,9 +278,9 @@
 
 				const limit = 1.0;
 				// 如果超過邊界，增加一個震盪阻力
-				if (Math.abs(posX) > limit) posX *= 0.001; 
-				if (Math.abs(posY) > limit) posY *= 0.001;
-				if (Math.abs(posZ) > limit) posZ *= 0.001;
+				if (Math.abs(posX) > limit) posX *= 0.1; 
+				if (Math.abs(posY) > limit) posY *= 0.1;
+				if (Math.abs(posZ) > limit) posZ *= 0.1;
 
 				positionsArr[i3] = posX;
 				positionsArr[i3+1] = posY;
@@ -298,12 +300,12 @@
 			// 3. 永遠盯著中心點，這會產生強烈的立體透視感
 			camera.lookAt(0, 0, 0);
 			
-            particleSystem.rotation.y += 0.005 + (gyroX * 0.1); // 隨左右傾斜加速旋轉
-			particleSystem.rotation.x += 0.002 - (gyroY * 0.1); // 隨前後傾斜加速旋轉
+            particleSystem.rotation.y += 0.002 + (gyroX * 0.01); // 隨左右傾斜加速旋轉
+			particleSystem.rotation.x += 0.001 - (gyroY * 0.01); // 隨前後傾斜加速旋轉
 
             // 如果音樂超響，背景變稍微深一點點來強調「黑光」
-            if (boost > 0.42) scene.background.set(darkGlowMode ? 0xeeeeee : 0xfcfcfc);
-            else scene.background.set(0xffffff);
+            if (boost > 0.45) scene.background.set(darkGlowMode ? 0xcccccc : 0xeeeeee);
+            else scene.background.set(0xfcfcfc);
         } else {
             particleSystem.rotation.y += 0.002;
 			particleSystem.rotation.x += 0.001;
