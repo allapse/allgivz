@@ -119,15 +119,17 @@
 
     function toggleDarkGlow() {
         darkGlowMode = !darkGlowMode;
-
+    
 		if (darkGlowMode) {
+			// --- 進入黑光發光模式 ---
 			particleSystem.material.blending = THREE.MultiplyBlending;
-			particleSystem.material.opacity = 0.8;
-			particleSystem.material.size = 0.03; 
+			particleSystem.material.size = 0.01;   // 放大粒子，讓邊緣漸層重疊
+			particleSystem.material.opacity = 0.3; // 讓黑度更高
 		} else {
+			// --- 回到普通硬核模式 ---
 			particleSystem.material.blending = THREE.NormalBlending;
+			particleSystem.material.size = 0.02;   // 縮小，看起來像精細的點
 			particleSystem.material.opacity = 0.6;
-			particleSystem.material.size = 0.015;
 		}
 		particleSystem.material.needsUpdate = true;
     }
@@ -199,8 +201,15 @@
         positionsArr = geometry.attributes.position.array;
 
         const material = new THREE.PointsMaterial({
-            color: 0x000000, size: 0.015, transparent: true, opacity: 0.6, blending: THREE.NormalBlending
-        });
+			color: 0x000000,
+			size: 0.02,              // 基礎大小
+			map: createCircleTexture(), // 套用剛才畫的漸層貼圖
+			transparent: true,
+			opacity: 0.6,
+			blending: THREE.NormalBlending,
+			depthWrite: false,       // 關鍵：這能讓粒子重疊時不會有難看的方塊邊緣
+			alphaTest: 0.001         // 確保透明部分的計算更精確
+		});
 
         particleSystem = new THREE.Points(geometry, material);
         scene.add(particleSystem);
@@ -305,7 +314,7 @@
 
 			// 2. 絲滑移動 (Lerp): 當前位置 + (目標 - 當前) * 係數
 			camera.position.x += (targetCamX - camera.position.x) * 0.08;
-			camera.position.y += (targetCamY - target.position.y) * 0.08;
+			camera.position.y += (targetCamY + camera.position.y) * 0.08;
 
 			// 3. 永遠盯著中心點，這會產生強烈的立體透視感
 			camera.lookAt(0, 0, 0);
@@ -322,6 +331,25 @@
         }
         renderer.render(scene, camera);
     }
+	
+	function createCircleTexture() {
+		const canvas = document.createElement('canvas');
+		canvas.width = 64;
+		canvas.height = 64;
+		const ctx = canvas.getContext('2d');
+
+		// 徑向漸層：中心不透明，邊緣完全透明
+		const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+		gradient.addColorStop(0, 'rgba(0,0,0,1)');   // 中心純黑
+		gradient.addColorStop(0.2, 'rgba(0,0,0,0.5)'); // 中間過渡
+		gradient.addColorStop(1, 'rgba(0,0,0,0)');   // 邊緣消失
+
+		ctx.fillStyle = gradient;
+		ctx.fillRect(0, 0, 64, 64);
+
+		const texture = new THREE.CanvasTexture(canvas);
+		return texture;
+	}
 
     function onWindowResize() {
         camera.aspect = window.innerWidth / window.innerHeight;
@@ -333,5 +361,3 @@
 </script>
 </body>
 </html>
-
-
