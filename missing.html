@@ -189,10 +189,10 @@
 		// 起點 (底部尖端)
 		heartShape.moveTo(0, 0); 
 		// 使用三次貝茲曲線畫出左右半圓
-		heartShape.bezierCurveTo(0.8, 0.4, 2.2, 1.0, 2.2, 2.2); 
-		heartShape.bezierCurveTo(2.2, 3.5, 0, 3.8, 0, 2.5); 
-		heartShape.bezierCurveTo(0, 3.8, -2.2, 3.5, -2.2, 2.2); 
-		heartShape.bezierCurveTo(-2.2, 1.0, -0.8, 0.4, 0, 0);
+		heartShape.bezierCurveTo(0.4, 0.2, 1.1, 0.5, 1.1, 1.1); 
+		heartShape.bezierCurveTo(1.1, 1.75, 0, 1.9, 0, 1.25); 
+		heartShape.bezierCurveTo(0, 1.9, -1.1, 1.75, -1.1, 1.1); 
+		heartShape.bezierCurveTo(-1.1, 0.5, -0.4, 0.2, 0, 0);
 
 		// --- 2. 設定擠壓 (3D) 參數 ---
 		const extrudeSettings = {
@@ -272,7 +272,7 @@
 
 			// 5. 賦值 (注意：這裡加了 -y 來修正你提到的上下顛倒問題)
 			positions[i3] = x * scale * fill;
-			positions[i3 + 1] = -y * scale * fill; // 加負號轉正
+			positions[i3 + 1] = y * scale * fill; // 加負號轉正
 			positions[i3 + 2] = z * scale * fill;
 
 			// 6. 存入初始位置，這很重要，animate 函式會抓這裡的資料
