@@ -445,7 +445,7 @@
 			camera.lookAt(0, 0, 0);
 			
             particleSystem.rotation.y += 0.002 - (gyroX * 0.05); // 隨左右傾斜加速旋轉
-			particleSystem.rotation.x += 0.001 - (gyroY * 0.05); // 隨前後傾斜加速旋轉
+			particleSystem.rotation.x += 0.001;// - (gyroY * 0.05); // 隨前後傾斜加速旋轉
 
             // 1. 設定一個觸發門檻 (例如 0.4，你可以根據音樂調整)
 			const boostThreshold = 0.42; 
@@ -475,7 +475,7 @@
 			}
         } else {
             particleSystem.rotation.y += 0.002;
-			particleSystem.rotation.x += 0.001;
+			//particleSystem.rotation.x += 0.001;
         }
         renderer.render(scene, camera);
     }
