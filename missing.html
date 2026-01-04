@@ -226,20 +226,38 @@
 		scene.add(cage);
 		window.cage = cage;
 		
-		// 建立內部背景
-		const innerBoxGeo = new THREE.BoxGeometry(1.99, 1.99, 1.99); // 比邊框 2.0 稍微小一點
+		// --- 5. 建立心形內部背景 (Inner Box Replacement) ---
+
+		// 設定擠壓參數：稍微縮小一點點，避免與邊框重疊
+		const innerExtrudeSettings = {
+			depth: 0.48,           // 原本是 0.5，縮小 0.02
+			bevelEnabled: true,
+			bevelSegments: 2,
+			steps: 2,
+			bevelSize: 0.09,      // 稍微縮小斜角
+			bevelThickness: 0.09
+		};
+
+		// 使用跟 cage 一模一樣的 heartShape
+		const innerHeartGeo = new THREE.ExtrudeGeometry(heartShape, innerExtrudeSettings);
+		innerHeartGeo.center(); // 務必同樣執行居中
+
 		const innerBoxMat = new THREE.MeshBasicMaterial({
 			color: 0xffffff,
-			side: THREE.BackSide, // 關鍵：讓顏色渲染在內壁，才不會擋住粒子
+			side: THREE.BackSide, // 關鍵：讓顏色渲染在內壁，形成容器感
 			transparent: true,
 			opacity: 0.5
 		});
-		const innerBox = new THREE.Mesh(innerBoxGeo, innerBoxMat);
+
+		const innerBox = new THREE.Mesh(innerHeartGeo, innerBoxMat);
+
+		// 保持與 cage 一致的旋轉
+		innerBox.rotation.x = cage.rotation.x; 
+
 		scene.add(innerBox);
 
-		// 為了讓 animate 能存取，記得把它設為全域變數
+		// 存入全域變數供 animate 使用
 		window.innerBox = innerBox;
-
         camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         camera.position.z = 3;
 
@@ -421,10 +439,15 @@
 				let posZ = initialPositions[i3+2] * scale + noise;
 
 				const limit = 1.0;
+				const radisSquared = limit*limit;
+				const distanceSquared = Math.abs(posX)*Math.abs(posX)+Math.abs(posY)*Math.abs(posY)+Math.abs(posZ)*Math.abs(posZ);
 				// 如果超過邊界，增加一個震盪阻力
-				if (Math.abs(posX) > limit) posX *= 0.1; 
-				if (Math.abs(posY) > limit) posY *= 0.1;
-				if (Math.abs(posZ) > limit) posZ *= 0.1;
+				if (distanceSquared>radisSquared)
+				{
+					posX *= 0.2;
+					posY *= 0.2;
+					posZ *= 0.2;
+				}
 
 				positionsArr[i3] = posX;
 				positionsArr[i3+1] = posY;
@@ -448,7 +471,7 @@
 			//particleSystem.rotation.x += 0.001 - (gyroY * 0.05); // 隨前後傾斜加速旋轉
 
             // 1. 設定一個觸發門檻 (例如 0.4，你可以根據音樂調整)
-			const boostThreshold = 0.42; 
+			const boostThreshold = 0.36; 
 			// 只計算超過門檻的部分，並放大它的倍率
 			let activeBoost = Math.max(0, boost - boostThreshold) * 2.0;
 
@@ -458,6 +481,9 @@
 			} else {
 				visualBoost *= 0.85; // 稍微加快回歸速度，讓閃爍更俐落
 			}
+			
+			if(visualBoost>0)
+			console.log(visualBoost)
 
 			// 3. 只有當 visualBoost 真的有值時才改變顏色與縮放
 			if (visualBoost > 0.01) {
