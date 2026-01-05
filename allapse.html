@@ -219,6 +219,16 @@
 					const mesh = new THREE.Mesh(tetraGeo, meshMat.clone());
 					const line = new THREE.LineSegments(edgesGeo, lineMat.clone());
 					
+                    // 在建立 3D 矩陣的迴圈內
+                    const isOuter = Math.abs(x) === count || Math.abs(y) === count || Math.abs(z) === count;
+
+                    if (isOuter) {
+                        mesh.material.opacity = 0.7; // 最外層線條完全不透明
+                        mesh.material.color.set(0x000000); 
+                    } else {
+                        mesh.material.opacity = 0.4; // 內層線條淡化，突出結構感
+                    }
+                    
 					const xPos = x * spacing;
 					const yPos = y * spacing;
 					const zPos = z * spacing;
