@@ -164,9 +164,9 @@
 
 	function syncSliders() {
 		const sliders = [
-			{ id: 'slider-intensity', key: 'intensity', range: [61, 100] }, 
-			{ id: 'slider-freq', key: 'frequency', range: [0, 40] },    
-			{ id: 'slider-speed', key: 'speed', range: [41, 60] }       
+			{ id: 'slider-intensity', key: 'intensity', range: [40, 70] }, 
+			{ id: 'slider-freq', key: 'frequency', range: [0, 19] },    
+			{ id: 'slider-speed', key: 'speed', range: [20, 40] }       
 		];
 
 		audioMappings = sliders.map(s => {
@@ -427,7 +427,7 @@
             for (let i = 0; i < particleCount; i++) {
                 const i3 = i * 3;
                 const freqVal = dataArray[i % freqLen] / 255.0;
-                const noise = Math.sin(initialPositions[i3] * params.frequency + time) * ((params.intensity + 0.2) * 5);
+                const noise = Math.sin(initialPositions[i3] * params.frequency + time) * params.intensity;
                 const scale = 1.0 + (freqVal * 3.0) + (boost * 1.0);
 
                 // 在 animate 迴圈內
