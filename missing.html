@@ -186,11 +186,13 @@
 		
 		// 1. 定義 2D 心形路徑（保持你原本的貝茲曲線）
 		const heartShape = new THREE.Shape();
-		heartShape.moveTo(0, 0); 
-		heartShape.bezierCurveTo(0.4, 0.2, 1.1, 0.5, 1.1, 1.1); 
-		heartShape.bezierCurveTo(1.1, 1.75, 0, 1.9, 0, 1.25); 
-		heartShape.bezierCurveTo(0, 1.9, -1.1, 1.75, -1.1, 1.1); 
-		heartShape.bezierCurveTo(-1.1, 0.5, -0.4, 0.2, 0, 0);
+		// 第一片：向左微傾
+		heartShape.moveTo(0, 0);
+		// 起點 (0, 0)
+		heartShape.bezierCurveTo(0.4, 0.22, 1.0, 0.55, 1.0, 1.21);   // 右上
+		heartShape.bezierCurveTo(1.0, 1.925, 0, 2.09, 0, 1.275);    // 右下
+		heartShape.bezierCurveTo(0, 2.09, -1.0, 1.925, -1.0, 1.21); // 左下
+		heartShape.bezierCurveTo(-1.0, 0.55, -0.4, 0.22, 0, 0);     // 左上
 
 		// 2. 將 Shape 轉為 Points (點陣) 或 Geometry
 		const points = heartShape.getPoints(50); // 50 為平滑度
@@ -208,13 +210,17 @@
 
 		// 建立第一片（向前傾斜）
 		const sideA = new THREE.LineLoop(geometry2D, lineMaterial);
-		sideA.rotation.y = Math.PI / 12; // 旋轉 30 度
+		sideA.rotation.y = 0; // 旋轉 30 度
 		cage.add(sideA);
 
 		// 建立第二片（向後傾斜）
 		const sideB = new THREE.LineLoop(geometry2D, lineMaterial);
 		sideB.rotation.y = -Math.PI / 12; // 反向旋轉 30 度
 		cage.add(sideB);
+		
+		const sideC = new THREE.LineLoop(geometry2D, lineMaterial);
+		sideB.rotation.y = Math.PI / 12; // 反向旋轉 30 度
+		cage.add(sideC);
 
 		scene.add(cage);
 		window.cage = cage;
@@ -233,16 +239,20 @@
 
 		// 建立第一片心形平面
 		const innerA = new THREE.Mesh(shapeGeo, innerMat);
-		innerA.rotation.y = Math.PI / 6;
+		innerA.rotation.y = 0;
 
 		// 建立第二片心形平面
 		const innerB = new THREE.Mesh(shapeGeo, innerMat);
-		innerB.rotation.y = -Math.PI / 6;
+		innerB.rotation.y = -Math.PI / 12;
+		// 建立第二片心形平面
+		const innerC = new THREE.Mesh(shapeGeo, innerMat);
+		innerC.rotation.y = -Math.PI / 12;
 
 		// 將它們加入場景
 		scene.add(innerA);
 		scene.add(innerB);
-		window.innerBoxes = [innerA, innerB];
+		scene.add(innerC);
+		window.innerBoxes = [innerA, innerB, innerC];
 		
 		cage.scale.set(1.2, 1.2, 1.2);
 		innerA.scale.set(1.2, 1.2, 1.2);
