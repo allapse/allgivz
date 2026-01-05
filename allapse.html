@@ -424,29 +424,40 @@
             const posAttribute = particleSystem.geometry.attributes.position;
             const freqLen = dataArray.length;
 
-            for (let i = 0; i < particleCount; i++) {
-                const i3 = i * 3;
-                const freqVal = dataArray[i % freqLen] / 255.0;
-                const noise = Math.sin(initialPositions[i3] * params.frequency + time) * params.intensity;
-                const scale = 1.0 + (freqVal * 3.0) + (boost * 1.0);
+            // 1. 在 animate 外部定義
+			let movingTime = 0; 
 
-                // 在 animate 迴圈內
-				let posX = initialPositions[i3] * scale + noise;
-				let posY = initialPositions[i3+1] * scale + noise;
-				let posZ = initialPositions[i3+2] * scale + noise;
+			// 2. 在 animate 內部更新
+			// 這裡用 params.speed 來決定每一幀時間流逝的快慢
+			movingTime += params.speed * 15; // 乘以 15 讓 0.002 這種數值更有感
 
-				// 代替原本的 if (distanceSquared > radisSquared)
-				// 讓粒子超過邊界後從另一頭出現，或者在邊界處產生「波紋」
+			for (let i = 0; i < particleCount; i++) {
+				const i3 = i * 3;
+				const freqVal = dataArray[i % freqLen] / 255.0;
+				
+				// --- 修正：分開計算三軸 noise，並使用 params.frequency ---
+				const f = params.frequency;
+				const noiseX = Math.sin(initialPositions[i3] * f + movingTime) * params.intensity;
+				const noiseY = Math.sin(initialPositions[i3+1] * f + movingTime + 1.2) * params.intensity;
+				const noiseZ = Math.sin(initialPositions[i3+2] * f + movingTime + 2.4) * params.intensity;
+
+				const scale = 1.0 + (freqVal * 3.0) + (boost * 1.0);
+
+				let posX = initialPositions[i3] * scale + noiseX;
+				let posY = initialPositions[i3+1] * scale + noiseY;
+				let posZ = initialPositions[i3+2] * scale + noiseZ;
+
+				// --- 修正：邊界限制邏輯 (修正 posY 賦值錯誤) ---
 				const limit = 2.0; 
-				if (Math.abs(posX) > limit) posX = Math.sign(posX) * limit - (posX - Math.sign(posX) * limit);
-				if (Math.abs(posY) > limit) posX = Math.sign(posY) * limit - (posY - Math.sign(posY) * limit);
-				if (Math.abs(posZ) > limit) posZ = Math.sign(posZ) * limit - (posZ - Math.sign(posZ) * limit);
+				if (Math.abs(posX) > limit) posX = Math.sign(posX) * limit * 2 - posX;
+				if (Math.abs(posY) > limit) posY = Math.sign(posY) * limit * 2 - posY; // 修正了！
+				if (Math.abs(posZ) > limit) posZ = Math.sign(posZ) * limit * 2 - posZ;
 
 				positionsArr[i3] = posX;
 				positionsArr[i3+1] = posY;
 				positionsArr[i3+2] = posZ;
-            }
-            posAttribute.needsUpdate = true;
+			}
+			posAttribute.needsUpdate = true;
 			
 			// 在 animate 粒子迴圈內
 			for (let i = 0; i < particleCount; i++) {
