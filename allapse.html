@@ -203,13 +203,13 @@
 		const lineMat = new THREE.LineBasicMaterial({ 
 			color: 0x000000, 
 			transparent: true, 
-			opacity: 0.75
+			opacity: 0.8
 		});
 		const meshMat = new THREE.MeshBasicMaterial({
 			color: 0x222222,
 			side: THREE.BackSide,
 			transparent: true,
-			opacity: 0.38
+			opacity: 0.4
 		});
 
 		// 建立 3D 矩陣排布
@@ -456,9 +456,12 @@
 
 				// 在 positionsArr 賦值時
 				// 讓 X, Y, Z 的結晶速度稍微錯開，產生一種扭曲著被吸進去的感覺
-				const timingX = Math.pow(crystalFactor, 1.2);
-				const timingY = Math.pow(crystalFactor, 1.5);
-				const timingZ = Math.pow(crystalFactor, 1.8);
+                // 關鍵：確保 crystalFactor 數值合法
+                const safeFactor = Math.max(0, Math.min(1, crystalFactor || 0));
+    
+				const timingX = Math.pow(safeFactor, 1.2);
+				const timingY = Math.pow(safeFactor, 1.5);
+				const timingZ = Math.pow(safeFactor, 1.8);
 
 				positionsArr[i3] = organicX * (1 - timingX) + gridX * timingX;
 				positionsArr[i3+1] = organicY * (1 - timingY) + gridY * timingY;
