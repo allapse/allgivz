@@ -371,6 +371,8 @@
 		gyroY = Math.max(Math.min((y - baseBeta) / 20, 1.5), -1.5);
 	}
 
+	let crystalFactor = 0;
+
     function animate() {
         requestAnimationFrame(animate);
         time += params.speed * 100;
@@ -424,29 +426,45 @@
             const posAttribute = particleSystem.geometry.attributes.position;
             const freqLen = dataArray.length;
 
-            for (let i = 0; i < particleCount; i++) {
-                const i3 = i * 3;
-                const freqVal = dataArray[i % freqLen] / 255.0;
-                const noise = Math.sin(initialPositions[i3] * params.frequency + time) * params.intensity;
-                const scale = 1.0 + (freqVal * 3.0) + (boost * 1.0);
+            const isClipping = dataArray.some(val => val >= 245);
+    
+			// --- B. 計算結晶係數 (讓切換更絲滑，不要瞬間跳變) ---
+			// 如果溢出，crystalFactor 趨向 1；否則趨向 0
+			crystalFactor += (isClipping ? 1.0 - crystalFactor : 0.0 - crystalFactor) * 0.15;
 
-                // 在 animate 迴圈內
-				let posX = initialPositions[i3] * scale + noise;
-				let posY = initialPositions[i3+1] * scale + noise;
-				let posZ = initialPositions[i3+2] * scale + noise;
+			// --- C. 粒子迴圈 ---
+			for (let i = 0; i < particleCount; i++) {
+				const i3 = i * 3;
+				
+				// [原本的發散/扭曲邏輯]
+				const f = params.frequency;
+				const noise = Math.sin(initialPositions[i3] * f + time) * params.intensity;
+				const scale = 1.0 + (dataArray[i % 128] / 255.0) * 3.0 + (boost * 1.5);
+				
+				const organicX = initialPositions[i3] * scale + noise;
+				const organicY = initialPositions[i3+1] * scale + noise;
+				const organicZ = initialPositions[i3+2] * scale + noise;
 
-				// 代替原本的 if (distanceSquared > radisSquared)
-				// 讓粒子超過邊界後從另一頭出現，或者在邊界處產生「波紋」
-				const limit = 2.0; 
-				if (Math.abs(posX) > limit) posX = Math.sign(posX) * limit - (posX - Math.sign(posX) * limit);
-				if (Math.abs(posY) > limit) posX = Math.sign(posY) * limit - (posY - Math.sign(posY) * limit);
-				if (Math.abs(posZ) > limit) posZ = Math.sign(posZ) * limit - (posZ - Math.sign(posZ) * limit);
+				// 替代方案：讓結晶維持螺旋但變得「極度規整」
+				const angle = Math.sqrt(i) * Math.PI * 2;
+				const radius = Math.sqrt(i) * 0.08;
+				const height = i * 0.008;
 
-				positionsArr[i3] = posX;
-				positionsArr[i3+1] = posY;
-				positionsArr[i3+2] = posZ;
-            }
-            posAttribute.needsUpdate = true;
+				const gridX = Math.cos(angle) * radius;
+				const gridY = Math.sin(angle) * radius;
+				const gridZ = height - (particleCount * 0.01) / 2; // 垂直拉伸成柱狀晶體
+
+				// 在 positionsArr 賦值時
+				// 讓 X, Y, Z 的結晶速度稍微錯開，產生一種扭曲著被吸進去的感覺
+				const timingX = Math.pow(crystalFactor, 1.2);
+				const timingY = Math.pow(crystalFactor, 1.5);
+				const timingZ = Math.pow(crystalFactor, 1.8);
+
+				positionsArr[i3] = organicX * (1 - timingX) + gridX * timingX;
+				positionsArr[i3+1] = organicY * (1 - timingY) + gridY * timingY;
+				positionsArr[i3+2] = organicZ * (1 - timingZ) + gridZ * timingZ;
+			}
+			posAttribute.needsUpdate = true;
 			
 			// 在 animate 粒子迴圈內
 			for (let i = 0; i < particleCount; i++) {
