@@ -192,7 +192,7 @@
 		
 		// 定義參數
 		const count = 5; // 每邊重複次數，總共會有 5^3 = 125 個
-		const spacing = 1; // 每個三角形之間的間距
+		const spacing = 0.7; // 每個三角形之間的間距
 		const instances = [];
 
 		const group = new THREE.Group();
@@ -201,15 +201,15 @@
 
 		// 材質保持你原本的質感
 		const lineMat = new THREE.LineBasicMaterial({ 
-			color: 0x000000, 
-			transparent: true, 
-			opacity: 0.8
+			color: 0x444444, 
+			//transparent: true, 
+			opacity: 1.0
 		});
 		const meshMat = new THREE.MeshBasicMaterial({
-			color: 0x222222,
-			side: THREE.BackSide,
-			transparent: true,
-			opacity: 0.4
+			color: 0x000000,
+			side: THREE.DoubleSide,
+			//transparent: true,
+			opacity: 0.9
 		});
 
 		// 建立 3D 矩陣排布
@@ -220,24 +220,23 @@
 					const line = new THREE.LineSegments(edgesGeo, lineMat.clone());
 					
                     // 在建立 3D 矩陣的迴圈內
-                    const isOuter = Math.abs(x) >= count-1 || Math.abs(y) >= count-1 || Math.abs(z) >= count-1;
+                    const isOuter = Math.abs(x) === count || Math.abs(y) === count || Math.abs(z) === count;
                     if (isOuter) {
-                        mesh.material.opacity = 0.7; // 最外層不透明
-                        mesh.material.color.set(0x000000); 
+						const xPos = x * spacing;
+						const yPos = y * spacing;
+						const zPos = z * spacing;
+						
+						mesh.position.set(xPos, yPos, zPos);
+						line.position.set(xPos, yPos, zPos);
+						
+						group.add(mesh);
+						group.add(line);
+						
+						// 存入陣列供 animate 存取
+						instances.push({ mesh, line, basePos: { x: xPos, y: yPos, z: zPos } });
                     } 
                     
-					const xPos = x * spacing;
-					const yPos = y * spacing;
-					const zPos = z * spacing;
 					
-					mesh.position.set(xPos, yPos, zPos);
-					line.position.set(xPos, yPos, zPos);
-					
-					group.add(mesh);
-					group.add(line);
-					
-					// 存入陣列供 animate 存取
-					instances.push({ mesh, line, basePos: { x: xPos, y: yPos, z: zPos } });
 				}
 			}
 		}
@@ -433,7 +432,7 @@
             const posAttribute = particleSystem.geometry.attributes.position;
             const freqLen = dataArray.length;
 
-            const isClipping = dataArray.some(val => val >= 222);
+            const isClipping = dataArray.some(val => val >= 150);
     
 			// --- B. 計算結晶係數 (讓切換更絲滑，不要瞬間跳變) ---
 			// 如果溢出，crystalFactor 趨向 1；否則趨向 0
@@ -454,12 +453,12 @@
 
 				// 替代方案：讓結晶維持螺旋但變得「極度規整」
 				const angle = Math.sqrt(i) * Math.PI * 2;
-				const radius = Math.sqrt(i) * 0.15;
-				const height = i * 0.12;
-
+				const radius = Math.sqrt(i) * 0.06;
+				const height = i * 0.0006;
+				
 				const gridX = Math.cos(angle) * radius;
 				const gridY = Math.sin(angle) * radius;
-				const gridZ = height - (particleCount * 0.01) / 2; // 垂直拉伸成柱狀晶體
+				const gridZ = height - (particleCount * 0.0001) / 2; // 垂直拉伸成柱狀晶體
 
 				// 在 positionsArr 賦值時
 				// 讓 X, Y, Z 的結晶速度稍微錯開，產生一種扭曲著被吸進去的感覺
