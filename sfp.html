@@ -95,6 +95,8 @@
 		let renderer, scene, camera, material;
 		let analyser, dataArray;
 		let orient = { x: 0.5, y: 0.5 };
+		let params = { intensity: 0.3, frequency: 2.0, speed: 0.002 };
+		let audioMappings = []; 
 
 		const _VS = `void main() { gl_Position = vec4(position, 1.0); }`;
 		const _FS = `
@@ -103,6 +105,9 @@
 			uniform float u_time;
 			uniform float u_volume;  // 麥克風：0.0 ~ 1.0
 			uniform vec2 u_orient;   // 陀螺儀：x, y 0.0 ~ 1.0
+			uniform float u_intensity;
+			uniform float u_complexity;
+			uniform float u_speed;
 
 			float noise(vec2 p) {
 				return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
@@ -115,9 +120,15 @@
 				float tx = (coords.x - 0.5) / f + 0.5;
 
 				float aa = 0.002 + depth * 0.003;
+				
+				// 用 u_complexity 影響雜訊的細膩度
+				float n = noise(coords * u_complexity + u_time * u_speed);
+				
+				// 用 u_intensity 增加邊緣的「光學畸變」
+				float rim = pow(d, 8.0 - u_intensity * 2.0);
 
-				// 1. 亮度受音量影響 (vol * 0.3)
-				float brightness = pow(1.0 - d, 0.1) + vol * 0.3;
+				// 1. 亮度受音量影響 (vol * 0.1)
+				float brightness = pow(1.0 - d, 0.1) + vol * 0.1 - u_intensity * 0.5;
 				float sideLight = (coords.y > 0.5) ? 1.0 : 0.92;
 				
 				vec3 col = vec3(0.2, 0.4, 0.6) * (0.5 / (d * 5.0 + 0.1));
@@ -236,6 +247,30 @@
 				}
 			}, { passive: true });
 		});
+		
+		function syncSliders() {
+			const sliders = [
+				{ id: 'slider-intensity', key: 'intensity', range: [61, 100] }, 
+				{ id: 'slider-freq', key: 'frequency', range: [0, 40] },    
+				{ id: 'slider-speed', key: 'speed', range: [41, 60] }       
+			];
+
+			audioMappings = sliders.map(s => {
+				const el = document.getElementById(s.id);
+				
+				// 監聽手動操作
+				el.addEventListener('mousedown', () => el.dataset.isDragging = "true");
+				el.addEventListener('touchstart', () => el.dataset.isDragging = "true");
+				window.addEventListener('mouseup', () => el.dataset.isDragging = "false");
+				window.addEventListener('touchend', () => el.dataset.isDragging = "false");
+
+				return { 
+					...s, 
+					el: el,
+					peak: 100 // 初始預期的最高強度，之後會自動調整
+				};
+			});
+		}
 
 		// 1. 初始化音訊與感測器 (由你的 UI 觸發)
 		async function initAudio() {
@@ -296,7 +331,11 @@
 					u_res: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
 					u_time: { value: 0.0 },
 					u_volume: { value: 0.0 },
-					u_orient: { value: new THREE.Vector2(0.5, 0.5) }
+					u_orient: { value: new THREE.Vector2(0.5, 0.5) },
+					// --- 加入 UI 參數 ---
+					u_intensity: { value: params.intensity },
+					u_complexity: { value: params.frequency },
+					u_speed: { value: params.speed }
 				},
 				vertexShader: _VS,
 				fragmentShader: _FS
@@ -305,6 +344,7 @@
 			const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
 			scene.add(mesh);
 
+			syncSliders();
 			animate();
 		}
 
