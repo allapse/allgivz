@@ -125,15 +125,16 @@
 				float n = noise(coords * u_complexity + u_time * u_speed);
 				
 				// 用 u_intensity 增加邊緣的「光學畸變」
-				float rim = pow(d, 8.0 - u_intensity * 2.0);
+				float rim = pow(d, 8.0 - u_intensity * 10.0);
 
 				// 1. 亮度受音量影響 (vol * 0.1)
-				float brightness = pow(1.0 - d, 0.1) + vol * 0.1 - u_intensity * 0.5;
+				//float brightness = pow(1.0 - d, 0.1) + vol * 0.1 - u_intensity * 0.5;
 				float sideLight = (coords.y > 0.5) ? 1.0 : 0.92;
 				
-				vec3 col = vec3(0.2, 0.4, 0.6) * (0.5 / (d * 5.0 + 0.1));
-				col *= brightness * sideLight;
-				col += vec3(0.8, 0.2, 0.5) * vol * 2.0; // 聲音大時轉向紫色發光
+				vec3 col = vec3(0.1, 0.11, 0.12) * (0.1 / (d * 2.0 + 0.1));
+				//vec3 col = vec3(0.95 - depth * 0.05) * brightness * sideLight;
+				//col *= brightness * sideLight;
+				col += vec3(0.12, 0.11, 0.1) * vol * 2.0; // 聲音大時轉向紫色發光
 				
 				// 聲音越大，磨砂噪點越強烈
 				col -= noise(coords + depth + u_time * 0.05) * (0.03 + vol * 0.1);
@@ -189,7 +190,7 @@
 					float nextD = (d - 0.03) / 0.92;
 					float nextY = (layerUV.y > 0.5) ? (nextD * 0.5 + 0.5) : (0.5 - nextD * 0.5);
 
-					float angle = 1.57 + sin(u_time * 0.2 + fi * 0.1) * 0.1;
+					float angle = 1.57 + sin(u_time * 0.2 + fi * u_intensity) * u_intensity;
 					float s = sin(angle); float c = cos(angle);
 					vec2 centered = vec2(nextX, nextY) - 0.5;
 					currentUV.x = (centered.x * c - centered.y * s) + 0.5;
@@ -204,7 +205,7 @@
 					float distToCenter = length(currentUV - 0.5);
 					// 深淵核心：受音量強烈驅動
 					float glow = exp(-distToCenter * (4.0 - u_volume * 2.0)); 
-					vec3 coreColor = vec3(0.3, 0.6, 1.0) * (u_volume * 5.0 + 0.5);
+					vec3 coreColor = vec3(0.12, 0.11, 0.1) * (u_volume * 2.0 + 0.1);
 					finalCol += coreColor * glow;
 				}
 
@@ -361,6 +362,45 @@
 				let sum = 0;
 				for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
 				material.uniforms.u_volume.value = sum / dataArray.length / 255.0;
+				
+				audioMappings.forEach(mapping => {
+					const el = mapping.el;
+					if (el.dataset.isDragging === "true") return;
+
+					// 1. 計算平均值
+					let sum = 0;
+					for (let i = mapping.range[0]; i <= mapping.range[1]; i++) {
+						sum += dataArray[i];
+					}
+					let currentAvg = sum / (mapping.range[1] - mapping.range[0] + 1);
+
+					// 2. 強化：扣除底噪門檻 (讓數值更有「空間」呼吸)
+					const noiseFloor = 30; 
+					currentAvg = Math.max(0, currentAvg - noiseFloor);
+
+					// 3. 強化：動態峰值 (快速上升，極慢下降)
+					if (currentAvg > mapping.peak) {
+						// 即使聲音變大，也不要立刻更新 peak，用一點緩衝
+						mapping.peak += (currentAvg - mapping.peak) * 0.2; 
+					} else {
+						mapping.peak *= 0.99999; // 維持在一個適中的下降速度
+					}
+
+					// 4. 【核心關鍵】：非線性縮放 (加上 Power 函數)
+					// 透過 Math.pow(ratio, 2)，小聲音會更小，大聲音才有爆發感
+					let ratio = currentAvg / (Math.max(mapping.peak, 50));
+					ratio = Math.pow(ratio, 1.5); // 數值越大，Slider 越難衝到頂 (1.5 ~ 2.0 效果最佳)
+
+					// 5. 映射與 Lerp
+					const min = parseFloat(el.min);
+					const max = parseFloat(el.max);
+					const targetVal = min + (max - min) * ratio;
+
+					// 降低靈敏度 (從 0.1 降到 0.05)，增加絲滑感
+					params[mapping.key] += (targetVal - params[mapping.key]) * 0.1;
+					
+					el.value = params[mapping.key];
+				});
 			}
 
 			// 更新陀螺儀
