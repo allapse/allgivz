@@ -142,24 +142,31 @@
 
 			void main() {
 				vec2 uv = gl_FragCoord.xy / u_res.xy;
+				
+				// 將陀螺儀數據轉換為 -1.0 到 1.0 的視角偏移
+				vec2 lookDir = (u_orient - 0.5) * 2.0; 
+
 				vec2 currentUV = uv;
 				vec3 finalCol = vec3(0.0);
 				float hitDeepest = 0.0;
-				
-				// 陀螺儀視差偏移 (Parallax)
-				vec2 drift = (u_orient - 0.5) * 0.15;
 
 				for (int i = 0; i < 20; i++) {
 					float fi = float(i);
-					
-					// 每一層根據深度疊加陀螺儀位移
-					vec2 layerUV = currentUV + drift * fi * 0.1;
-					
+
+					// --- 核心改動：模擬投影視角 ---
+					// 隨著深度 fi 增加，uv 座標被 lookDir 往相反方向推動
+					// 這裡 0.05 是透視強度，數值越大，轉頭感越強
+					vec2 perspectiveShift = lookDir * fi * 0.05;
+					vec2 layerUV = currentUV + perspectiveShift;
+
+					// 模擬視角傾斜導致的縮放不均勻 (Keystone Effect)
+					// 當你往右看 (lookDir.x > 0)，右側內容應該被「拉近」
+					layerUV = (layerUV - 0.5) * (1.0 + dot(layerUV - 0.5, lookDir) * 0.2) + 0.5;
+
 					vec4 layer = drawWall(layerUV, fi, u_volume);
-					
+
 					if (layer.a < 0.5) {
 						finalCol = layer.rgb;
-						hitDeepest = 0.0;
 						break;
 					}
 					
