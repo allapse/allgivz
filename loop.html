@@ -125,18 +125,20 @@
 				
 				// 用 u_complexity 影響雜訊的細膩度
 				float n = noise(coords * u_complexity + u_time * u_speed);
-				
-				// 用 u_intensity 增加邊緣的「光學畸變」
-				float rim = pow(d, 8.0 - u_intensity * 2.0);
-
-				// 1. 亮度受音量影響 (vol * 0.1)
 				float brightness = pow(1.0 - d, 0.1) + u_complexity * 0.1 - u_intensity * 0.3;
 				float sideLight = 0.3 - 0.04 * depth;
 				
-				vec3 col = vec3(0.2, 0.4, 0.6) * (0.5 / (d * 5.0 + 0.1));
-				//vec3 col = vec3(0.95 - depth * 0.05) * brightness * sideLight;
+				// 1. 基礎色調（深色）
+				vec3 col = vec3(0.1, 0.2, 0.3); 
+
+				// 2. 讓 rim (邊緣光) 成為主角
+				float rim = pow(d, 8.0 - u_intensity * 2.0); 
+				col += vec3(0.1, 0.2, 0.3) * rim * (1.0 + vol * 3.0); 
+
+				// 3. 亮度與側光 (sideLight) 疊加
+				vec3 col2 = vec3(0.1, 0.2, 0.3) * (0.5 / (d * 5.0 + 0.1));
+				col += col2;
 				col *= brightness * sideLight;
-				col += vec3(0.6, 0.2, 0.3) * vol; // 聲音大時轉向紫色發光
 				
 				// 聲音越大，磨砂噪點越強烈
 				col -= noise(coords + depth + u_time * 0.05) * (0.03 + vol * 0.1);
@@ -192,7 +194,8 @@
 					float nextD = (d - 0.03) / 0.92;
 					float nextY = (layerUV.y > 0.5) ? (nextD * 0.5 + 0.5) : (0.5 - nextD * 0.5);
 
-					float angle = 1.57 + sin(u_time * 0.2 + fi * 0.1) * 0.1 + u_speed;
+					float currentRotation = u_time * (0.2 + u_speed * 5.0);
+					float angle = 1.57 + sin(currentRotation + fi * 0.1) * 0.1;
 					float s = sin(angle); float c = cos(angle);
 					vec2 centered = vec2(nextX, nextY) - 0.5;
 					currentUV.x = (centered.x * c - centered.y * s) + 0.5;
@@ -333,8 +336,8 @@
 			orient.y = (deltaY + 45) / 90;
 
 			// 4. 加上邊界限制 (Clamp)，防止數值超過 0~1 範圍
-			orient.x = Math.max(0, Math.min(1, orient.x));
-			orient.y = Math.max(0, Math.min(1, orient.y));
+			orient.x = Math.max(-1, Math.min(1, orient.x));
+			orient.y = Math.max(-1, Math.min(1, orient.y));
 		}
 
 		// 2. 初始化 Three.js 環境
