@@ -33,5 +33,5 @@ body { margin: 0; overflow: hidden; background-color: #ffffff; font-family: 'Cou
 
 #link {
 	position: absolute; bottom: 20px; left: 20px; font-size: 9px; color: #999;
-	letter-spacing: 1px; pointer-events: auto; display: none; z-index: 101;
+	letter-spacing: 1px; pointer-events: auto; z-index: 101;
 }
