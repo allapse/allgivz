@@ -46,7 +46,7 @@
 	let visualBoost = 0;
 
 	const overlay = document.getElementById('overlay');
-    overlay.addEventListener('click', async () => await audioMap.initAudio('沒醉.mp3'));
+    overlay.addEventListener('click', async () => await audioMap.initAudio('./sober.mp3'));
 	const link = document.getElementById('link');
     link.addEventListener('click', function() {
 		window.location.assign("missing.html");
@@ -307,5 +307,6 @@
 </script>
 </body>
 </html>
+
 
 
