@@ -3,92 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M40 10 L95 75 L45 95 Z' fill='%23666'/><path d='M40 10 L5 65 L45 95 Z' fill='%23333'/><path d='M45 95 L5 65 L95 75 Z' fill='%23000' fill-opacity='0.7'/></svg>">
     <title>SOBER</title>
-    <style>
-        body { margin: 0; overflow: hidden; background-color: #ffffff; font-family: 'Courier New', Courier, monospace; cursor: crosshair; }
-        #canvas-container { position: fixed; /* 改用 fixed 確保不會隨網頁滾動 */
-			top: 0;
-			left: 0;
-			width: 100vw;
-			height: 100vh;
-			display: block; 
-		}
-        
-        /* 極簡 Slider 樣式 */
-        #ui-layer {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            z-index: 20; color: #999; display: none;
-        }
-        .control-group { margin-bottom: 20px; }
-        label { font-size: 9px; display: block; margin-bottom: 8px; text-transform: uppercase;}
-        
-        input[type=range] {
-            -webkit-appearance: none; width: 180px; background: transparent;
-        }
-        input[type=range]:focus { outline: none; }
-        /* 軌道 */
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%; height: 1px; background: #999; border: none;
-        }
-        /* 拉桿 */
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none; height: 12px; width: 12px; 
-            background: #999; cursor: pointer; margin-top: -5.5px;
-            border-radius: 0; border: 1px solid #fff;
-        }
-
-        #overlay {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            text-align: center; color: #999; cursor: pointer; z-index: 100;
-            padding: 30px; border: 0px solid #000; transition: 0.4s; letter-spacing: 4px; font-size: 12px;
-			background: rgba(0, 0, 0, 0.6);
-        }
-        #overlay:hover { background: rgba(0, 0, 0, 0.7); color: #fff; }
-
-        #mode-hint {
-            position: absolute; bottom: 20px; right: 20px; font-size: 9px; color: #999;
-            letter-spacing: 1px; pointer-events: none; display: none; z-index: 100;
-        }
-		
-		#link {
-            position: absolute; bottom: 20px; left: 20px; font-size: 9px; color: #999;
-            letter-spacing: 1px; pointer-events: auto; z-index: 101;
-        }
-		
-		#canvas-container { 
-			width: 100vw; 
-			height: 100vh; 
-			touch-action: none; /* 重要：防止瀏覽器攔截觸控事件 */
-		}
-    </style>
+    <link rel="stylesheet" href="css/ui.css">
 </head>
 <body>
 
-<div id="overlay" style="white-space: pre;">   S O B E R   </div>
+<div id="overlay" style="white-space: pre;">  S O B E R  </div>
 <div id="mode-hint">TAP TO GLOW</div>
 <div id="link">MISSING</div>
 
-<div id="ui-layer">
-    <div class="control-group">
-        <label>Distortion</label>
-        <input type="range" id="slider-intensity" min="0" max="2" step="0.02">
-    </div>
-    <div class="control-group">
-        <label>Complexity</label>
-        <input type="range" id="slider-freq" min="0.1" max="10" step="0.1">
-    </div>
-    <div class="control-group">
-        <label>Evolution</label>
-        <input type="range" id="slider-speed" min="0" max="0.0025" step="0.0001">
-    </div>
-</div>
+<div id="ui-layer" style="display: none;"></div>
+<script src="js/util.js"></script>
+<script>
+	// 1. 參數定義
+	const params = { intensity: 0.3, frequency: 2.0, speed: 0.002 };
 
-<div id="canvas-container"></div>
+	// 2. 初始化中樞
+	const audioMap = new AudioMap(params);
+
+	// 3. 生成 UI (此時 ID 自動與 config 掛鉤)
+	audioMap.buildUI('ui-layer', [
+		{ id: 'ui-intensity', key: 'intensity', label: 'Distortion', min: 0, max: 2, step: 0.02, range: [61, 100] },
+		{ id: 'ui-freq', key: 'frequency', label: 'Complexity', min: 0.1, max: 10, step: 0.1, range: [0, 40] },
+		{ id: 'ui-speed', key: 'speed', label: 'Evolution', min: 0, max: 0.0025, step: 0.0001, range: [41, 60] }
+	]);
+</script>
+
+<div id="container"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <script>
-    let scene, camera, renderer, particleSystem, analyser, dataArray;
+    let scene, camera, renderer, particleSystem;
     let particleCount = 15000;
     let initialPositions, positionsArr;
     let time = 0;
@@ -96,19 +43,14 @@
 	let gyroX = 0, gyroY = 0; // 儲存陀螺儀數值
 	let baseBeta = null, baseGamma = null; // 用來紀錄啟動時的手機姿勢
 
-    let params = { intensity: 0.3, frequency: 2.0, speed: 0.002 };
 	let visualBoost = 0;
 
-    // Slider 監聽
 	const overlay = document.getElementById('overlay');
-    overlay.addEventListener('click', initAudio);
+    overlay.addEventListener('click', () => audioMap.initAudio('assets/audio/沒醉.mp3'));
 	const link = document.getElementById('link');
     link.addEventListener('click', function() {
 		window.location.assign("missing.html");
 	});
-    document.getElementById('slider-intensity').oninput = (e) => params.intensity = parseFloat(e.target.value);
-    document.getElementById('slider-freq').oninput = (e) => params.frequency = parseFloat(e.target.value);
-    document.getElementById('slider-speed').oninput = (e) => params.speed = parseFloat(e.target.value);
 
     // 1. 同時監聽 click 和 touchend
 	['click', 'touchend'].forEach(eventType => {
@@ -152,32 +94,19 @@
 		particleSystem.material.needsUpdate = true;
     }
 	
-	// 儲存前一幀的平均頻率
-	let audioMappings = []; 
-	let prevAverages = {};
+	// 處理陀螺儀數據
+	function handleOrientation(event) {
+		let x = event.gamma || 0; // 左右 (-90 到 90)
+		let y = event.beta || 0;  // 前後 (-180 到 180)
 
-	function syncSliders() {
-		const sliders = [
-			{ id: 'slider-intensity', key: 'intensity', range: [61, 100] }, 
-			{ id: 'slider-freq', key: 'frequency', range: [0, 40] },    
-			{ id: 'slider-speed', key: 'speed', range: [41, 60] }       
-		];
+		// 第一筆數據進來時，紀錄為基準點
+		if (baseGamma === null) baseGamma = x;
+		if (baseBeta === null) baseBeta = y;
 
-		audioMappings = sliders.map(s => {
-			const el = document.getElementById(s.id);
-			
-			// 監聽手動操作
-			el.addEventListener('mousedown', () => el.dataset.isDragging = "true");
-			el.addEventListener('touchstart', () => el.dataset.isDragging = "true");
-			window.addEventListener('mouseup', () => el.dataset.isDragging = "false");
-			window.addEventListener('touchend', () => el.dataset.isDragging = "false");
-
-			return { 
-				...s, 
-				el: el,
-				peak: 100 // 初始預期的最高強度，之後會自動調整
-			};
-		});
+		// 計算偏移量 (當前角度 - 基準角度)
+		// 我們限制偏移量在一個合理範圍內
+		gyroX = Math.max(Math.min((x - baseGamma) / 20, 1.5), -1.5);
+		gyroY = Math.max(Math.min((y - baseBeta) / 20, 1.5), -1.5);
 	}
 
     function init() {
@@ -222,7 +151,7 @@
         renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        document.getElementById('canvas-container').appendChild(renderer.domElement);
+        document.getElementById('container').appendChild(renderer.domElement);
 
         const geometry = new THREE.BufferGeometry();
         const positions = new Float32Array(particleCount * 3);
@@ -259,119 +188,28 @@
         scene.add(particleSystem);
 
         window.addEventListener('resize', onWindowResize, false);
-		syncSliders();
         animate();
     }
-
-    async function initAudio() {
-        document.getElementById('overlay').style.display = 'none';
-        document.getElementById('ui-layer').style.display = 'block';
-		document.getElementById('mode-hint').style.display = 'block';
-		document.getElementById('link').style.display = 'block';
-		
-		// --- 陀螺儀授權請求 (iOS 專用) ---
-		if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-			try {
-				const permission = await DeviceOrientationEvent.requestPermission();
-				if (permission === 'granted') {
-					window.addEventListener('deviceorientation', handleOrientation);
-				}
-			} catch (error) {
-				console.error("陀螺儀授權失敗:", error);
-			}
-		} else {
-			// 非 iOS 裝置（如 Android）通常不需要手動授權
-			window.addEventListener('deviceorientation', handleOrientation);
-		}
-
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const audio = new Audio();
-        audio.src = '沒醉.mp3'; 
-        audio.crossOrigin = "anonymous";
-        audio.loop = true;
-        
-        const source = audioContext.createMediaElementSource(audio);
-        analyser = audioContext.createAnalyser();
-        analyser.fftSize = 256;
-        source.connect(analyser);
-        analyser.connect(audioContext.destination);
-
-        dataArray = new Uint8Array(analyser.frequencyBinCount);
-        if (audioContext.state === 'suspended') await audioContext.resume();
-        audio.play();
-    }
-	
-	// 處理陀螺儀數據
-	function handleOrientation(event) {
-		let x = event.gamma || 0; // 左右 (-90 到 90)
-		let y = event.beta || 0;  // 前後 (-180 到 180)
-
-		// 第一筆數據進來時，紀錄為基準點
-		if (baseGamma === null) baseGamma = x;
-		if (baseBeta === null) baseBeta = y;
-
-		// 計算偏移量 (當前角度 - 基準角度)
-		// 我們限制偏移量在一個合理範圍內
-		gyroX = Math.max(Math.min((x - baseGamma) / 20, 1.5), -1.5);
-		gyroY = Math.max(Math.min((y - baseBeta) / 20, 1.5), -1.5);
-	}
 
     function animate() {
         requestAnimationFrame(animate);
         time += params.speed * 100;
 
-        if (analyser) {
-            analyser.getByteFrequencyData(dataArray);
+        if (audioMap && audioMap.analyser && audioMap.dataArray) {
+            audioMap.analyser.getByteFrequencyData(audioMap.dataArray);
 			
-			audioMappings.forEach(mapping => {
-				const el = mapping.el;
-				if (el.dataset.isDragging === "true") return;
-
-				// 1. 計算平均值
-				let sum = 0;
-				for (let i = mapping.range[0]; i <= mapping.range[1]; i++) {
-					sum += dataArray[i];
-				}
-				let currentAvg = sum / (mapping.range[1] - mapping.range[0] + 1);
-
-				// 2. 強化：扣除底噪門檻 (讓數值更有「空間」呼吸)
-				const noiseFloor = 30; 
-				currentAvg = Math.max(0, currentAvg - noiseFloor);
-
-				// 3. 強化：動態峰值 (快速上升，極慢下降)
-				if (currentAvg > mapping.peak) {
-					// 即使聲音變大，也不要立刻更新 peak，用一點緩衝
-					mapping.peak += (currentAvg - mapping.peak) * 0.2; 
-				} else {
-					mapping.peak *= 0.99999; // 維持在一個適中的下降速度
-				}
-
-				// 4. 【核心關鍵】：非線性縮放 (加上 Power 函數)
-				// 透過 Math.pow(ratio, 2)，小聲音會更小，大聲音才有爆發感
-				let ratio = currentAvg / (Math.max(mapping.peak, 50));
-				ratio = Math.pow(ratio, 1.5); // 數值越大，Slider 越難衝到頂 (1.5 ~ 2.0 效果最佳)
-
-				// 5. 映射與 Lerp
-				const min = parseFloat(el.min);
-				const max = parseFloat(el.max);
-				const targetVal = min + (max - min) * ratio;
-
-				// 降低靈敏度 (從 0.1 降到 0.05)，增加絲滑感
-				params[mapping.key] += (targetVal - params[mapping.key]) * 0.1;
-				
-				el.value = params[mapping.key];
-			});
+			audioMap.updateAudioReaction(audioMap.dataArray, null);
 			
             let sum = 0;
-            for (let j = 0; j < dataArray.length; j++) sum += dataArray[j];
-            const boost = (sum / dataArray.length) / 255;
+            for (let j = 0; j < audioMap.dataArray.length; j++) sum += audioMap.dataArray[j];
+            const boost = (sum / audioMap.dataArray.length) / 255;
 
             const posAttribute = particleSystem.geometry.attributes.position;
-            const freqLen = dataArray.length;
+            const freqLen = audioMap.dataArray.length;
 
             for (let i = 0; i < particleCount; i++) {
                 const i3 = i * 3;
-                const freqVal = dataArray[i % freqLen] / 255.0;
+                const freqVal = audioMap.dataArray[i % freqLen] / 255.0;
                 const noise = Math.sin(initialPositions[i3] * params.frequency + time) * params.intensity;
                 const scale = 1.0 + (freqVal * 3.0) + (boost * 1.0);
 
@@ -469,4 +307,3 @@
 </script>
 </body>
 </html>
-
