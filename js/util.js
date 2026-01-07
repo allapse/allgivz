@@ -159,6 +159,7 @@ class AudioMap {
     }
 	
 	async initAudio(audioPath = null) {
+        this.isReady = false;
 		// 1. UI 顯示切換
 		document.getElementById('overlay').style.display = 'none';
 		const uiElements = ['ui-layer', 'mode-hint', 'link'];
@@ -216,5 +217,7 @@ class AudioMap {
 		if (audioContext.state === 'suspended') {
 			await audioContext.resume();
 		}
+        
+        this.isReady = true;
 	}
 }
