@@ -211,8 +211,15 @@ class AudioMap {
 			console.log("Mode: MP3 File - " + audioPath);
 		}
 
-		// 5. 準備數據陣列
-		this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+		try{
+			// 5. 準備數據陣列
+			this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+		}
+		catch{
+			console.log("this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);");
+		}
+
+		
 		
 		if (audioContext.state === 'suspended') {
 			await audioContext.resume();
