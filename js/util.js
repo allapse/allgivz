@@ -158,15 +158,14 @@ class AudioMap {
 		});
     }
 	
-	async initAudio(audioElement = null) {
-		if (this.isReady) return;
-
-	    // 1. UI 顯示切換
-	    document.getElementById('overlay').style.display = 'none';
-	    ['ui-layer', 'mode-hint', 'link'].forEach(id => {
-	        const el = document.getElementById(id);
-	        if (el) el.style.display = 'block';
-	    });
+	async initAudio(audioPath = null) {
+		// 1. UI 顯示切換
+		document.getElementById('overlay').style.display = 'none';
+		const uiElements = ['ui-layer', 'mode-hint', 'link'];
+		uiElements.forEach(id => {
+			const el = document.getElementById(id);
+			if (el) el.style.display = 'block';
+		});
 
 		// 2. 陀螺儀授權 (針對 iOS 13+)
 		if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
@@ -180,41 +179,42 @@ class AudioMap {
 			window.addEventListener('deviceorientation', handleOrientation);
 		}
 
-		// 3. 啟動 Context
-	    if (this.audioContext.state === 'suspended') {
-	        await this.audioContext.resume();
-	    }
-	
-	    // 4. 根據來源對接
-	    if (!audioElement) {
-	        // --- 麥克風模式 ---
-	        try {
-	            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-	            this.source = this.audioContext.createMediaStreamSource(stream);
-	            this.source.connect(this.analyser);
-	        } catch (err) {
-	            console.error("Mic access failed", err);
-	            return;
-	        }
-	    } else {
-	        // --- MP3 模式 ---
-	        this.audio = audioElement;
-	        
-	        try {
-	            // 只有在還沒建立 source 的時候才建立
-	            if (!this.source) {
-	                this.source = this.audioContext.createMediaElementSource(this.audio);
-	                this.source.connect(this.analyser);
-	                this.analyser.connect(this.audioContext.destination);
-	            }
-	            console.log("Mode: MP3 File Connected");
-	        } catch (e) {
-	            console.error("Web Audio Connection Error:", e);
-	        }
-	    }
-	
-	    // 5. 確保數據空間
-	    this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
-	    this.isReady = true;
+		// 3. 初始化 AudioContext
+		const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+		this.analyser = audioContext.createAnalyser();
+		this.analyser.fftSize = 256;
+
+		// 4. 根據參數決定來源 (路徑為空則吃 Mic)
+		if (!audioPath) {
+			// --- 麥克風模式 ---
+			try {
+				const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+				const source = audioContext.createMediaStreamSource(stream);
+				this.analyser.smoothingTimeConstant = 0.8; // 麥克風建議滑順一點
+				source.connect(this.analyser);
+				console.log("Mode: Microphone Input");
+			} catch (err) {
+				console.error("Mic access failed", err);
+				alert("無法存取麥克風，請檢查權限設定。");
+				return;
+			}
+		} else {
+			// --- MP3 模式 ---
+			const audio = new Audio(audioPath);
+			audio.crossOrigin = "anonymous";
+			audio.loop = true;
+			const source = audioContext.createMediaElementSource(audio);
+			source.connect(this.analyser);
+			this.analyser.connect(audioContext.destination);
+			audio.play();
+			console.log("Mode: MP3 File - " + audioPath);
+		}
+
+		// 5. 準備數據陣列
+		this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+		
+		if (audioContext.state === 'suspended') {
+			await audioContext.resume();
+		}
 	}
 }
