@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="css/ui.css">
 </head>
 <body>
-	<div id="overlay" style="white-space: pre;">    L O O P    </div>
+	<div id="overlay" style="white-space: pre;">    L  O  O  P    </div>
 	<div id="mode-hint" display="none">TAP TO GLOW</div>
 	<div id="link">SOBER</div>
 
@@ -203,7 +203,7 @@
 		
 		// Slider 監聽
 		const overlay = document.getElementById('overlay');
-		overlay.addEventListener('click', async () => await audioMap.initAudio('./輪迴(找到我)(v5).mp3'+"?v=" + Date.now()));
+		overlay.addEventListener('click', () => audioMap.initAudio('assets/audio/輪迴(找到我)(v5).mp3'));
 		const link = document.getElementById('link');
 		link.addEventListener('click', function() {
 			window.location.assign("index.html");
@@ -278,23 +278,16 @@
 
 			// 更新時間
 			material.uniforms.u_time.value = time * 0.001;
-			try{
-				// 更新音量
-				if (audioMap && audioMap.isReady && audioMap.analyser && audioMap.dataArray) {
-					console.log("1");
-					audioMap.analyser.getByteFrequencyData(audioMap.dataArray);
-					console.log("2");
-					let sum = 0;
-					for (let i = 0; i < audioMap.dataArray.length; i++) sum += audioMap.dataArray[i];
-					material.uniforms.u_volume.value = sum / audioMap.dataArray.length / 255.0;
-					
-					audioMap.updateAudioReaction(audioMap.dataArray, null);
-				}
+
+			// 更新音量
+			if (audioMap && audioMap.analyser && audioMap.dataArray) {
+				audioMap.analyser.getByteFrequencyData(audioMap.dataArray);
+				let sum = 0;
+				for (let i = 0; i < audioMap.dataArray.length; i++) sum += audioMap.dataArray[i];
+				material.uniforms.u_volume.value = sum / audioMap.dataArray.length / 255.0;
+				
+				audioMap.updateAudioReaction(audioMap.dataArray, null);
 			}
-			catch{
-				console.log("3");
-			}
-			
 
 			// 更新陀螺儀
 			material.uniforms.u_orient.value.set(orient.x, orient.y);
@@ -315,11 +308,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
