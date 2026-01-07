@@ -205,13 +205,14 @@
 		const lineMaterial = new THREE.LineBasicMaterial({ 
 			color: 0x000000, 
 			transparent: true, 
-			opacity: 0.3 
+			opacity: 0.2 ,
+			depthWrite: false  // 關鍵：關閉深度寫入，這樣就不會遮擋內部的粒子
 		});
 
 		// 建立第一片（向前傾斜）
 		const today = new Date();
 		const date = today.getDate();
-		const n = date; // 你想畫幾片就改這個數字
+		const n = 31 + 1; // 你想畫幾片就改這個數字
 		const totalAngle = Math.PI; // 總展開角度 (Math.PI 是 180度，如果要一整圈就用 Math.PI * 2)
 
 		const innerBoxes = [];
@@ -232,19 +233,22 @@
 		for (let i = 0; i < n; i++) {
 			// 計算每一片的旋轉角度
 			// 讓它們對稱展開：第一片和最後一片會分佈在 totalAngle 的兩端
-			const angle = (i / (n - 1) - 0.5) * totalAngle;
+			const centerOffset = Math.PI * 0.25;
+			const angle = (i / (n - 1) - 0.5) * totalAngle + 0;
+			const scaleSize = 1.0 + i * 0.99;
 
 			// 1. 建立線框 (LineLoop)
 			const lineLoop = new THREE.LineLoop(geometry2D, lineMaterial);
 			lineLoop.rotation.y = angle;
-			lineLoop.rotation.y = angle;
+			
+			//lineLoop.scale.set(scaleSize, scaleSize, scaleSize);
 			lineLoop.renderOrder = 10; // 優先級高
 			cage.add(lineLoop);
 
 			// 2. 建立填充面 (Mesh)
 			const mesh = new THREE.Mesh(shapeGeo, innerMat);
 			mesh.rotation.y = angle;
-			mesh.scale.set(1.2, 1.2, 1.2);
+			mesh.scale.set(scaleSize, scaleSize, scaleSize);
 			mesh.renderOrder = 1; // 優先級低
 			cage.add(mesh);
 
