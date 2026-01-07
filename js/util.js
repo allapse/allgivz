@@ -233,3 +233,6 @@ class AudioMap {
         this.isReady = true;
 	}
 }
+
+const audioMap = new AudioMap();
+window.audioMap = audioMap;
