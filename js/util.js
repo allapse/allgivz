@@ -202,7 +202,7 @@ class AudioMap {
 		} else {
 			// --- MP3 模式 ---
 			const audio = new Audio(audioPath);
-			audio.crossOrigin = "anonymous";
+			//audio.crossOrigin = "anonymous";
 			audio.loop = true;
 			const source = audioContext.createMediaElementSource(audio);
 			source.connect(this.analyser);
