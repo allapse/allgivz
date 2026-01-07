@@ -160,6 +160,7 @@ class AudioMap {
 	
 	async initAudio(audioPath = null) {
 		fetch(audioPath).then(r => console.log("檔案是否存在:", r.status));
+		if (this.isReady) return;
         this.isReady = false;
 		// 1. UI 顯示切換
 		document.getElementById('overlay').style.display = 'none';
