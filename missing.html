@@ -177,7 +177,7 @@
 			// 2. 建立填充面 (Mesh)
 			const mesh = new THREE.Mesh(shapeGeo, innerMat);
 			mesh.rotation.y = angle;
-			mesh.scale.set(scaleSize, scaleSize, scaleSize);
+			//mesh.scale.set(scaleSize, scaleSize, scaleSize);
 			mesh.renderOrder = 1; // 優先級低
 			cage.add(mesh);
 
@@ -389,5 +389,6 @@
 </script>
 </body>
 </html>
+
 
 
