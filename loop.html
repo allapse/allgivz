@@ -281,7 +281,9 @@
 			try{
 				// 更新音量
 				if (audioMap && audioMap.isReady && audioMap.analyser && audioMap.dataArray) {
+					console.log("1");
 					audioMap.analyser.getByteFrequencyData(audioMap.dataArray);
+					console.log("2");
 					let sum = 0;
 					for (let i = 0; i < audioMap.dataArray.length; i++) sum += audioMap.dataArray[i];
 					material.uniforms.u_volume.value = sum / audioMap.dataArray.length / 255.0;
@@ -290,7 +292,7 @@
 				}
 			}
 			catch{
-				console.log("1");
+				console.log("3");
 			}
 			
 
@@ -313,6 +315,7 @@
     </script>
 </body>
 </html>
+
 
 
 
