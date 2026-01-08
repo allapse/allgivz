@@ -152,7 +152,7 @@ class AudioMap {
 			if (bassAvg > 200 && (now - this.lastFlashTime) > 300) {
 				if (this.lastFlashTime !== 0) {
 					const interval = now - this.lastFlashTime;
-					const roundedBPM = Math.round((60000 / interval) / 5) * 2;
+					const roundedBPM = Math.round((60000 / interval) / 5) * 3;
 					this.lockedInterval = 60000 / roundedBPM;
 					this.isBPMLocked = true;
 				}
@@ -168,7 +168,7 @@ class AudioMap {
 		}
 
 		// 每一幀都讓能量衰減 (0.9 代表較長的餘暉，0.8 代表短促的閃爍)
-		this.beatValue *= 0.88; 
+		this.beatValue *= 0.92; 
 		if (this.beatValue < 0.01) this.beatValue = 0;
 
 		this.audioMappings.forEach(mapping => {
