@@ -149,10 +149,10 @@ class AudioMap {
 		// --- A. 節拍邏輯 (固定節奏) ---
 		if (!this.isBPMLocked) {
 			let bassAvg = (dataArray[0] + dataArray[1] + dataArray[2]) / 3;
-			if (bassAvg > 210 && (now - this.lastFlashTime) > 300) {
+			if (bassAvg > 200 && (now - this.lastFlashTime) > 300) {
 				if (this.lastFlashTime !== 0) {
 					const interval = now - this.lastFlashTime;
-					const roundedBPM = Math.round((60000 / interval) / 5) * 10;
+					const roundedBPM = Math.round((60000 / interval) / 5) * 2;
 					this.lockedInterval = 60000 / roundedBPM;
 					this.isBPMLocked = true;
 				}
