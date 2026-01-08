@@ -189,6 +189,16 @@
 				// 加上雜訊
 				col += (noise(coords * 50.0 + bouncyTime) - 0.5) * 0.05 * vol;
 				
+				// 簡易法線計算：看看周圍的 SDF 數值
+				float d = digitalSDF;
+				float nx = sdPhone(sdfP + vec2(0.01, 0.0)) - d;
+				float ny = sdPhone(sdfP + vec2(0.0, 0.01)) - d;
+				vec2 normal = normalize(vec2(nx, ny));
+
+				// 利用 lookDir（你的視角）與法線做點積，算出「側光」
+				float lighting = max(0.0, dot(normal, normalize(lookDir + 0.5)));
+				col += lighting * vec3(1.0) * 0.5 * snap; // 重拍時，零件的受光面會瞬間亮起
+				
 				return vec4(col, inHole);
 			}
 
