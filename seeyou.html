@@ -110,8 +110,8 @@
 				float bouncyTime = mix(u_time, u_time, 0.6);
 				
 				// 聲波扭曲
-				float wave = sin(p.x * 20.0 + bouncyTime * 2.0) * snap * 2.0;
-				//float wave = sin(p.x * 20.0 + u_time * 10.0)* vol *0.05;
+				//float wave = sin(p.x * 20.0 + bouncyTime * 2.0) * snap * 2.0;
+				float wave = sin(p.x * 20.0 + u_time * 10.0)* vol *0.1;
 				vec2 distortedP = p + vec2(0.0, wave);
 				
 				// SDF 數位流體
