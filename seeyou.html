@@ -101,27 +101,17 @@
 			}
 
 			// 核心繪製：牆面與幾何體
-			vec4 drawWall(vec2 coords, float depth, float vol, vec2 lookDir) {
-				float snap = pow(vol, 2.0);
-				vec2 p = (coords - 0.5) * (1.0 - snap * 0.0);
+			vec4 drawWall(vec2 coords, float depth, float vol, vec2 lookDir, float subTime) {
+				float snap = pow(vol, 3.0);
+				vec2 p = (coords - 0.5) * (1.0 - snap * 0.3);
 				p = abs(p);
-				float beatTime = (u_time * 6.0 + floor(u_time * 2.0) + pow(fract(u_time * 2.0), 4.0)) / 10.0;
-				float bouncyTime = mix(u_time, beatTime, 0.6);
+				// 16.0 太碎，8.0 剛剛好，配上 4.0 的次方強化「黏滯感」
+				float beatTime = (subTime * 6.0 + floor(subTime * 2.0) + pow(fract(subTime * 2.0), 4.0)) / 10.0;
+				float bouncyTime = mix(subTime, subTime, 0.6);
 				
 				// 聲波扭曲
-				// 1. 使用簡單的居中坐標與基本的振幅控制
-				vec2 uv = coords - 0.5;
-				
-				// 2. 建立多層次的平滑波浪 (替代原本的 wave 邏輯)
-				// 使用不同頻率的 sin 疊加，可以產生更自然、不抖動的流動感
-				float depthFactor = 1.0 / (depth + 1.0); 
-				float wave1 = sin(uv.x * 12.0 + u_time * 3.0) * 0.1 * depthFactor * u_intensity;
-				float wave2 = cos(uv.x * 25.0 - u_time * 5.0) * 0.6 * depthFactor * u_intensity;
-				float combinedWave = (wave1 + wave2) * vol; // 直接受音量影響，不再使用 snap
-				
-				// 3. 扭曲坐標
-				// 這裡我們直接對 uv.y 進行偏移，並保持 uv.x 的穩定性
-				vec2 distortedP = vec2(uv.x, uv.y + combinedWave);
+				float wave = sin(p.x * 20.0 + bouncyTime * 2.0) * snap * 2.0;
+				vec2 distortedP = p + vec2(0.0, wave);
 				
 				// SDF 數位流體
 				vec2 sdfP = p * 2.0 + lookDir * 0.5;
@@ -154,6 +144,7 @@
 
 			// 渲染整個隧道 (封裝原本 main 裡的循環)
 			vec3 renderScene(vec2 uv, vec2 lookDir) {
+				float rotationT = floor(u_time * 120.0) / 120.0;
 				vec3 finalCol = vec3(0.0);
 				vec2 currentUV = uv;
 				float hitDeepest = 0.0;
@@ -163,7 +154,7 @@
 					vec2 layerUV = currentUV + lookDir * fi * 0.04;
 					layerUV = (layerUV - 0.5) * (1.0 + dot(layerUV - 0.5, lookDir) * 0.3) + 0.5;
 
-					vec4 layer = drawWall(layerUV, fi, u_volume, lookDir);
+					vec4 layer = drawWall(layerUV, fi, u_volume, lookDir, rotationT);
 					
 					// 丁達爾光柱 (層級投影)
 					float lightShaft = smoothstep(0.3, 0.0, layer.a); 
@@ -194,20 +185,24 @@
 				vec2 rayDir = (uv - 0.5) * 0.15;
 				float snap = pow(u_volume, 3.0);
 
+				float fps = 120.0;
+				float stableT = floor(u_time * fps) / fps;
+
 				for (float i = 0.0; i < 1.0; i += 0.125) { // 8 次採樣，兼顧效能與品質
+					float subTime = stableT - (i * 0.01);
 					vec2 sampleUV = uv - rayDir * i;
 					// 這裡改為調用渲染後的場景，但為避免死循環，我們只對單層採樣
-					vec4 sampleCol = drawWall(sampleUV, 7.0, u_volume, lookDir);
+					vec4 sampleCol = drawWall(sampleUV, 7.0, u_volume, lookDir, subTime);
 					
 					// 色散效果
-					float r = drawWall(sampleUV - rayDir * 0.02, 7.0, u_volume, lookDir).r;
-					float b = drawWall(sampleUV + rayDir * 0.02, 7.0, u_volume, lookDir).b;
+					float r = drawWall(sampleUV - rayDir * 0.02, 7.0, u_volume, lookDir, subTime).r;
+					float b = drawWall(sampleUV + rayDir * 0.02, 7.0, u_volume, lookDir, subTime).b;
 					
 					vec3 brightPart = vec3(r, sampleCol.g, b);
 					tyndallEffect += brightPart * smoothstep(0.4, 1.2, length(brightPart)) * (1.0 - i);
 				}
 				finalCol += (tyndallEffect * 0.125) * (snap * 4.0);
-				
+
 				// 3. DarkGlow 模式
 				if (u_darkGlow < 0.5) {
 					float luminance = dot(finalCol, vec3(0.2126, 0.7152, 0.0722));
@@ -289,20 +284,12 @@
 			animate();
 		}
 		
-		// 在 animate 函數外面定義起點
-		const startTime = performance.now();
-		
 		// 3. Three.js 的渲染循環 (取代你原本手寫的 render)
 		function animate(time) {
 			requestAnimationFrame(animate);
 
-			// 計算從開始到現在經過的秒數 (絕對時間)
-			// performance.now() 提供微秒級精度，且不會受幀率波動影響
-			const currentTime = performance.now();
-			const elapsedSeconds = (currentTime - startTime) / 1000.0;
-
-			// 將速度乘法移到這裡
-			material.uniforms.u_time.value = elapsedSeconds * (1.0 + params.speed * 5.0);
+			// 更新時間
+			material.uniforms.u_time.value += params.speed * 5;
 
 			// 更新音量
 			if (audioMap && audioMap.analyser && audioMap.dataArray) {
