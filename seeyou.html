@@ -74,7 +74,6 @@
 			uniform vec2 u_res;
 			uniform float u_time;
 			uniform float u_volume;
-			uniform float u_volume_smooth;
 			uniform vec2 u_orient;
 			uniform float u_intensity;
 			uniform float u_complexity;
@@ -102,15 +101,30 @@
 			}
 
 			// 核心繪製：牆面與幾何體
-			vec4 drawWall(vec2 coords, float depth, float vol, float volSmooth, vec2 lookDir) {
+			vec4 drawWall(vec2 coords, float depth, float vol, vec2 lookDir) {
 				float snap = pow(vol, 2.0);
-				vec2 p = (coords - 0.5) * (1.0 - pow(volSmooth, 2.0) * 0.5);
+				vec2 p = (coords - 0.5) * (1.0 - snap * 0.0);
 				p = abs(p);
-				float beatTime = (u_time*6.0 + floor(u_time * 2.0) + pow(fract(u_time * 2.0), 4.0)) / 10.0;
-				float bouncyTime = mix(u_time, u_time, 0.6);
+				float beatTime = (u_time * 6.0 + floor(u_time * 2.0) + pow(fract(u_time * 2.0), 4.0)) / 10.0;
+				float bouncyTime = mix(u_time, beatTime, 0.6);
 				
 				// 聲波扭曲
-				float wave = sin(p.x * 20.0 + bouncyTime * 2.0) * snap * 2.0;
+				float waveSpace = p.x * 40.0; // 增加頻率，補足 abs 縮減掉的一半空間
+
+				// 2. 能量過濾：為了 Funk 的力度，我們對 snap 進行二次壓制，
+				// 這樣微小的雜訊（抖動）會被過濾，強拍（鼓點）會更彈。
+				float funkSnap = snap * snap * 12.5; 
+
+				// 3. 多重波干涉：利用 beatTime 與 bouncyTime 的細微時差，
+				// 產生兩個交錯的正弦波，這能極大地掩蓋單一數值跳變產生的機械感。
+				float waveA = sin(waveSpace + bouncyTime * 3.0);
+				float waveB = cos(waveSpace * 0.8 - beatTime * 2.0);
+
+				// 4. 合成波形：
+				// 加入 (0.5 - p.x) 作為邊緣衰減，確保波浪在靠近畫面邊緣（原始 0.0 和 1.0 處）是平滑的
+				float wave = (waveA + waveB * 0.4) * funkSnap * (0.5 - p.x);
+
+				// 5. 輸出位移
 				vec2 distortedP = p + vec2(0.0, wave);
 				
 				// SDF 數位流體
@@ -153,7 +167,7 @@
 					vec2 layerUV = currentUV + lookDir * fi * 0.04;
 					layerUV = (layerUV - 0.5) * (1.0 + dot(layerUV - 0.5, lookDir) * 0.3) + 0.5;
 
-					vec4 layer = drawWall(layerUV, fi, u_volume, u_volume_smooth, lookDir);
+					vec4 layer = drawWall(layerUV, fi, u_volume, lookDir);
 					
 					// 丁達爾光柱 (層級投影)
 					float lightShaft = smoothstep(0.3, 0.0, layer.a); 
@@ -187,11 +201,11 @@
 				for (float i = 0.0; i < 1.0; i += 0.125) { // 8 次採樣，兼顧效能與品質
 					vec2 sampleUV = uv - rayDir * i;
 					// 這裡改為調用渲染後的場景，但為避免死循環，我們只對單層採樣
-					vec4 sampleCol = drawWall(sampleUV, 7.0, u_volume, u_volume_smooth, lookDir);
+					vec4 sampleCol = drawWall(sampleUV, 7.0, u_volume, lookDir);
 					
 					// 色散效果
-					float r = drawWall(sampleUV - rayDir * 0.02, 7.0, u_volume, u_volume_smooth, lookDir).r;
-					float b = drawWall(sampleUV + rayDir * 0.02, 7.0, u_volume, u_volume_smooth, lookDir).b;
+					float r = drawWall(sampleUV - rayDir * 0.02, 7.0, u_volume, lookDir).r;
+					float b = drawWall(sampleUV + rayDir * 0.02, 7.0, u_volume, lookDir).b;
 					
 					vec3 brightPart = vec3(r, sampleCol.g, b);
 					tyndallEffect += brightPart * smoothstep(0.4, 1.2, length(brightPart)) * (1.0 - i);
@@ -262,7 +276,6 @@
 					u_res: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
 					u_time: { value: 0.0 },
 					u_volume: { value: 0.0 },
-					u_volume_smooth: { value: 0.0 },
 					u_orient: { value: new THREE.Vector2(0.5, 0.5) },
 					// --- 加入 UI 參數 ---
 					u_intensity: { value: params.intensity },
@@ -295,18 +308,12 @@
 			// 將速度乘法移到這裡
 			material.uniforms.u_time.value = elapsedSeconds * (1.0 + params.speed * 5.0);
 
-			// 1. 在初始化的地方先定義一個變量存儲平滑後的音量
-			let smoothedVolume = 0;
-
 			// 更新音量
 			if (audioMap && audioMap.analyser && audioMap.dataArray) {
 				audioMap.analyser.getByteFrequencyData(audioMap.dataArray);
 				let sum = 0;
 				for (let i = 0; i < audioMap.dataArray.length; i++) sum += audioMap.dataArray[i];
-				let currentTarget = sum / audioMap.dataArray.length / 255.0;
-				smoothedVolume += (currentTarget - smoothedVolume) * 0.15;
-				material.uniforms.u_volume.value = currentTarget
-				material.uniforms.u_volume.u_volume_smooth = Math.pow(smoothedVolume, 1.5) * 1.5;
+				material.uniforms.u_volume.value = sum / audioMap.dataArray.length / 255.0;
 				
 				audioMap.updateAudioReaction(audioMap.dataArray, null);
 			}
