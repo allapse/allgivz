@@ -103,15 +103,15 @@
 
 			// 核心繪製：牆面與幾何體
 			vec4 drawWall(vec2 coords, float depth, float vol, float volSmooth, vec2 lookDir) {
-				float snap = pow(volSmooth, 3.0);
-				vec2 p = (coords - 0.5) * (1.0 - snap * 0.3);
+				float snap = pow(vol, 3.0);
+				vec2 p = (coords - 0.5) * (1.0 - volSmooth * 0.3);
 				p = abs(p);
 				// 16.0 太碎，8.0 剛剛好，配上 4.0 的次方強化「黏滯感」
-				float beatTime = floor(u_time * 60.0) / 60.0;
+				float beatTime = floor(u_time * 8.0) / 8.0;
 				float bouncyTime = mix(u_time, u_time, 0.6);
 				
 				// 聲波扭曲
-				float wave = sin(p.x * 20.0 + bouncyTime * 2.0) * 0.2;
+				float wave = sin(p.x * 20.0 + bouncyTime * 2.0) * snap * 2.0;
 				vec2 distortedP = p + vec2(0.0, wave);
 				
 				// SDF 數位流體
