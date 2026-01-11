@@ -24,7 +24,7 @@
 		let orient = { x: 0.5, y: 0.5 };
 		window.orient = orient;
 		
-		function handleOrientation(event) {
+		/*function handleOrientation(event) {
 			let x = event.gamma || 0; // 左右
 			let y = event.beta || 0;  // 前後
 
@@ -46,7 +46,7 @@
 			orient.x = Math.max(-1, Math.min(1, orient.x));
 			orient.y = Math.max(-1, Math.min(1, orient.y));
 		}
-		window.handleOrientation = handleOrientation;
+		window.handleOrientation = handleOrientation;*/
 
 		// 2. 初始化中樞
 		const audioMap = new AudioMap(params);
@@ -226,7 +226,13 @@
 		
 		// Slider 監聽
 		const overlay = document.getElementById('overlay');
-		overlay.addEventListener('click', () => audioMap.initAudio('assets/audio/再見.mp3'));
+		overlay.addEventListener('click', async () => {
+			audioMap.initAudio('assets/audio/再見.mp3')
+			await audioMap.initGyro({ range: 45 }, (data) => {
+				orient.x = data.x * 0.5 + 0.5;
+				orient.y = data.y * 0.5 + 0.5;
+			});
+		});
 		const link = document.getElementById('link');
 		link.addEventListener('click', function() {
 			window.location.assign("index.html");
