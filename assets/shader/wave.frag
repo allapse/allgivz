@@ -18,74 +18,53 @@ float hash(float n) { return fract(sin(n) * 43758.5453123); }
 #define PI 3.14159265359
 
 float map(vec3 p) {
-    // 修正：確保 zLoop 與 ro 的運動邏輯一致
+    // 1. 統一對 Z 軸取模，確保手機精確度
     float zLoop = mod(p.z, 6.28318); 
     float timeMod = u_time * (u_speed * 2.0 + 1.0);
     
-    // --- 鏡像處理 (消除分割線的核心) ---
-    // --- 兩倍鏡像 (萬花筒效果) ---
-    float angle = atan(p.y, p.x); // 範圍 -PI ~ PI
-    
-    // 第一次折疊：左右對稱
+    float angle = atan(p.y, p.x);
     float mirrorAngle = abs(angle); 
-    
-    // 第二次折疊：上下對稱
-    // 我們將角度限制在 0 ~ PI/2 之間，然後再做一次 abs
-    // 這樣 0~90, 90~180, 0~-90, -90~-180 看起來都會一模一樣
     mirrorAngle = abs(mirrorAngle - PI * 0.5);
     
-    // 1. 基礎隧道
-    float tunnel = -(length(p.xy) - (1.6 + u_volume * 0.4)); 
+    // 2. 稍微加大隧道半徑，給相機空間
+    float tunnel = -(length(p.xy) - (1.8 + u_volume * 0.5)); 
     
-    // 2. 扭曲邏輯 (鏡像 + Noise 重疊)
-    // 確保 freq 是偶數或整數會更穩定，但有了鏡像後非整數也沒關係了
-    float freq = 0.05 + u_intensity * 3.0; 
-    float amp = 0.02 + u_complexity * 0.01; 
+    // 3. 加大 amp，讓扭曲變明顯，手機才看得到細節
+    float freq = 2.0 + u_intensity * 10.0; 
+    float amp = 0.05 + u_complexity * 0.3; // 這裡加大了
 
-    // 第一層：主波紋 (使用鏡像角度)
     float wave = sin(mirrorAngle * freq + timeMod) * cos(zLoop * 2.0);
-    
-    // 第二層：Noise 疊加 (用來模糊接縫處的生硬感)
-    // 利用 p.z 加入一點隨機擾動
-    float noise = hash(floor(p.z * 5.0)) * u_complexity * 2.0;
+    float noise = hash(floor(p.z * 5.0)) * u_complexity;
     wave += sin(mirrorAngle * (freq * 1.5) - timeMod + noise) * 0.5;
-    
-    // 縱向波紋 (保持不變)
-    wave += sin(zLoop * 5.0 + timeMod) * 0.3;
     
     return tunnel + (wave * amp);
 }
 
 void main() {
-    vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / (min(u_res.y, u_res.x) + 0.001) * 5.0;
+    // 修正：移除 * 5.0，恢復正常視角
+    vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / (min(u_res.y, u_res.x) + 0.001);
     
-    // 修正：將 u_orient 轉為 -1 到 1 的範圍，並減小權重
-    vec2 look = (u_orient)*2.0; 
+    // 修正：look 不要乘太大
+    vec2 look = (u_orient - 0.5) * 1.0; 
     
-    // 3. 設定相機 (ro.z 也取模，保持在小範圍運動)
-    float travel = u_time * (u_speed * 2.0 + 1.0);
-    vec3 ro = vec3(0.0, 0.0, mod(travel, 6.28318));
+    // 修正：ro 不要取 mod，讓它一直增加 (手機更穩定)
+    vec3 ro = vec3(0.0, 0.0, u_time * (u_speed * 3.0 + 1.5));
     
-    // 4. 設定射線：確保 z (1.5) 足夠強，look 不要偏移太誇張
-    vec3 rd = normalize(vec3(uv + look * 0.1, 1.5)); 
-    
-    // 側翻效果
-    rd.xy *= rot(look.x * 0.3);
+    // 修正：rd 的 Z 軸設為 1.0 ~ 1.5
+    vec3 rd = normalize(vec3(uv + look, 1.2)); 
+    rd.xy *= rot(look.x * 0.5);
 
     float t = 0.0;
     float glow = 0.0;
     
-    // 5. 步進優化
-    for(int i = 0; i < 12; i++) { // 增加到 40 次讓細節出來
+    // 4. 增加步進次數：12 次太少了，手機至少要 30 次才會有東西
+    for(int i = 0; i < 32; i++) { 
         vec3 p = ro + rd * t;
         float d = map(p);
+        glow += 0.015 / (abs(d) + 0.015);
         
-        // 累積亮度
-        glow += 0.02 / (abs(d) + 0.02);
-        
-        // 限制最大步進距離
-        if (d < 0.002 || t > 20.0) break;
-        t += d * 0.6; // 0.6 是安全係數，防止穿透
+        if (d < 0.01 || t > 20.0) break; // 手機判斷距離調鬆一點 (0.01)
+        t += d * 0.5; 
     }
     
     // 6. 著色
