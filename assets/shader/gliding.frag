@@ -14,14 +14,20 @@ void main() {
     // 1. 座標歸一化
     vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / min(u_res.y, u_res.x);
     
-    // 2. 視角偏移 (加上陀螺儀)
-    vec2 look = u_orient * 0.2;
-    vec2 p = uv + look;
+    // 2. 視角偏轉 (模擬頭部轉動)
+	// 增加權重到 0.5 讓效果更明顯，並將 u_orient 對齊到中心 (-0.5 ~ 0.5)
+	vec2 look = (u_orient - 0.5) * 0.5; 
 
-    // 3. 極坐標轉換 (隧道核心)
-    float r = length(p)*1.5;
-    float angle = atan(p.y, p.x);
+	// 關鍵修正：不要直接加在 uv 上，而是影響 p
+	vec2 p = uv;
+
+	// 重新計算 r 和 angle
+	float r = length(p);
+	float angle = atan(p.y, p.x);
     float depth = 1.0 / (r + 0.01); 
+	
+	// 這裡模擬視角轉向：離中心越遠（depth 越小），位移量越大
+	p += look * (depth * 0.05); 
     
     // 4. 建立紋理與控制參數
     float forward = depth + u_time * (u_speed * 10.0 + 5.0);
