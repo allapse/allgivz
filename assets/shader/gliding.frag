@@ -36,7 +36,7 @@ void main() {
     float forward = depth + u_time * (u_speed * 10.0 + 5.0);
     
     // 使用 u_complexity 控制隧道壁的瓣數
-    float sides = floor(6.0 + u_intensity * 20.0);
+    float sides = floor(6.0 + u_intensity * 10.0);
     
     // 使用 u_intensity 控制花紋的分散/銳利度
     float spread = 0.5 - (u_complexity * 0.03);
