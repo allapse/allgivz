@@ -8,78 +8,83 @@ uniform float u_complexity;
 uniform float u_speed;
 uniform float u_darkGlow;
 
+#define PI 3.14159265359
+
 mat2 rot(float a) {
     float s = sin(a), c = cos(a);
     return mat2(c, -s, s, c);
 }
-// 簡易雜訊函式：用來打碎分割線的規律感
-float hash(float n) { return fract(sin(n) * 43758.5453123); }
-// 定義常數 PI
-#define PI 3.14159265359
+
+float hash(float n) { return fract(sin(n) * 43758.5453); }
 
 float map(vec3 p) {
-    // 1. 統一對 Z 軸取模，確保手機精確度
-    float zLoop = mod(p.z, 6.28318); 
+    // 1. 防止 zLoop 數值過大
+    float zLoop = mod(p.z, 6.28318);
     float timeMod = u_time * (u_speed * 2.0 + 1.0);
+
+    // 2. 防止 atan(0,0) 崩潰，加上一個極小值
+    float angle = atan(p.y, p.x + 0.00001);
     
-    float angle = atan(p.y, p.x);
-    float mirrorAngle = abs(angle); 
+    // 兩倍鏡像
+    float mirrorAngle = abs(angle);
     mirrorAngle = abs(mirrorAngle - PI * 0.5);
-    
-    // 2. 稍微加大隧道半徑，給相機空間
-    float tunnel = -(length(p.xy) - (1.8 + u_volume * 0.5)); 
-    
-    // 3. 加大 amp，讓扭曲變明顯，手機才看得到細節
-    float freq = 2.0 + u_intensity * 10.0; 
-    float amp = 0.05 + u_complexity * 0.3; // 這裡加大了
+
+    // 3. 基礎隧道：確保 length(p.xy) 不會因為等於 0 而出錯
+    float d_xy = length(p.xy + 0.00001);
+    float tunnel = -(d_xy - (1.8 + u_volume * 0.5));
+
+    // 4. 扭曲邏輯
+    float freq = 2.0 + u_intensity * 10.0;
+    float amp = 0.05 + u_complexity * 0.3;
 
     float wave = sin(mirrorAngle * freq + timeMod) * cos(zLoop * 2.0);
-    float noise = hash(floor(p.z * 5.0)) * u_complexity;
+    float noise = hash(floor(p.z * 5.0 + 0.5)) * u_complexity;
     wave += sin(mirrorAngle * (freq * 1.5) - timeMod + noise) * 0.5;
-    
+
     return tunnel + (wave * amp);
 }
 
 void main() {
-    // 修正：移除 * 5.0，恢復正常視角
-    vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / (min(u_res.y, u_res.x) + 0.001);
+    // 修正 1：確保 u_res 不為 0 導致除以零
+    vec2 res = u_res + 0.01;
+    vec2 uv = (gl_FragCoord.xy - 0.5 * res) / min(res.y, res.x);
     
-    // 修正：look 不要乘太大
-    vec2 look = (u_orient - 0.5) * 1.0; 
+    // 修正 2：確保 look 初始值為中心
+    vec2 look = (u_orient - 0.5); 
     
-    // 修正：ro 不要取 mod，讓它一直增加 (手機更穩定)
-    vec3 ro = vec3(0.0, 0.0, u_time * (u_speed * 3.0 + 1.5));
+    // 修正 3：相機 ro 與 射線 rd
+    vec3 ro = vec3(0.0, 0.0, u_time * (u_speed * 3.0 + 1.0));
     
-    // 修正：rd 的 Z 軸設為 1.0 ~ 1.5
-    vec3 rd = normalize(vec3(uv + look, 1.2)); 
+    // 修正 4：防止 normalize 零向量，並適度縮小 look 影響力
+    vec3 dir = vec3(uv + look * 0.5, 1.0);
+    vec3 rd = normalize(dir + 0.00001); 
+    
+    // 手機側翻
     rd.xy *= rot(look.x * 0.5);
 
-    float t = 0.0;
+    float t = 0.01; // 從微小距離開始步進
     float glow = 0.0;
     
-    // 4. 增加步進次數：12 次太少了，手機至少要 30 次才會有東西
-    for(int i = 0; i < 32; i++) { 
+    // 修正 5：步進次數調至手機最安全的 30 次
+    for(int i = 0; i < 30; i++) {
         vec3 p = ro + rd * t;
         float d = map(p);
-        glow += 0.015 / (abs(d) + 0.015);
         
-        if (d < 0.01 || t > 20.0) break; // 手機判斷距離調鬆一點 (0.01)
-        t += d * 0.5; 
+        // 累積亮度
+        glow += 0.01 / (abs(d) + 0.015);
+        
+        // 修正 6：放寬碰撞距離，手機精度低，0.002 太難達成
+        if (d < 0.02 || t > 20.0) break;
+        t += d * 0.5;
     }
     
-    // 6. 著色
     vec3 baseCol = mix(vec3(0.1, 0.4, 0.8), vec3(0.6, 0.1, 0.8), sin(t * 0.2 + u_time) * 0.5 + 0.5);
-    
-    // 基礎亮度保證：即使 volume 為 0 也要有光
-    vec3 finalCol = baseCol * (glow * (0.3 + u_volume * 0.7));
-    
-    // 霧氣：讓遠處漸隱
+    vec3 finalCol = baseCol * (glow * (0.4 + u_volume));
     finalCol = mix(finalCol, vec3(0.01, 0.02, 0.05), smoothstep(2.0, 15.0, t));
 
-    // 7. DarkGlow 
     if (u_darkGlow > 0.5) {
-        float luminance = dot(finalCol, vec3(0.0722, 0.7152, 0.2126));
-        finalCol = vec3(pow(1.0 - luminance, 2.5)) * vec3(0.6, 0.6, 0.0);
+        float luminance = dot(finalCol, vec3(0.2126, 0.7152, 0.0722));
+        finalCol = vec3(pow(1.0 - luminance, 2.0)) * vec3(0.0, 1.0, 0.3);
     }
 
     gl_FragColor = vec4(finalCol, 1.0);
