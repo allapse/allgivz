@@ -31,7 +31,8 @@
 			{ id: 'ui-freq', key: 'frequency', label: 'Complexity', min: 0.1, max: 10, step: 0.1, range: [0, 30] },
 			{ id: 'ui-speed', key: 'speed', label: 'Evolution', min: 0, max: 0.0025, step: 0.0001, range: [31, 70] },
 		],
-		'assets/audio/list.json');
+		'assets/audio/list.json',
+		true);
 	</script>
 
 	<div id="container"></div>
@@ -153,7 +154,7 @@
 		function toggleDarkGlow() {
 			darkGlowMode = !darkGlowMode;
 			// 將布林值轉為 0.0 或 1.0 傳給 Shader
-			material.uniforms.u_darkGlow.value = darkGlowMode ? 1.0 : 0.0;
+			audioMap.material.uniforms.u_darkGlow.value = darkGlowMode ? 1.0 : 0.0;
 		}
 		
 		// 2. 初始化 Three.js 環境
@@ -166,7 +167,7 @@
 			document.getElementById('container').appendChild(renderer.domElement);
 
 			// 關鍵：在 Three.js 中定義 Uniforms
-			material = new THREE.ShaderMaterial({
+			audioMap.material = new THREE.ShaderMaterial({
 				uniforms: {
 					u_res: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
 					u_time: { value: 0.0 },
@@ -184,7 +185,7 @@
 				fragmentShader: _FS
 			});
 
-			const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
+			const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), audioMap.material);
 			scene.add(mesh);
 			
 			animate();
@@ -198,7 +199,7 @@
 			requestAnimationFrame(animate);
 
 			// 更新時間
-			material.uniforms.u_time.value += 0.01 + params.speed * 5;
+			audioMap.material.uniforms.u_time.value += 0.01 + params.speed * 5;
 
 			// 更新音量
 			if (audioMap && audioMap.analyser && audioMap.dataArray) {
@@ -207,9 +208,9 @@
 				for (let i = 0; i < audioMap.dataArray.length; i++) sum += audioMap.dataArray[i];
 				let currentTarget = sum / audioMap.dataArray.length / 255.0;
 				smoothedVolume += (currentTarget - smoothedVolume) * 0.15;
-				material.uniforms.u_volume.value = currentTarget;
-				material.uniforms.u_volume_smooth.value = Math.pow(smoothedVolume, 1.5) * 1.5;
-				material.uniforms.u_last_volume.value = lastVolume;
+				audioMap.material.uniforms.u_volume.value = currentTarget;
+				audioMap.material.uniforms.u_volume_smooth.value = Math.pow(smoothedVolume, 1.5) * 1.5;
+				audioMap.material.uniforms.u_last_volume.value = lastVolume;
 				lastVolume = currentTarget;
 				
 				audioMap.updateAudioReaction(audioMap.dataArray, null);
@@ -217,10 +218,10 @@
 			}
 
 			// 更新陀螺儀
-			material.uniforms.u_orient.value.set(orient.x, orient.y);
-			material.uniforms.u_intensity.value = params.intensity;
-			material.uniforms.u_complexity.value = params.frequency;
-			material.uniforms.u_speed.value = params.speed;
+			audioMap.material.uniforms.u_orient.value.set(orient.x, orient.y);
+			audioMap.material.uniforms.u_intensity.value = params.intensity;
+			audioMap.material.uniforms.u_complexity.value = params.frequency;
+			audioMap.material.uniforms.u_speed.value = params.speed;
 
 			renderer.render(scene, camera);
 		}
@@ -230,7 +231,7 @@
 
 		window.onresize = () => {
 			renderer.setSize(window.innerWidth, window.innerHeight);
-			material.uniforms.u_res.value.set(window.innerWidth, window.innerHeight);
+			audioMap.material.uniforms.u_res.value.set(window.innerWidth, window.innerHeight);
 		};
     </script>
 </body>
