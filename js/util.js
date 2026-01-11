@@ -411,29 +411,27 @@ class AudioMap {
 	 */
 	async initGyro(config = {}, onUpdate = null) {
 		const settings = { range: config.range || 45, ...config };
+		
+		// 將這些變數存在閉包內，確保 reset 後能重新校準
 		let baseQ = null;
+		let startOffset = { x: 0, y: 0 };
+		let firstFrameProcessed = false;
 
-		// --- 關鍵修正：將權限請求移到最前面，不加任何 await ---
+		// 權限請求 (iOS 專用)
 		let granted = false;
 		if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
 			try {
-				// iOS 專用彈窗
 				const permission = await DeviceOrientationEvent.requestPermission();
 				granted = (permission === 'granted');
 			} catch (e) {
-				console.error("iOS Permission Error:", e);
 				granted = false;
 			}
 		} else {
-			// Android 或電腦版
-			granted = true;
+			granted = true; 
 		}
 
-		if (!granted) {
-			return { success: false };
-		}
+		if (!granted) return { success: false };
 
-		// 內部計算邏輯 (跟之前的四元數版本一樣)
 		const eulerToQuaternion = (alpha, beta, gamma) => {
 			const _x = (beta || 0) * (Math.PI / 180);
 			const _y = (gamma || 0) * (Math.PI / 180);
@@ -441,6 +439,7 @@ class AudioMap {
 			const cX = Math.cos(_x / 2), sX = Math.sin(_x / 2);
 			const cY = Math.cos(_y / 2), sY = Math.sin(_y / 2);
 			const cZ = Math.cos(_z / 2), sZ = Math.sin(_z / 2);
+			// Z-X-Y 順序
 			return [
 				sX * cY * cZ - cX * sY * sZ,
 				cX * sY * cZ + sX * cY * sZ,
@@ -450,21 +449,37 @@ class AudioMap {
 		};
 
 		const handleOrientation = (event) => {
+			// 電腦模擬器有時會送出全 0 事件，我們確保有收到數值才開始
+			if (event.beta === null || event.gamma === null) return;
+
 			const currentQ = eulerToQuaternion(event.alpha, event.beta, event.gamma);
-			if (baseQ === null) {
-				baseQ = currentQ;
-				return;
-			}
-			const qx = currentQ[0], qy = currentQ[1], qz = currentQ[2], qw = currentQ[3];
-			// 投影計算
+			const [qx, qy, qz, qw] = currentQ;
+
+			// 計算當前投影分量
 			const dx = 2 * (qx * qz + qw * qy);
 			const dy = 2 * (qy * qz - qw * qx);
+
+			// 核心修正：第一次進入時強制對齊
+			if (baseQ === null) {
+				baseQ = currentQ;
+				startOffset.x = dx;
+				startOffset.y = dy;
+				// 第一次不輸出，確保 baseQ 已就緒
+				return;
+			}
+
+			// 靈敏度計算
 			const sensitivity = 90 / settings.range;
+
+			// 這裡就是你說的「座標對位」：
+			// 如果 y 軸沒反應或 x 軸亂跳，請在這裡調換 dx/dy 或加負號
+			let outX = (dx - startOffset.x) * sensitivity;
+			let outY = (dy - startOffset.y) * sensitivity;
 
 			if (onUpdate) {
 				onUpdate({
-					x: Math.max(-1, Math.min(1, dx * sensitivity)),
-					y: Math.max(-1, Math.min(1, dy * sensitivity))
+					x: Math.max(-1, Math.min(1, outX)),
+					y: Math.max(-1, Math.min(1, outY))
 				});
 			}
 		};
@@ -473,7 +488,10 @@ class AudioMap {
 
 		return {
 			success: true,
-			reset: () => { baseQ = null; },
+			reset: () => { 
+				baseQ = null; 
+				console.log("Gyro Recalibrated");
+			},
 			stop: () => window.removeEventListener('deviceorientation', handleOrientation)
 		};
 	}
