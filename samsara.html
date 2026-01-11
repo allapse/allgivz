@@ -45,7 +45,6 @@
 
 		// --- 全域變數 ---
 		let renderer, scene, camera, material;
-		let gyroX = 0, gyroY = 0; // 儲存陀螺儀數值
 		let darkGlowMode = false;
 
 		const _VS = `void main() { gl_Position = vec4(position, 1.0); }`;
@@ -108,9 +107,7 @@
 
 			void main() {
 				vec2 uv = gl_FragCoord.xy / u_res.xy;
-				
-				// 將陀螺儀數據轉換為 -1.0 到 1.0 的視角偏移
-				vec2 lookDir = (u_orient - 0.5) * 2.0; 
+				vec2 lookDir = u_orient; 
 
 				vec2 currentUV = uv;
 				vec3 finalCol = vec3(0.0);
