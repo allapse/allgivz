@@ -91,7 +91,7 @@ class AudioMap {
      * @param {string} containerId - 容器的 ID (如 'ui-layer')
      * @param {Array} configs - Slider 的配置陣列
      */
-    async buildUI(containerId, configs, jsonPath) {
+    async buildUI(containerId, configs, jsonPath, canSelectView = false) {
         const container = document.getElementById(containerId);
         if (!container) return;
 
@@ -144,7 +144,7 @@ class AudioMap {
 				.music-select {
 					width: 100%; background: transparent; color: #999;
 					border: none; border-bottom: 1px solid #999;
-					font-size: 9px; outline: none;
+					font-size: 9px; outline: none; letter-spacing: 1px;
 					-webkit-appearance: none; padding: 0px; cursor: pointer;
 					 margin-left: 2px; 
 				}
@@ -158,12 +158,12 @@ class AudioMap {
 				</select>
 			</div>
 			<style>
-				.shader-group { margin-top: 20px; width: 180px; position: relative; }
+				.shader-group { margin-top: 20px; width: 180px; position: relative; display: ${canSelectView ? 'block' : 'none'};}
 				.shader-label { font-size: 9px; color: #999; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px; }
 				.shader-select {
 					width: 100%; background: transparent; color: #999;
 					border: none; border-bottom: 1px solid #999;
-					font-size: 9px; outline: none;
+					font-size: 9px; outline: none; letter-spacing: 1px;
 					-webkit-appearance: none; padding: 0px; cursor: pointer;
 					 margin-left: 2px; 
 				}
