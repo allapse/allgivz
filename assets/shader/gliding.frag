@@ -19,10 +19,10 @@ void main() {
 
 	// 讓 uv 根據 look 產生透視形變
 	vec2 p = uv;
-	p.x += look.x * (r * 0.5 + 0.5); // 越往外圈偏越多
-	p.y += look.y * (r * 0.5 + 0.5);
-
 	float r = length(p);
+	p.x += look.x * (r * 0.5); // 越往外圈偏越多
+	p.y += look.y * (r * 0.5);
+
 	float angle = atan(p.y, p.x);
 
 	// 加上旋轉感：根據 look.x 讓整個隧道產生輕微傾斜
