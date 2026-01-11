@@ -23,30 +23,6 @@
 		window.baseGamma = baseGamma;
 		let orient = { x: 0.5, y: 0.5 };
 		window.orient = orient;
-		
-		/*function handleOrientation(event) {
-			let x = event.gamma || 0; // 左右
-			let y = event.beta || 0;  // 前後
-
-			// 1. 紀錄第一筆數據作為基準
-			if (baseGamma === null) baseGamma = x;
-			if (baseBeta === null) baseBeta = y;
-
-			// 2. 計算相對於基準點的偏移量 (Delta)
-			let deltaX = x - baseGamma;
-			let deltaY = y - baseBeta;
-
-			// 3. 合併你的公式：
-			// 原本公式 (x + 45) / 90 是把 -45~45 度映射到 0~1
-			// 現在改為以基準點為中心，偏移 45 度為邊界
-			orient.x = (deltaX + 45) / 90;
-			orient.y = (deltaY + 45) / 90;
-
-			// 4. 加上邊界限制 (Clamp)，防止數值超過 0~1 範圍
-			orient.x = Math.max(-1, Math.min(1, orient.x));
-			orient.y = Math.max(-1, Math.min(1, orient.y));
-		}
-		window.handleOrientation = handleOrientation;*/
 
 		// 2. 初始化中樞
 		const audioMap = new AudioMap(params);
