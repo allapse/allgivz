@@ -14,16 +14,19 @@ void main() {
     // 1. 座標歸一化
     vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / min(u_res.y, u_res.x);
     
-    // 2. 視角偏轉 (模擬頭部轉動)
-	// 增加權重到 0.5 讓效果更明顯，並將 u_orient 對齊到中心 (-0.5 ~ 0.5)
-	vec2 look = (u_orient - 0.5) * 0.5; 
+    // --- 視角偏轉優化版 ---
+	vec2 look = (u_orient - 0.5) * 0.8; 
 
-	// 關鍵修正：不要直接加在 uv 上，而是影響 p
+	// 讓 uv 根據 look 產生透視形變
 	vec2 p = uv;
+	p.x += look.x * (r * 0.5 + 0.5); // 越往外圈偏越多
+	p.y += look.y * (r * 0.5 + 0.5);
 
-	// 重新計算 r 和 angle
 	float r = length(p);
 	float angle = atan(p.y, p.x);
+
+	// 加上旋轉感：根據 look.x 讓整個隧道產生輕微傾斜
+	angle += look.x * 0.2;
     float depth = 1.0 / (r + 0.01); 
 	
 	// 這裡模擬視角轉向：離中心越遠（depth 越小），位移量越大
