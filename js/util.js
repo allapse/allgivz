@@ -122,6 +122,20 @@ class AudioMap {
 			`<option value="${m.path}">${m.name}</option>`
 		).join('');
 		
+		let fragList = [];
+		try {
+			const response = await fetch('assets/shader/list.json');
+			fragList = await response.json();
+		} catch (e) {
+			console.error("讀取視覺清單失敗:", e);
+			// 備用方案
+			//fragList = [{ name: "預設視覺", path: "./shader/default.frag" }];
+		}
+		
+		let shadersHtml = fragList.map(m => 
+			`<option value="${m.path}">${m.name}</option>`
+		).join('');
+		
 		container.innerHTML = `
 			${slidersHtml}
 			<style>
@@ -130,17 +144,36 @@ class AudioMap {
 				.music-select {
 					width: 100%; background: transparent; color: #999;
 					border: none; border-bottom: 1px solid #999;
-					font-size: 11px; outline: none;
+					font-size: 9px; outline: none;
 					-webkit-appearance: none; padding: 0px; cursor: pointer;
 					 margin-left: 2px; 
 				}
 				.music-group::after { content: '▼'; font-size: 8px; color: #999; position: absolute; right: 0; bottom: 8px; pointer-events: none; }
-				.music-select option { font-size: 11px; background: #000; color: #999;}
+				.music-select option { font-size: 9px; background: #000; color: #999;}
 			</style>
 			<div class="music-group">
 				<select id="music-select" class="music-select">
-					<option value="" disabled selected></option>
+					<option value="" disabled selected>INPUT</option>
 					${optionsHtml}
+				</select>
+			</div>
+			<style>
+				.shader-group { margin-top: 20px; width: 180px; position: relative; }
+				.shader-label { font-size: 9px; color: #999; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px; }
+				.shader-select {
+					width: 100%; background: transparent; color: #999;
+					border: none; border-bottom: 1px solid #999;
+					font-size: 9px; outline: none;
+					-webkit-appearance: none; padding: 0px; cursor: pointer;
+					 margin-left: 2px; 
+				}
+				.shader-group::after { content: '▼'; font-size: 8px; color: #999; position: absolute; right: 0; bottom: 8px; pointer-events: none; }
+				.shader-select option { font-size: 9px; background: #000; color: #999;}
+			</style>
+			<div class="shader-group">
+				<select id="shader-select" class="shader-select">
+					<option value="" disabled selected>VIEW</option>
+					${shadersHtml}
 				</select>
 			</div>
 		`;
