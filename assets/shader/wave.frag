@@ -35,7 +35,7 @@ float map(vec3 p) {
 
     // 4. 扭曲邏輯
     float freq = 2.0 + u_intensity * 10.0;
-    float amp = 0.05 + u_complexity * 0.3;
+    float amp = 0.05 + u_complexity * 0.03;
 
     float wave = sin(mirrorAngle * freq + timeMod) * cos(zLoop * 2.0);
     float noise = hash(floor(p.z * 5.0 + 0.5)) * u_complexity;
