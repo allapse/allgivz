@@ -36,7 +36,7 @@ void main() {
     
     // --- 3. 物理場與粒子參數 ---
     float gravity = -0.5;
-    float explosion = pow(u_volume, 2.2) * 6.0;
+    float explosion = pow(u_volume, 2.2) * 3.5;
     float grid = 65.0;
     
     // --- 4. 渲染循環與色彩分離 ---
