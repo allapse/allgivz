@@ -293,52 +293,61 @@ class AudioMap {
 
 			const effectBtn = document.getElementById('effect-btn');
 			if (effectBtn) {
-				// 確保這裡的 this 是指向包含 audioContext 的那個對象
+				// 使用箭頭函數確保 this 指向你的主程式物件
 				effectBtn.onclick = () => {
-					// 1. 安全檢查：檢查 audioContext 是否已經建立
-					if (!this.audioContext) {
-						console.error("AudioContext 尚未初始化，請先啟動音樂");
+					console.log("Effect Button Clicked");
+
+					// 1. 檢查基礎環境
+					if (!this.audioContext || !this.source || !this.analyser) {
+						console.error("音訊元件未就緒");
 						return;
 					}
 
-					// 2. 初始化濾波器（僅執行一次）
+					// 2. 初始化濾波器（只執行一次）
 					if (!this.fxFilter) {
-						try {
-							this.fxFilter = this.audioContext.createBiquadFilter();
-							this.fxFilter.type = "allpass";
-							
-							// 重新串接音軌：Source -> Filter -> 原本的目標
-							// 這裡假設你原本是 connect 到 destination 或 analyser
-							this.source.disconnect(); 
-							this.source.connect(this.fxFilter);
-							this.fxFilter.connect(this.audioContext.destination);
-							
-							this.currentAudioMode = 0;
-							console.log("濾波器初始化成功");
-						} catch (e) {
-							console.error("建立濾波器失敗:", e);
-							return;
-						}
+						this.fxFilter = this.audioContext.createBiquadFilter();
+						this.fxFilter.type = "allpass";
+
+						// --- 關鍵：重新編排節點鏈 ---
+						// 先斷開所有舊連線
+						this.source.disconnect();
+						
+						// 重新串接：Source -> Filter -> Analyser -> Destination
+						this.source.connect(this.fxFilter);
+						this.fxFilter.connect(this.analyser);
+						this.analyser.connect(this.audioContext.destination);
+						
+						this.currentAudioMode = 0;
+						console.log("節點鏈重組完成");
 					}
 
-					// 3. 切換模式邏輯
+					// 3. 模式切換
 					this.currentAudioMode = (this.currentAudioMode + 1) % 3;
 					const mode = this.currentAudioMode;
-					
+
+					// 設定濾波參數
+					if (mode === 0) { // PURE
+						this.fxFilter.type = "allpass";
+					} else if (mode === 1) { // QUANTUM (High-pass)
+						this.fxFilter.type = "highpass";
+						this.fxFilter.frequency.setTargetAtTime(1500, this.audioContext.currentTime, 0.1);
+					} else if (mode === 2) { // DEEP (Low-pass)
+						this.fxFilter.type = "lowpass";
+						this.fxFilter.frequency.setTargetAtTime(600, this.audioContext.currentTime, 0.1);
+					}
+
+					// 4. 更新 UI (手動更新樣式以確保手機端反應)
 					const colors = ["#999", "#00ffff", "#ff00ff"];
 					const labels = ["PURE", "QUANTUM", "DEEP"];
-					const types = ["allpass", "highpass", "lowpass"];
-					const freqs = [0, 1500, 600];
-
-					this.fxFilter.type = types[mode];
-					if (mode !== 0) this.fxFilter.frequency.value = freqs[mode];
-
-					// 更新 UI
+					
 					effectBtn.innerText = "DIMENSION: " + labels[mode];
 					effectBtn.style.color = colors[mode];
-					effectBtn.style.borderBottomColor = colors[mode];
+					effectBtn.style.borderBottom = `1px solid ${colors[mode]}`;
 					
-					console.log("切換至模式:", labels[mode]);
+					// 如果手機沒反應，這行強制重繪
+					effectBtn.style.display = 'none';
+					effectBtn.offsetHeight; 
+					effectBtn.style.display = 'block';
 				};
 			}
 
