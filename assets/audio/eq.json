@@ -1,0 +1,23 @@
+[
+  {
+    "name": "PURE",
+    "type": "allpass",
+    "freq": 0,
+    "q": 1,
+    "color": "#999999"
+  },
+  {
+    "name": "QUANTUM",
+    "type": "highpass",
+    "freq": 2000,
+    "q": 0.7,
+    "color": "#00ffff"
+  },
+  {
+    "name": "SUB-DEEP",
+    "type": "lowpass",
+    "freq": 400,
+    "q": 2.0,
+    "color": "#ff00ff"
+  }
+]
