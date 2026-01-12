@@ -12,6 +12,7 @@ class MapSlider extends HTMLElement {
 		this.analyser = null;
 		this.audioContext = null;
 		this.fxFilter = null;
+		this.eqList = null;
     }
 
     connectedCallback() {
@@ -138,11 +139,21 @@ class AudioMap {
 			`<option value="${m.path}">${m.name}</option>`
 		).join('');
 		
+		try {
+			const response = await fetch('assets/audio/eq.json?t='+Date.now());
+			this.eqList = await response.json();
+		} catch (e) {
+			console.error("讀取視覺清單失敗:", e);
+		}
+		
+		let eqHtml = this.eqList.map((preset, index) => 
+			`<option value="${index}">${preset.name}</option>`
+		).join('');
+		
 		container.innerHTML = `
 			${slidersHtml}
 			<style>
 				.music-group { margin-top: 20px; width: 180px; position: relative; }
-				.music-label { font-size: 9px; color: #999; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px; }
 				.music-select {
 					width: 100%; background: transparent; color: #999;
 					border: none; border-bottom: 1px solid #999;
@@ -161,7 +172,6 @@ class AudioMap {
 			</div>
 			<style>
 				.shader-group { margin-top: 20px; width: 180px; position: relative; display: ${canSelectView ? 'block' : 'none'};}
-				.shader-label { font-size: 9px; color: #999; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px; }
 				.shader-select {
 					width: 100%; background: transparent; color: #999;
 					border: none; border-bottom: 1px solid #999;
@@ -174,50 +184,28 @@ class AudioMap {
 			</style>
 			<div class="shader-group">
 				<select id="shader-select" class="shader-select">
-					<option value="" disabled selected>VIEW</option>
+					<option value="" disabled selected>VISUALIZER</option>
 					${shadersHtml}
 				</select>
 			</div>
 			<style>
-				#effect-btn {
-					/* 基礎樣式 */
-					width: 100%; 
-					background-color: rgba(0,0,0,0) !important; /* 強制背景全透明 */
-					background: transparent !important;
-					color: #999;
-					
-					/* 清除瀏覽器預設樣式 */
-					-webkit-appearance: none;
-					-moz-appearance: none;
-					appearance: none;
-					border:  1px solid #999;
-					
-					/* 文字與間距 */
-					font-size: 9px; 
-					outline: none; 
-					letter-spacing: 1px;
-					padding: 5px 0px; /* 增加一點點上下間距，比較好點擊 */
-					margin-top: 5px;   /* 跟上面的 select 保持距離 */
-					cursor: pointer;
-					
-					/* 滑過效果 */
-					transition: all 0.2s ease;
-					text-align: center;
+				.eq-group { margin-top: 20px; width: 180px; position: relative; display: ${canSelectView ? 'block' : 'none'};}
+				.eq-select {
+					width: 100%; background: transparent; color: #999;
+					border: none; border-bottom: 1px solid #999;
+					font-size: 9px; outline: none; letter-spacing: 1px;
+					-webkit-appearance: none; padding: 0px; cursor: pointer;
+					 margin-left: 2px; 
 				}
-
-				#effect-btn:hover {
-					color: #fff;
-					border-bottom: 1px solid #fff;
-					background-color: rgba(255,255,255,0.05) !important; /* 滑過時淡淡的發光 */
-				}
-
-				#effect-btn:active {
-					color: #00ffff; /* 點擊瞬間變色，增加互動感 */
-				}
+				.eq-group::after { content: '▼'; font-size: 8px; color: #999; position: absolute; right: 0; bottom: 8px; pointer-events: none; }
+				.eq-select option { font-size: 9px; background: #000; color: #999;}
 			</style>
-
-			<button id="effect-btn" onclick="toggleAudioEffect()">DIMENSION: PURE</button>
-			
+			<div class="eq-group">
+				<select id="eq-select" class="eq-select">
+					<option value="" disabled selected>EQUALIZER</option>
+					${eqHtml}
+				</select>
+			</div>
 		`;
 		
 		const gyroUI = document.createElement('div');
@@ -291,63 +279,11 @@ class AudioMap {
 				};
 			}
 
-			const effectBtn = document.getElementById('effect-btn');
-			if (effectBtn) {
+			const eqSelect = document.getElementById('eq-select');
+			if (eqSelect) {
 				// 使用箭頭函數確保 this 指向你的主程式物件
-				effectBtn.onclick = () => {
-					console.log("Effect Button Clicked");
-
-					// 1. 檢查基礎環境
-					if (!this.audioContext || !this.source || !this.analyser) {
-						console.error("音訊元件未就緒");
-						return;
-					}
-
-					// 2. 初始化濾波器（只執行一次）
-					if (!this.fxFilter) {
-						this.fxFilter = this.audioContext.createBiquadFilter();
-						this.fxFilter.type = "allpass";
-
-						// --- 關鍵：重新編排節點鏈 ---
-						// 先斷開所有舊連線
-						this.source.disconnect();
-						
-						// 重新串接：Source -> Filter -> Analyser -> Destination
-						this.source.connect(this.fxFilter);
-						this.fxFilter.connect(this.analyser);
-						this.analyser.connect(this.audioContext.destination);
-						
-						this.currentAudioMode = 0;
-						console.log("節點鏈重組完成");
-					}
-
-					// 3. 模式切換
-					this.currentAudioMode = (this.currentAudioMode + 1) % 3;
-					const mode = this.currentAudioMode;
-
-					// 設定濾波參數
-					if (mode === 0) { // PURE
-						this.fxFilter.type = "allpass";
-					} else if (mode === 1) { // QUANTUM (High-pass)
-						this.fxFilter.type = "highpass";
-						this.fxFilter.frequency.setTargetAtTime(1500, this.audioContext.currentTime, 0.1);
-					} else if (mode === 2) { // DEEP (Low-pass)
-						this.fxFilter.type = "lowpass";
-						this.fxFilter.frequency.setTargetAtTime(600, this.audioContext.currentTime, 0.1);
-					}
-
-					// 4. 更新 UI (手動更新樣式以確保手機端反應)
-					const colors = ["#999", "#00ffff", "#ff00ff"];
-					const labels = ["PURE", "QUANTUM", "DEEP"];
-					
-					effectBtn.innerText = "DIMENSION: " + labels[mode];
-					effectBtn.style.color = colors[mode];
-					effectBtn.style.borderBottom = `1px solid ${colors[mode]}`;
-					
-					// 如果手機沒反應，這行強制重繪
-					effectBtn.style.display = 'none';
-					effectBtn.offsetHeight; 
-					effectBtn.style.display = 'block';
+				eqSelect.onchange = (e) => {
+					this.changeEQ(e.target.value);
 				};
 			}
 
@@ -362,6 +298,45 @@ class AudioMap {
 		// 開始嘗試綁定
 		bindLogic();
     }
+	
+	changeEQ(index){
+		// 1. 檢查基礎環境
+		if (!this.audioContext || !this.source || !this.analyser) {
+			console.error("音訊元件未就緒");
+			return;
+		}
+		
+		const preset = this.eqList[index]; 
+		if (!preset) return;
+
+		const now = this.audioContext.currentTime;
+
+		// 確保濾波器存在並串接
+		if (!this.fxFilter) {
+			this.fxFilter = this.audioContext.createBiquadFilter();
+			this.source.disconnect();
+			this.source.connect(this.fxFilter);
+			this.fxFilter.connect(this.analyser);
+			this.analyser.connect(this.audioContext.destination);
+		}
+
+		// --- 關鍵：根據 JSON 設定參數 ---
+		this.fxFilter.type = preset.type; // 如 'lowpass', 'highpass'
+		
+		// 使用平滑過渡避免爆音
+		this.fxFilter.frequency.setTargetAtTime(preset.freq, now, 0.1);
+		this.fxFilter.Q.setTargetAtTime(preset.q || 1, now, 0.1);
+		
+		// 如果 JSON 有設定 gain (例如 peaking 濾波器需要)
+		if (preset.gain !== undefined) {
+			this.fxFilter.gain.setTargetAtTime(preset.gain, now, 0.1);
+		}
+
+		// UI 視覺連動
+		const selector = document.getElementById('eq-selector');
+		
+		console.log(`維度切換成功: ${preset.name}`, preset);
+	}
 	
 	async loadShader(shaderName){
 		try {
