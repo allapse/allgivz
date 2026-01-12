@@ -1,120 +1,195 @@
-precision highp float;
-uniform vec2 u_res;
-uniform float u_time;
-uniform float u_volume;
-uniform float u_volume_smooth;
-uniform vec2 u_orient;
-uniform float u_intensity;
-uniform float u_complexity;
-uniform float u_speed;
-uniform float u_darkGlow;
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M40 10 L95 75 L45 95 Z' fill='%23666'/><path d='M40 10 L5 65 L45 95 Z' fill='%23333'/><path d='M45 95 L5 65 L95 75 Z' fill='%23000' fill-opacity='0.7'/></svg>">
+    <title>GLIDING</title>
+    <link rel="stylesheet" href="css/ui.css">
+</head>
+<body>
+	<div id="overlay" style="white-space: pre;">  G L I D I N G  </div>
+	<div id="mode-hint" display="none">TAP TO GLOW</div>
+	<div id="link">SOBER</div>
 
-#define PI 3.14159265359
+	<div id="ui-layer" style="display: none;"></div>
+	<script src="js/util.js"></script>
+	<script type="module">
+		// 1. 參數定義
+		const params = { intensity: 0.01, frequency: 2.0, speed: 0.002 };
+		window.params = params;
+		let orient = { x: 0.0, y: 0.0 };
+		window.orient = orient;
 
-// 偽隨機函數：生成雜訊的基礎
-float hash(vec2 p) {
-    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
-}
+		// 2. 初始化中樞
+		const audioMap = new AudioMap(params);
+		window.audioMap = audioMap;
+		
+		// 3. 生成 UI (此時 ID 自動與 config 掛鉤)
+		await audioMap.buildUI('ui-layer', [
+			{ id: 'ui-intensity', key: 'intensity', label: 'Distortion', min: 0, max: 2, step: 0.02, range: [61, 100] },
+			{ id: 'ui-freq', key: 'frequency', label: 'Complexity', min: 0.1, max: 10, step: 0.1, range: [0, 30] },
+			{ id: 'ui-speed', key: 'speed', label: 'Evolution', min: 0, max: 0.0025, step: 0.0001, range: [31, 60] },
+		],
+		'assets/audio/list.json',
+		true);
+	</script>
 
-// 簡單雜訊 (Value Noise)
-float noise(vec2 p) {
-    vec2 i = floor(p);
-    vec2 f = fract(p);
-    f = f * f * (3.0 - 2.0 * f);
-    float a = hash(i);
-    float b = hash(i + vec2(1.0, 0.0));
-    float c = hash(i + vec2(0.0, 1.0));
-    float d = hash(i + vec2(1.0, 1.0));
-    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
-}
+	<div id="container"></div>
 
-// 分形布朗運動 (FBM)：增加複雜度層次
-float fbm(vec2 p) {
-    float v = 0.0;
-    float amp = 0.5;
-    // u_complexity 決定疊代的細節量
-    int iter = int(3.0 + u_complexity * 17.0);
-    for (int i = 0; i < 8; i++) {
-        if (i >= iter) break;
-        v += noise(p) * amp;
-        p *= 2.1;
-        amp *= 0.5;
-    }
-    return v;
-}
+    <script type="importmap">
+        { "imports": { "three": "https://esm.sh/three@0.160.0" } }
+    </script>
 
-void main() {
-    // 1. 座標歸一化與視角修正
-    vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / min(u_res.y, u_res.x);
-    vec2 look = (u_orient);
-	vec2 targetLook = u_orient * 0.4;
-    
-    // 2. 極坐標轉換
-    float rot = u_orient.x * 0.2;
-    mat2 rotMat = mat2(cos(rot), -sin(rot), sin(rot), cos(rot));
-    vec2 p_uv = uv * rotMat - targetLook;
+    <script type="module">
+		import * as THREE from 'three';
 
-    float r = length(p_uv);
-    float angle = atan(p_uv.y, p_uv.x);
-    
-    // 兩倍鏡像
-    float mirrorAngle = abs(angle);
-    mirrorAngle = abs(mirrorAngle - PI * 0.5);
-    
-    // 3. 空間扭曲 (Space Warping)
-    // 深度計算加入音量影響，產生震盪感
-    float zoom = 1.0 / (r + 0.01) * (1.0 + u_volume_smooth * 0.5);
-    vec2 p = vec2(mirrorAngle * (u_intensity * 5.0 + 2.0) / 6.28, zoom + u_time * u_speed);
+		// --- 全域變數 ---
+		let renderer, scene, camera, material;
+		let darkGlowMode = false;
+		
+		const _VS = `void main() { gl_Position = vec4(position, 1.0); }`;
+		const _FS = `void main() { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); }`;
+		
+		// Slider 監聽
+		const overlay = document.getElementById('overlay');
+		overlay.addEventListener('click', async () => {
+			try {
+				// 1. 先啟動音訊 Context (解決 Mic 與播放問題)
+				await audioMap.initAudio('assets/audio/沒醉.mp3');
 
-    // 4. 域扭曲 (Domain Warping) - 這是產生「複雜感」的關鍵
-    // 公式：g(p) = fbm( p + fbm( p ) )
-    vec2 offset = vec2(fbm(p + u_time * 0.1), fbm(p - u_time * 0.1));
-    float pattern = fbm(p + offset + u_volume_smooth);
+				// 2. 啟動陀螺儀 (傳回 success 狀態)
+				const gyro = await audioMap.initGyro({ range: 20 }, (data) => {
+					// 建議在 data.x 傳出前已經在 initGyro 內部處理好基準點偏移
+					orient.x = data.x * 1.5;
+					orient.y = data.y * 1.5;
+				});
 
-    // 3. 深度與速度耦合
-    float depth = 1.0 / (r + 0.01);
-    float forward = depth + u_time * (u_speed * 10.0 + 5.0);
+				// 3. 只有成功啟動才關閉遮罩
+				if (gyro.success) {
+					overlay.style.display = 'none';
+				}
+			} catch (e) {
+				console.error("啟動失敗", e);
+			}
+		});
+		const link = document.getElementById('link');
+		link.addEventListener('click', function() {
+			window.location.assign("index.html");
+		});
 
-    // 4. 利用 u_orient 影響花紋的「流向」
-    // 當手機側翻時，花紋會往傾斜方向「墜落」
-    float pattern2 = sin(angle * 6.0 + u_orient.x * 2.0) * sin(forward + u_orient.y);
-    
-    // --- 顏色輸出與色散 ---
-    // 側翻越重，顏色層次越豐富
-    vec3 col;
-    col.r = smoothstep(0.4, 0.6, pattern2 + u_orient.x * 0.1);
-    col.g = smoothstep(0.4, 0.6, pattern2);
-    col.b = smoothstep(0.4, 0.6, pattern2 - u_orient.x * 0.1);
+		// 1. 同時監聽 click 和 touchend
+		['click', 'touchend'].forEach(eventType => {
+			window.addEventListener(eventType, (e) => {
+				const overlay = document.getElementById('overlay');
+				
+				// --- 攔截條件 ---
+				// 如果 Overlay 還在，不執行切換
+				if (overlay && overlay.style.display !== 'none') return;
+				// 如果點到 UI 控制板（或是 input），不執行切換
+				if (e.target.closest('#ui-layer') || e.target.tagName === 'INPUT') return;
+				// 如果點到的是 Overlay 本身（雖然已經隱藏，但作為保險），不執行切換
+				if (e.target.id === 'overlay') return;
+				if (e.target.closest('#link')) return;
 
-    // 結合 baseCol 與音量
-    vec3 baseCol = mix(vec3(0.1, 0.2, 0.5), vec3(0.7, 0.1, 0.4), u_volume_smooth);
-    vec3 finalCol = col * baseCol * (1.0 + u_volume_smooth);
+				// --- 執行切換 ---
+				toggleDarkGlow();
 
-    // 邊緣光暈處理
-    finalCol += (vec3(0.3, 0.6, 1.0) * 0.2) / (r + 0.1);
-    
-    // 基礎色調：根據深度與音量變化
-    vec3 col1 = vec3(0.1, 0.05, 0.2); // 深紫
-    vec3 col2 = vec3(0.0, 0.8, 1.0); // 電光藍
-    vec3 baseCol2 = mix(col1, col2, pattern + u_volume_smooth);
+				// 避免在某些瀏覽器上 click 和 touchend 重複觸發
+				if (eventType === 'touchend') {
+					// 如果點擊有效，防止後續的 click 事件產生
+					// e.preventDefault(); // 注意：若有其他連結需要點擊，可視情況註解此行
+				}
+			}, { passive: true });
+		});
+		
+		function toggleDarkGlow() {
+			darkGlowMode = !darkGlowMode;
+			// 將布林值轉為 0.0 或 1.0 傳給 Shader
+			audioMap.material.uniforms.u_darkGlow.value = darkGlowMode ? 1.0 : 0.0;
+		}
+		
+		// 2. 初始化 Three.js 環境
+		async function init() {
+			scene = new THREE.Scene();
+			camera = new THREE.Camera(); // 正交相機，適合全螢幕 Shader
+			
+			renderer = new THREE.WebGLRenderer({ antialias: true });
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			document.getElementById('container').appendChild(renderer.domElement);
 
-    if (u_darkGlow > 0.5) {
-        // 模式 A：星雲/黑洞模式
-        float glow = pow(pattern, 3.0) * 2.0;
-        finalCol = baseCol2 * glow;
-        finalCol += vec3(0.5, 0.2, 0.8) * (1.0 - r); // 邊緣色彩滲透
-    } else {
-        // 模式 B：數位/矩陣模式 (駭客綠升級版)
-        float scanline = sin(gl_FragCoord.y * 2.0 + u_time * 20.0) * 0.1;
-        float grid = step(0.9, fract(p.x * 10.0)) + step(0.9, fract(p.y * 10.0));
-        float hack = (1.0 - pattern) * 1.5;
-        finalCol = vec3(hack * 0.1, hack, hack * 0.4) + grid * 0.2 + scanline;
-    }
+			// 關鍵：在 Three.js 中定義 Uniforms
+			audioMap.material = new THREE.ShaderMaterial({
+				uniforms: {
+					u_res: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+					u_time: { value: 0.0 },
+					u_volume: { value: 0.0 },
+					u_volume_smooth: { value: 0.0 },
+					u_last_volume: { value: 0.0 },
+					u_orient: { value: new THREE.Vector2(0.5, 0.5) },
+					// --- 加入 UI 參數 ---
+					u_intensity: { value: params.intensity },
+					u_complexity: { value: params.frequency },
+					u_speed: { value: params.speed },
+					u_darkGlow: { value: 0.0 }
+				},
+				vertexShader: _VS,
+				fragmentShader: _FS
+			});
+			
+			await audioMap.loadShader('assets/shader/fbm.frag');
 
-    // 6. 中心發光與邊緣壓暗
-    float center = pow(0.05 / (r + 0.01), 1.5) * (1.0 + u_volume * 2.0);
-    finalCol += vec3(0.8, 0.9, 1.0) * center;
-    finalCol *= smoothstep(1.5, 0.2, r); // Vignette
+			const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), audioMap.material);
+			scene.add(mesh);
+			
+			animate();
+		}
+		
+		let smoothedVolume = 0;
+		let lastVolume = 0;
+		
+		// 3. Three.js 的渲染循環 (取代你原本手寫的 render)
+		function animate(time) {
+			requestAnimationFrame(animate);
 
-    gl_FragColor = vec4(finalCol, 1.0);
-}
+			// 更新時間
+			audioMap.material.uniforms.u_time.value += 0.01 + params.speed * 5;
+
+			// 更新音量
+			if (audioMap && audioMap.analyser && audioMap.dataArray) {
+				audioMap.analyser.getByteFrequencyData(audioMap.dataArray);
+				let sum = 0;
+				for (let i = 0; i < audioMap.dataArray.length; i++) sum += audioMap.dataArray[i];
+				let currentTarget = sum / audioMap.dataArray.length / 255.0;
+				smoothedVolume += (currentTarget - smoothedVolume) * 0.15;
+				audioMap.material.uniforms.u_volume.value = currentTarget;
+				audioMap.material.uniforms.u_volume_smooth.value = Math.pow(smoothedVolume, 1.5) * 1.5;
+				audioMap.material.uniforms.u_last_volume.value = lastVolume;
+				lastVolume = currentTarget;
+				
+				audioMap.updateAudioReaction(audioMap.dataArray, null);
+				audioMap.updateGyroUI(orient);
+				
+				if(audioMap.audio.currentTime && audioMap.audio.duration)
+				audioMap.material.uniforms.u_progress = audioMap.audio.currentTime / audioMap.audio.duration;
+			}
+
+			// 更新陀螺儀
+			audioMap.material.uniforms.u_orient.value.set(orient.x, orient.y);
+			audioMap.material.uniforms.u_intensity.value = params.intensity;
+			audioMap.material.uniforms.u_complexity.value = params.frequency;
+			audioMap.material.uniforms.u_speed.value = params.speed;
+			
+			renderer.render(scene, camera);
+		}
+
+		// 啟動
+		await init();
+
+		window.onresize = () => {
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			audioMap.material.uniforms.u_res.value.set(window.innerWidth, window.innerHeight);
+		};
+    </script>
+</body>
+</html>
