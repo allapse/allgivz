@@ -44,6 +44,7 @@ button, input, select, textarea {
     z-index: 1000; /* 確保它比 overlay 還高，或至少在最上層 */
     pointer-events: auto; /* 確保滑鼠點得到它 */
     /* 不要寫 display: none，我們交給 HTML 的 inline style 或 JS 控制 */
+	touch-action: auto;
 }
 
 #overlay {
