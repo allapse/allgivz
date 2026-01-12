@@ -9,6 +9,16 @@ html, body {
 
     /* 3. 防止手機端字體自動縮放 */
     text-size-adjust: 100%;
+	
+	/* 移除所有點擊觸發的縮放與延遲 */
+    touch-action: manipulation;
+    
+    /* 防止在 iOS 上長按圖片或連結彈出選單（選填） */
+    -webkit-touch-callout: none;
+    
+    /* 防止文字選取（選填，適合全螢幕視覺作品） */
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 /* 針對所有的 Form 元素（select、button、input）強制繼承字體 */
