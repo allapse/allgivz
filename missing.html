@@ -16,13 +16,9 @@
 <div id="ui-layer" style="display: none;"></div>
 <script src="js/util.js"></script>
 <script type="module">
-	// 1. 參數定義
-	const params = { intensity: 0, speed: 0, complexity: 0.1 };
-	window.params = params;
-
-	// 2. 初始化中樞
-	const audioMap = new AudioMap(params);
+	const audioMap = new AudioMap();
 	window.audioMap = audioMap;
+	window.params = audioMap.params;
 
 	// 3. 生成 UI (此時 ID 自動與 config 掛鉤)
 	audioMap.buildUI('ui-layer', [
@@ -257,7 +253,8 @@
             audioMap.analyser.getByteFrequencyData(audioMap.dataArray);
 			
 			audioMap.updateAudioReaction(audioMap.dataArray, null);
-			audioMap.updateGyroUI(orient);
+			audioMap.orient = orient;
+			audioMap.updateGyroUI();
 			
             let sum = 0;
             for (let j = 0; j < audioMap.dataArray.length; j++) sum += audioMap.dataArray[j];
@@ -385,7 +382,5 @@
 </script>
 </body>
 </html>
-
-
 
 
