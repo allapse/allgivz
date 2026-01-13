@@ -866,7 +866,7 @@ class AudioMap {
 			this.lastVolume = currentTarget;
 			
 			this.updateAudioReaction();
-			this.updateGyroUI();
+			this.updateGyroUI(this.orient);
 			
 			this.material.uniforms.u_progress.value = this.audio.currentTime / this.audio.duration;
 			this.material.uniforms.u_orient.value.set(this.orient.x, this.orient.y);
