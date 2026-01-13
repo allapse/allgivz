@@ -315,7 +315,8 @@ class AudioMap {
 				// 切換布林值
 				this.darkGlowMode = !this.darkGlowMode;
 				
-				this.material.uniforms.u_darkGlow.value = this.darkGlowMode ? 1.0 : 0.0;
+				if(this.material)
+					this.material.uniforms.u_darkGlow.value = this.darkGlowMode ? 1.0 : 0.0;
 				
 				const hint = document.getElementById('mode-hint');
 				
