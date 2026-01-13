@@ -114,8 +114,8 @@ class AudioMap {
 					// 1. 啟動陀螺儀 (傳回 success 狀態)
 					const gyro = await this.initGyro({ range: 20 }, (data) => {
 						// 建議在 data.x 傳出前已經在 initGyro 內部處理好基準點偏移
-						orient.x = data.x * 1.5;
-						orient.y = data.y * 1.5;
+						this.orient.x = data.x * 1.5;
+						this.orient.y = data.y * 1.5;
 					});
 					
 					// 2. 先啟動音訊 Context (解決 Mic 與播放問題)
@@ -728,9 +728,7 @@ class AudioMap {
 
 			// 第一次執行或手動重置後會進來
 			if (baseQ === null) {
-				baseQ = currentQ;
-				startOffset.x = dx;
-				startOffset.y = dy;
+				resetBase(currentQ, dx, dy);
 				return;
 			}
 
