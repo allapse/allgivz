@@ -16,7 +16,7 @@
 	<script src="js/util.js"></script>
 	<script type="module">
 		// 1. 參數定義
-		const params = { intensity: 0.3, frequency: 2.0, speed: 0.002 };
+		const params = { intensity: 0.3, complexity: 2.0, speed: 0.002 };
 		window.params = params;
 		let orient = { x: 0.0, y: 0.0 };
 		window.orient = orient;
@@ -274,7 +274,7 @@
 					u_orient: { value: new THREE.Vector2(0.5, 0.5) },
 					// --- 加入 UI 參數 ---
 					u_intensity: { value: params.intensity },
-					u_complexity: { value: params.frequency },
+					u_complexity: { value: params.complexity },
 					u_speed: { value: params.speed },
 					u_darkGlow: { value: 0.0 }
 				},
@@ -317,7 +317,7 @@
 			// 更新陀螺儀
 			material.uniforms.u_orient.value.set(orient.x, orient.y);
 			material.uniforms.u_intensity.value = params.intensity;
-			material.uniforms.u_complexity.value = params.frequency;
+			material.uniforms.u_complexity.value = params.complexity;
 			material.uniforms.u_speed.value = params.speed;
 
 			renderer.render(scene, camera);
@@ -333,6 +333,7 @@
     </script>
 </body>
 </html>
+
 
 
 
