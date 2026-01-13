@@ -123,7 +123,7 @@ class AudioMap {
 
 					// 3. 只有成功啟動才關閉遮罩
 					if (gyro.success) {
-						overlay.style.display = 'none';
+						//overlay.style.display = 'none';
 					}
 				} catch (e) {
 					console.error("啟動失敗", e);
@@ -561,7 +561,7 @@ class AudioMap {
 	
 	async initAudio(audioPath = null) {
 		// 1. UI 與 陀螺儀 (保持不變)
-		//document.getElementById('overlay').style.display = 'none';
+		document.getElementById('overlay').style.display = 'none';
 		const uiElements = ['ui-layer', 'mode-hint', 'link'];
 		uiElements.forEach(id => {
 			const el = document.getElementById(id);
