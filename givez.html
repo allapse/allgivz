@@ -2,193 +2,31 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M40 10 L95 75 L45 95 Z' fill='%23666'/><path d='M40 10 L5 65 L45 95 Z' fill='%23333'/><path d='M45 95 L5 65 L95 75 Z' fill='%23000' fill-opacity='0.7'/></svg>">
     <title>GIVE Z</title>
     <link rel="stylesheet" href="css/ui.css">
 </head>
 <body>
-	<div id="overlay" style="white-space: pre;">   G I V E   Z   </div>
-	<div id="mode-hint" display="none">TAP TO GLOW</div>
-	<div id="link">SOBER</div>
-
-	<div id="ui-layer" style="display: none;"></div>
 	<script src="js/util.js"></script>
-	<script type="module">
-		// 1. 參數定義
-		const params = { intensity: 0.01, frequency: 2.0, speed: 0.002 };
-		window.params = params;
-		let orient = { x: 0.0, y: 0.0 };
-		window.orient = orient;
-
-		// 2. 初始化中樞
-		const audioMap = new AudioMap(params);
-		window.audioMap = audioMap;
-		
-		// 3. 生成 UI (此時 ID 自動與 config 掛鉤)
-		await audioMap.buildUI('ui-layer', [
-			{ id: 'ui-intensity', key: 'intensity', label: 'Distortion', min: 0, max: 2, step: 0.02, range: [61, 100] },
-			{ id: 'ui-freq', key: 'frequency', label: 'Complexity', min: 0.1, max: 10, step: 0.1, range: [0, 30] },
-			{ id: 'ui-speed', key: 'speed', label: 'Evolution', min: 0, max: 0.0025, step: 0.0001, range: [31, 60] },
-		],
-		'assets/audio/list.json',
-		true);
-	</script>
-
-	<div id="container"></div>
-
     <script type="importmap">
         { "imports": { "three": "https://esm.sh/three@0.160.0" } }
     </script>
-
     <script type="module">
 		import * as THREE from 'three';
+		window.THREE = THREE;
 
-		// --- 全域變數 ---
-		let renderer, scene, camera, material;
-		let darkGlowMode = false;
+		const audioMap = new AudioMap();
 		
-		const _VS = `void main() { gl_Position = vec4(position, 1.0); }`;
-		const _FS = `void main() { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); }`;
+		audioMap.buildMainUI('   G I V E   Z   ', 'SOBER', 'index.html', 'assets/audio/刺耳(給力).mp3');
 		
-		// Slider 監聽
-		const overlay = document.getElementById('overlay');
-		overlay.addEventListener('click', async () => {
-			try {
-				// 2. 啟動陀螺儀 (傳回 success 狀態)
-				const gyro = await audioMap.initGyro({ range: 20 }, (data) => {
-					// 建議在 data.x 傳出前已經在 initGyro 內部處理好基準點偏移
-					orient.x = data.x * 1.5;
-					orient.y = data.y * 1.5;
-				});
-				
-				// 1. 先啟動音訊 Context (解決 Mic 與播放問題)
-				await audioMap.initAudio('assets/audio/刺耳(給力).mp3');
+		await audioMap.buildUI('ui-layer', [
+			{ id: 'ui-intensity', key: 'intensity', label: 'Distortion', min: 0, max: 2, step: 0.02, range: [61, 100] },
+			{ id: 'ui-speed', key: 'speed', label: 'Evolution', min: 0, max: 0.0025, step: 0.0001, range: [31, 60] },
+			{ id: 'ui-complexity', key: 'complexity', label: 'Complexity', min: 0.1, max: 10, step: 0.1, range: [0, 30] },
+		], 'assets/audio/list.json', true);
 
-				// 3. 只有成功啟動才關閉遮罩
-				if (gyro.success) {
-					overlay.style.display = 'none';
-				}
-			} catch (e) {
-				console.error("啟動失敗", e);
-			}
-		});
-		const link = document.getElementById('link');
-		link.addEventListener('click', function() {
-			window.location.assign("index.html");
-		});
-
-		// 1. 同時監聽 click 和 touchend
-		['click', 'touchend'].forEach(eventType => {
-			window.addEventListener(eventType, (e) => {
-				const overlay = document.getElementById('overlay');
-				
-				// --- 攔截條件 ---
-				// 如果 Overlay 還在，不執行切換
-				if (overlay && overlay.style.display !== 'none') return;
-				// 如果點到 UI 控制板（或是 input），不執行切換
-				if (e.target.closest('#ui-layer') || e.target.tagName === 'INPUT') return;
-				// 如果點到的是 Overlay 本身（雖然已經隱藏，但作為保險），不執行切換
-				if (e.target.id === 'overlay') return;
-				if (e.target.closest('#link')) return;
-
-				// --- 執行切換 ---
-				toggleDarkGlow();
-
-				// 避免在某些瀏覽器上 click 和 touchend 重複觸發
-				if (eventType === 'touchend') {
-					// 如果點擊有效，防止後續的 click 事件產生
-					// e.preventDefault(); // 注意：若有其他連結需要點擊，可視情況註解此行
-				}
-			}, { passive: true });
-		});
-		
-		function toggleDarkGlow() {
-			darkGlowMode = !darkGlowMode;
-			// 將布林值轉為 0.0 或 1.0 傳給 Shader
-			audioMap.material.uniforms.u_darkGlow.value = darkGlowMode ? 1.0 : 0.0;
-		}
-		
-		// 2. 初始化 Three.js 環境
-		async function init() {
-			scene = new THREE.Scene();
-			camera = new THREE.Camera(); // 正交相機，適合全螢幕 Shader
-			
-			renderer = new THREE.WebGLRenderer({ antialias: true });
-			renderer.setSize(window.innerWidth, window.innerHeight);
-			document.getElementById('container').appendChild(renderer.domElement);
-
-			// 關鍵：在 Three.js 中定義 Uniforms
-			audioMap.material = new THREE.ShaderMaterial({
-				uniforms: {
-					u_res: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-					u_time: { value: 0.0 },
-					u_volume: { value: 0.0 },
-					u_volume_smooth: { value: 0.0 },
-					u_last_volume: { value: 0.0 },
-					u_orient: { value: new THREE.Vector2(0.5, 0.5) },
-					// --- 加入 UI 參數 ---
-					u_intensity: { value: params.intensity },
-					u_complexity: { value: params.frequency },
-					u_speed: { value: params.speed },
-					u_darkGlow: { value: 0.0 }
-				},
-				vertexShader: _VS,
-				fragmentShader: _FS
-			});
-			
-			await audioMap.loadShader('assets/shader/gliding.frag');
-
-			const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), audioMap.material);
-			scene.add(mesh);
-			
-			animate();
-		}
-		
-		let smoothedVolume = 0;
-		let lastVolume = 0;
-		
-		// 3. Three.js 的渲染循環 (取代你原本手寫的 render)
-		function animate(time) {
-			requestAnimationFrame(animate);
-
-			// 更新時間
-			audioMap.material.uniforms.u_time.value += 0.01 + params.speed * 5;
-
-			// 更新音量
-			if (audioMap && audioMap.analyser && audioMap.dataArray) {
-				audioMap.analyser.getByteFrequencyData(audioMap.dataArray);
-				let sum = 0;
-				for (let i = 0; i < audioMap.dataArray.length; i++) sum += audioMap.dataArray[i];
-				let currentTarget = sum / audioMap.dataArray.length / 255.0;
-				smoothedVolume += (currentTarget - smoothedVolume) * 0.15;
-				audioMap.material.uniforms.u_volume.value = currentTarget;
-				audioMap.material.uniforms.u_volume_smooth.value = Math.pow(smoothedVolume, 1.5) * 1.5;
-				audioMap.material.uniforms.u_last_volume.value = lastVolume;
-				lastVolume = currentTarget;
-				
-				audioMap.updateAudioReaction(audioMap.dataArray, null);
-				audioMap.updateGyroUI(orient);
-			}
-
-			// 更新陀螺儀
-			audioMap.material.uniforms.u_orient.value.set(orient.x, orient.y);
-			audioMap.material.uniforms.u_intensity.value = params.intensity;
-			audioMap.material.uniforms.u_complexity.value = params.frequency;
-			audioMap.material.uniforms.u_speed.value = params.speed;
-
-			renderer.render(scene, camera);
-		}
-
-		// 啟動
-		await init();
-
-		window.onresize = () => {
-			renderer.setSize(window.innerWidth, window.innerHeight);
-			audioMap.material.uniforms.u_res.value.set(window.innerWidth, window.innerHeight);
-		};
-    </script>
+		await audioMap.startEngine('assets/shader/gliding.frag');
+	</script>
 </body>
 </html>
-
-
