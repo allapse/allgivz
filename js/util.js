@@ -79,7 +79,7 @@ class AudioMap {
 		this.fxFilter = null;
 		this.eqList = null;
 		this.material = null;
-		this.params = { intensity: 0.04, speed: 0.005, complexity: 0.2 };
+		this.params = { intensity: 0, speed: 0, complexity: 0.1 };
 		this.orient = { x: 0.0, y: 0.0 };
 		this.audioMappings = [];
 		this.smoothedVolume = null;
