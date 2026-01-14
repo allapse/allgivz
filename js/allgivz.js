@@ -558,6 +558,8 @@ class AudioMap {
     updateAudioReaction() {
         if (!this.dataArray || !this.audioMappings.length) return;
 		
+		this.handleVol();
+		
 		const now = Date.now();
 
 		if (!this.isBPMLocked) {
@@ -618,17 +620,77 @@ class AudioMap {
 				}
 			}
 			
-			if (!el || el.dataset.isDragging === "true") return;
+			if (el.dataset.isDragging === "true") {
+				const currentVal = parseFloat(el.value);
+				this.params[mapping.key] = currentVal; // 同步最新數值
+				
+				const uKey = "u_" + mapping.key;
+				if (this.material && this.material.uniforms[uKey]) {
+					this.material.uniforms[uKey].value = currentVal;
+				}
+				return; // 跳過下方的音訊計算，但 Uniform 已經更新了
+			}
 			
 			if(mapping.range)
-				this.handleLegacy(mapping, min, max, el);
+				this.handleLegacy(mapping, min, max);
 			else
-				this.handleGivz(mapping, min, max, el);
+				this.handleGivz(mapping, min, max);
 			
+			el.value = this.params[mapping.key];
+
+			// --- 更新 Material Uniforms ---
+			if (this.material && this.material.uniforms) {
+				const uKey = "u_" + mapping.key;
+				if (this.material.uniforms[uKey]) {
+					this.material.uniforms[uKey].value = this.params[mapping.key];
+				}
+			}
 		});
     }
 	
-	handleLegacy(mapping, min, max, el){
+	handleVol() {
+		this.analyser.getByteFrequencyData(this.dataArray);
+		
+		let sum = 0;
+		let peak = 0;
+		const len = this.dataArray.length;
+
+		for (let i = 0; i < len; i++) {
+			const val = this.dataArray[i];
+			sum += val;
+			// 計算峰值
+			if (val > peak) peak = val;
+		}
+
+		// 正規化 (0.0 ~ 1.0)
+		const currentTarget = sum / len / 255.0;
+		const currentPeak = peak / 255.0;
+
+		// 平滑化處理
+		this.smoothedVolume += (currentTarget - this.smoothedVolume) * 0.15;
+
+		// 更新 Uniforms
+		this.material.uniforms.u_volume.value = currentTarget;
+		this.material.uniforms.u_volume_smooth.value = Math.pow(this.smoothedVolume, 1.5) * 1.5;
+		this.material.uniforms.u_last_volume.value = this.lastVolume;
+		
+		// 如果你有預留峰值的 Uniform
+		if(this.material.uniforms.u_volume_peak) {
+			this.material.uniforms.u_volume_peak.value = currentPeak;
+		}
+
+		// 儲存本次狀態供下次循環使用
+		this.lastVolume = currentTarget;
+
+		// 回傳一個 Map 或物件，方便後續擴充 (例如做動態縮放)
+		return {
+			average: currentTarget,
+			smooth: this.smoothedVolume,
+			peak: currentPeak
+		};
+	}
+	
+	handleLegacy(mapping, min, max){
 		// --- 1~4. 你的核心計算邏輯 (平均值、峰值、Power 縮放) ---
 		let sum = 0;
 		for (let i = mapping.range[0]; i <= mapping.range[1]; i++) sum += this.dataArray[i];
@@ -649,18 +711,9 @@ class AudioMap {
 
 		// 核心：更新這個被引用的 params 物件
 		this.params[mapping.key] += (targetVal - this.params[mapping.key]) * 0.1;
-		el.value = this.params[mapping.key];
-		
-		// --- 6. 條件式更新 Material (僅在傳入 material 時執行) ---
-		if (this.material && this.material.uniforms) {
-			const uKey = "u_" + mapping.key;
-			if (this.material.uniforms[uKey]) {
-				this.material.uniforms[uKey].value = this.params[mapping.key];
-			}
-		}
 	}
 	
-	handleGivz(mapping, min, max, el) {
+	handleGivz(mapping, min, max) {
 		const data = this.dataArray;
 		const N = data.length;
 		let result = 0;
@@ -676,6 +729,7 @@ class AudioMap {
 				}
 				// 歸一化到 0~1 (重心位置 / 頻譜長度)
 				result = totalAmplitude > 0 ? (weightedSum / totalAmplitude) / N : 0;
+				result *= result;
 				break;
 
 			case 'speed': // 全域飽滿度 (Spectral Flatness)
@@ -692,17 +746,20 @@ class AudioMap {
 				break;
 
 			case 'complexity': // 全域複雜度 (Spectral Flux)
-				// 需要儲存上一幀數據 prevDataArray
 				if (!this.prevDataArray) this.prevDataArray = new Uint8Array(N);
 				let flux = 0;
 				for (let i = 0; i < N; i++) {
 					const diff = data[i] - this.prevDataArray[i];
 					flux += Math.max(0, diff);
 				}
-				// 更新上一幀快照
 				this.prevDataArray.set(data);
-				// 歸一化 (Flux 通常變動大，建議除以一個經驗常數或動態 Peak)
-				result = Math.min(flux / 500, 1.0); 
+
+				// 歸一化修正：flux 數值通常很大
+				let rawComplexity = Math.min(flux / (N * 2), 1.0); 
+				
+				// 平滑處理：讓抖動變成「律動」
+				this.lastComplexity = (this.lastComplexity || 0) * 0.9 + rawComplexity * 0.1;
+				result = this.lastComplexity;
 				break;
 		}
 
@@ -719,15 +776,6 @@ class AudioMap {
 		
 		// 平滑過渡到 params
 		this.params[mapping.key] += (targetVal - this.params[mapping.key]) * 0.1;
-		el.value = this.params[mapping.key];
-
-		// --- 更新 Material Uniforms ---
-		if (this.material && this.material.uniforms) {
-			const uKey = "u_" + mapping.key;
-			if (this.material.uniforms[uKey]) {
-				this.material.uniforms[uKey].value = this.params[mapping.key];
-			}
-		}
 	}
 	
 	async initAudio(audioPath = null) {
@@ -990,6 +1038,7 @@ class AudioMap {
 				u_volume: { value: 0.0 },
 				u_volume_smooth: { value: 0.0 },
 				u_last_volume: { value: 0.0 },
+				u_peak: { value: 0.0 },
 				u_orient: { value: new THREE.Vector2(0.5, 0.5) },
 				// --- 加入 UI 參數 ---
 				u_intensity: { value: this.params.intensity },
@@ -1023,19 +1072,10 @@ class AudioMap {
 	
 	internalUpdate(){
 		// 更新時間
-		this.material.uniforms.u_time.value += 0.01 + this.params.speed * 5;
+		this.material.uniforms.u_time.value += 0.01 + this.params.speed * 0.05;
 
 		// 更新音量
 		if (this && this.analyser && this.dataArray) {
-			this.analyser.getByteFrequencyData(this.dataArray);
-			let sum = 0;
-			for (let i = 0; i < this.dataArray.length; i++) sum += this.dataArray[i];
-			let currentTarget = sum / this.dataArray.length / 255.0;
-			this.smoothedVolume += (currentTarget - this.smoothedVolume) * 0.15;
-			this.material.uniforms.u_volume.value = currentTarget;
-			this.material.uniforms.u_volume_smooth.value = Math.pow(this.smoothedVolume, 1.5) * 1.5;
-			this.material.uniforms.u_last_volume.value = this.lastVolume;
-			this.lastVolume = currentTarget;
 			
 			this.updateAudioReaction();
 			this.updateGyroUI();
