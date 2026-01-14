@@ -3,9 +3,12 @@ uniform vec2 u_res;
 uniform float u_time;
 uniform float u_volume;
 uniform float u_volume_smooth;
+uniform float u_peak;
 uniform vec2 u_orient;      // x: 左右旋轉, y: 垂直位移/縮放
 uniform float u_intensity;  
 uniform float u_complexity; 
+uniform float u_speed;
+uniform float u_darkGlow;
 
 // 旋轉矩陣函數
 mat2 rot(float a) {
@@ -31,7 +34,7 @@ void main() {
     
     // --- 2. 空間扭曲層 (Warping Layer) ---
     // 衝擊波現在會隨著你的視角轉動而同步位移
-    float shock = 0.01 + sin(distToCenter * 15.0 - u_time * 5.0) * u_volume_smooth * u_intensity;
+    float shock = 0.01 + sin(distToCenter * 15.0 - u_time) * u_volume_smooth;
     uv += normalize(uv) * shock; 
     
     // --- 3. 物理場與粒子參數 ---
@@ -53,7 +56,7 @@ void main() {
         float seed = hash21(id);
         
         // 力的計算：加入 u_complexity 影響的波動頻率
-        float wave = sin(shiftUv.x * (5.0 * u_complexity)) * cos(shiftUv.y * 5.0);
+        float wave = sin(shiftUv.x * (20.0 * u_complexity)) * cos(shiftUv.y * 5.0);
         
         // 力的向量受旋轉後的 UV 影響，會產生跟隨視角的動態感
         vec2 force = mix(
@@ -80,6 +83,19 @@ void main() {
     
     // 增加邊緣整體的質感與環境光
     finalCol *= (0.9 + 0.1 * sin(u_time * 20.0));
-
-    gl_FragColor = vec4(finalCol, 1.0);
+	
+	if (u_darkGlow > 0.5) {
+		float luma = dot(finalCol, vec3(0.9126, 0.2152, 0.0222));
+		
+		// 產生隨時間移動的掃描線
+		float scanline = sin(gl_FragCoord.y * 0.8 + u_time * u_speed * 10.0) * 0.1;
+		
+		// 反轉亮度並疊加掃描線
+		float inverted = pow(max(0.0, 1.0 - luma), 2.5) + scanline;
+		
+		// 色彩受到 Intensity 影響，越高越紅，越低越藍
+		vec3 cyberColor = mix(vec3(0.1, 0.1, 0.1), vec3(0.9, 0.9, 1.0), u_intensity);
+		
+		finalCol = inverted * cyberColor;
+	}    gl_FragColor = vec4(finalCol, 1.0);
 }

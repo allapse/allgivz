@@ -7,6 +7,8 @@ uniform float u_last_volume;
 uniform vec2 u_orient;      // 控制旋轉視角: x (左右), y (上下)
 uniform float u_intensity;  
 uniform float u_complexity; 
+uniform float u_speed; 
+uniform float u_darkGlow;
 
 // 旋轉矩陣函數
 mat2 rot(float a) {
@@ -24,27 +26,27 @@ float hash(vec3 p) {
 // 3D 距離函數：這個宇宙的「實體內容」
 float map(vec3 p, float filteredVol) {
     float vol = filteredVol;
-    float phase = pow(u_complexity / 50.0, 3.0);
+    float phase = u_speed;
     
     // 基礎扭曲：隨深度旋轉
     p.xy *= rot(p.z * 0.15);
     
     // 物態演化
-    if (phase < 0.4) {
+    if (phase < 0.3) {
         // 固態：幾何分形
         for(int i=0; i<3; i++) {
-            p = abs(p) - 0.4 * (1.0 + vol);
+            p = abs(p) - 0.4 * (1.0);
             p.xy *= rot(0.5 + phase);
             p.xz *= rot(0.8);
         }
     } else {
         // 液態/神經態：空間波動
-        p += sin(p.zxy * 1.5 + u_time) * 0.3 * phase;
+        p += sin(p.zxy * 1.5 + u_time) * u_complexity * phase;
     }
     
     // 產生無限重複的粒子晶格
     vec3 q = mod(p, 2.0) - 1.0;
-    return length(q) - (0.04 + vol * 0.25);
+    return length(q) - (0.04 + 0.25);
 }
 
 void main() {
@@ -53,7 +55,7 @@ void main() {
     
     // --- 1. 時間與速度演化 ---
     float timeSpeed = mix(1.0, 0.05, pow(filteredVol, 3.0));
-    float t_axis = u_time * 2.5;
+    float t_axis = u_time * 0.01;
 
     // --- 2. 攝像機設置 (Camera & Orientation) ---
     vec3 ro = vec3(0.0, 0.0, t_axis); // 攝像機位置 (隨時間推進)
@@ -72,7 +74,7 @@ void main() {
     float glow = 0.0;
     vec3 p;
     
-    for(int i=0; i<50; i++) {
+    for(int i=0; i<20; i++) {
         p = ro + rd * t;
         float d = map(p, filteredVol);
         
@@ -87,7 +89,7 @@ void main() {
     float fog = 1.0 / (1.0 + t * t * 0.05);
     
     // 動態色譜：低強度為冷調，高強度為輻射橘
-    vec3 baseCol = mix(vec3(0.1, 0.3, 0.9), vec3(1.0, 0.4, 0.1), u_intensity * 2.0);
+    vec3 baseCol = mix(vec3(0.1, 0.3, 0.9), vec3(1.0, 0.4, 0.1), u_intensity);
     
     // 增加一點隨深度變化的色相偏移
     baseCol.rb *= rot(t * 0.1); 
@@ -141,6 +143,17 @@ void main() {
     // 5. 終極光影：對比度強化與輝光溢出
     sceneCol = smoothstep(0.0, 1.2, sceneCol);
     sceneCol += pow(u_volume_smooth, 4.0) * 0.5; // 音量峰值閃光
+	
+	float d = map(p, filteredVol);
+
+	if (u_darkGlow < 0.5) {
+		// 透過極坐標或 P 座標產生掃描線感
+		float scanline = smoothstep(0.05, 0.0, abs(fract(p.y * 10.0) - 0.5));
+		float grid = smoothstep(0.05, 0.0, abs(fract(p.x * 10.0) - 0.5));
+		col += (scanline + grid) * vec3(0.0, 1.0, 0.5) * fog;
+		// 讓背景完全漆黑，只留綠色線條
+		col *= 0.2; 
+	}
     
     gl_FragColor = vec4(col, 1.0);
 }

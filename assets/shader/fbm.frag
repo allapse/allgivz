@@ -29,7 +29,7 @@ float noise(vec2 p) {
 float fbm(vec2 p) {
     float v = 0.0;
     float amp = 0.5;
-    int iter = int(3.0 + u_complexity * 10.0); // 稍微降低疊代提高效能
+    int iter = int(3.0 + u_complexity * 20.0); // 稍微降低疊代提高效能
     for (int i = 0; i < 6; i++) {
         if (i >= iter) break;
         v += noise(p) * amp;
@@ -68,10 +68,10 @@ void main() {
     // 4. 隧道深度計算 (使用 u_intensity 決定寬窄)
     float zoom = 1.0 / (r + 0.01) * (1.0 + u_volume_smooth * 0.3);
     // 這裡 p.x 是角度分佈，p.y 是向中心前進的深度
-    vec2 p = vec2(mirrorAngle * (u_intensity * 3.0 + 1.0) / PI, zoom + u_time * (u_speed * 20.0 + 2.0));
+    vec2 p = vec2(mirrorAngle * (u_intensity * 5.0 + 1.0) / PI, zoom + u_time);
 
     // 5. 域扭曲 (Domain Warping)
-    vec2 warpOffset = vec2(fbm(p * 0.5 + u_time * 0.1), fbm(p * 0.5 - u_time * 0.1));
+    vec2 warpOffset = vec2(fbm(p * 0.5 + u_time), fbm(p * 0.5 - u_time));
     float pattern = fbm(p + warpOffset + u_volume_smooth * 0.2);
 
     // 利用 u_orient 影響圖樣偏移，加強「物理傾斜」的錯覺
@@ -85,9 +85,9 @@ void main() {
     vec3 col2 = vec3(0.0, 0.9, 1.0);   // 亮藍
     vec3 baseCol = mix(col1, col2, pattern + u_volume_smooth * 0.5);
 
-    if (u_darkGlow > 0.5) {
+    if (u_darkGlow < 0.5) {
         // 模式 A：深色發光 (星雲)
-        float glow = pow(pattern, 2.5) * 3.0;
+        float glow = pow(pattern, 2.5) * 2.0;
         finalCol = baseCol * glow;
         // 加上邊緣色散，隨 orient 偏移
         finalCol.r += smoothstep(0.3, 0.7, pattern + u_orient.x * 0.1) * 0.2;
@@ -95,7 +95,7 @@ void main() {
     } else {
         // 模式 B：數位矩陣
         float grid = step(0.92, fract(p.x * 8.0)) + step(0.92, fract(p.y * 8.0));
-        float hack = (1.0 - pattern) * 2.0;
+        float hack = (1.0 - pattern) * 1.0;
         vec3 matrixCol = vec3(hack * 0.1, hack * 0.8, hack * 0.4);
         finalCol = matrixCol + grid * 0.3 * vec3(0.0, 1.0, 0.5);
     }

@@ -33,13 +33,13 @@ void main() {
 	p += look * (depth * 0.5); 
     
     // 4. 建立紋理與控制參數
-    float forward = depth + u_time * (u_speed * 10.0 + 5.0);
+    float forward = depth + u_time * 3.0;
     
     // 使用 u_complexity 控制隧道壁的瓣數
-    float sides = floor(6.0 + u_intensity * 10.0);
+    float sides = floor(6.0 + pow(u_complexity ,3.0) * 20.0);
     
     // 使用 u_intensity 控制花紋的分散/銳利度
-    float spread = 0.5 - (u_complexity * 0.03);
+    float spread = 0.5 - (u_intensity * 0.4);
     
 	float symmetryAngle = abs(angle);
 	float noise = sin(angle * 2.0) * u_time;
@@ -56,7 +56,7 @@ void main() {
     
     // 6. 模擬光暈 (glow)
     // 這裡我們手動計算一個中心發光效果來代替原本未定義的 glow
-    float centerGlow = pow((0.1 / (r + 0.05)),2.0)+ u_complexity * 0.1;
+    float centerGlow = pow((0.1 / (r + 0.05)),2.0)+ u_volume;
     finalCol += vec3(0.2, 0.6, 1.0) * centerGlow;
     
     // 邊緣壓暗 (Vignette)
