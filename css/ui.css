@@ -67,7 +67,7 @@ button, input, select, textarea {
 	background: conic-gradient(
 		from 0deg,
 		transparent 0%,
-		rgba(255, 255, 255, 0.3) 15%, /* 這是流光的中心點 */
+		rgba(0, 0, 0, 1.0) 15%, /* 這是流光的中心點 */
 		transparent 40%
 	);
 	
@@ -75,7 +75,7 @@ button, input, select, textarea {
 	filter: blur(30px);
 	
 	/* 執行旋轉動畫 */
-	animation: rotate-glow 8s linear infinite;
+	animation: rotate-glow 6s linear infinite;
 	
 	/* 放在 overlay 背景的下方 */
 	z-index: -1;
