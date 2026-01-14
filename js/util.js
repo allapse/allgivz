@@ -146,7 +146,7 @@ class AudioMap {
 					background: conic-gradient(
 						from 0deg,
 						transparent 0%,
-						rgba(255, 255, 255, 0.3) 15%, /* 這是流光的中心點 */
+						rgba(0, 0, 0, 1.0) 15%, /* 這是流光的中心點 */
 						transparent 40%
 					);
 					
@@ -154,7 +154,7 @@ class AudioMap {
 					filter: blur(30px);
 					
 					/* 執行旋轉動畫 */
-					animation: rotate-glow 8s linear infinite;
+					animation: rotate-glow 6s linear infinite;
 					
 					/* 放在 overlay 背景的下方 */
 					z-index: -1;
@@ -344,8 +344,6 @@ class AudioMap {
 			<div id="gyro-down" class="gyro-indicator">+</div>
 			<div id="gyro-left" class="gyro-indicator">+</div>
 			<div id="gyro-right" class="gyro-indicator">+</div>
-			
-			<div id="ui-layer" style="display: none;"></div>
 			
 			<div id="mode-hint" style="display: none; cursor: pointer; transition: all 0.3s;">
 				TAP TO GLOW
