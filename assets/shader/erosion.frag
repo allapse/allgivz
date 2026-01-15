@@ -17,7 +17,7 @@ float hash(vec2 p) {
 
 void main() {
     // 1. 座標基礎設定
-    vec2 uv = (gl_FragCoord.xy * 2.0 - u_res) / min(u_res.x, u_res.y);
+    vec2 uv = (gl_FragCoord.xy * 2.0 - u_res) / min(u_res.x, u_res.y) * 3.0;
     
     // --- PEAK 控制震動 ---
     // 利用 peak 產生瞬間的縮放與位移感
@@ -102,4 +102,5 @@ void main() {
     }
 
     gl_FragColor = vec4(finalCol, 1.0);
+
 }
