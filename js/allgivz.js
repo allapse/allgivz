@@ -557,6 +557,7 @@ class AudioMap {
      */
     updateAudioReaction() {
         if (!this.dataArray || !this.audioMappings.length) return;
+		this.analyser.getByteFrequencyData(this.dataArray);
 		
 		this.handleVol();
 		
@@ -649,8 +650,6 @@ class AudioMap {
     }
 	
 	handleVol() {
-		this.analyser.getByteFrequencyData(this.dataArray);
-		
 		let sum = 0;
 		let peak = 0;
 		const len = this.dataArray.length;
@@ -729,10 +728,28 @@ class AudioMap {
 					weightedSum += i * data[i];
 					totalAmplitude += data[i];
 				}
-				// 歸一化到 0~1 (重心位置 / 頻譜長度)
-				result = totalAmplitude > 0 ? (weightedSum / totalAmplitude) / N : 0;
-				result *= result;
-				break;
+				let raw = totalAmplitude > 0 ? (weightedSum / totalAmplitude) / N : 0;
+
+				// 動態抓取這首歌的重心範圍
+				if (!this.minObserved) this.minObserved = raw;
+				if (!this.maxObserved) this.maxObserved = raw;
+				
+				// 緩慢向外擴張邊界，並緩慢向中心收縮（確保切歌後能重新適應）
+				this.minObserved = Math.min(this.minObserved, raw) * 0.999 + raw * 0.001;
+				this.maxObserved = Math.max(this.maxObserved, raw) * 0.999 + raw * 0.001;
+
+				// 將當前 raw 映射到觀察到的範圍中
+				let range = this.maxObserved - this.minObserved;
+				let autoMapped = range > 0.001 ? (raw - this.minObserved) / range : 0.5;
+
+				// 縮放到 0.1 ~ 1.0
+				result = 0.1 + (1.0 - 0.1) * autoMapped;
+				result = Math.sqrt(Math.max(0, result));
+
+				// 加上一點點滑動感 (0.1 可以根據你想要的反應速度調整)
+				this.params[mapping.key] += (result - this.params[mapping.key]) * 0.1;
+				
+				return;
 
 			case 'speed': // 全域飽滿度 (Spectral Flatness)
 				let sumLog = 0;
@@ -757,10 +774,13 @@ class AudioMap {
 				this.prevDataArray.set(data);
 
 				// 歸一化修正：flux 數值通常很大
-				let rawComplexity = Math.min(flux / (N * 2), 1.0); 
+				let rawComplexity = Math.min(flux / (N * 8), 1.0); 
 				
-				// 平滑處理：讓抖動變成「律動」
-				this.lastComplexity = (this.lastComplexity || 0) * 0.9 + rawComplexity * 0.1;
+				// 讓 rawComplexity 本身先經過一個平方根處理，這會拉高低能量時的數值
+				let processedComplexity = Math.sqrt(rawComplexity); 
+
+				// 再進入 0.9 的平滑
+				this.lastComplexity = (this.lastComplexity || 0) * 0.9 + processedComplexity * 0.1;
 				result = this.lastComplexity;
 				break;
 		}
@@ -845,6 +865,7 @@ class AudioMap {
 			this.analyser.connect(this.audioContext.destination);
 
 			// D. 換歌並播放
+			this.dataArray.fill(0)
 			this.audio.src = audioPath;
 			await this.audio.play();
 			this.isBPMLocked = false;
