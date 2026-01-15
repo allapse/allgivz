@@ -260,12 +260,12 @@ class AudioMap {
 	}
 	
 	async unlockGyro(){
-		if(this.isGyroLocked){
+		/*if(this.isGyroLocked){
 			await this.initGyro({ range: 20 }, (data) => {
 				this.orient.x = data.x * 1.5;
 				this.orient.y = data.y * 1.5;
 			});
-		}
+		}*/
 		
 		// 切換布林值狀態
 		this.isGyroLocked = !this.isGyroLocked;
