@@ -51,7 +51,6 @@ class MapSlider extends HTMLElement {
 						rgba(255,255,255, 0.8) calc(var(--peak, 0) * 100%), 
 						#555 calc(var(--peak, 0) * 100%), 
 						#555 100%);
-					opacity: 1.0;
 				}
 			</style>
 			<div class="control-group" id="group" style="--flash: 0;">
@@ -800,9 +799,10 @@ class AudioMap {
 		// 3. 強化：動態峰值 (快速上升，極慢下降)
 		if (currentAvg > mapping.peak) mapping.peak += (currentAvg - mapping.peak) * 0.2;
 		else mapping.peak *= 0.995;
-
+		
+		mapping.el.style.setProperty('--peak', mapping.peak / (255 - noiseFloor));
+		
 		let ratio = Math.pow(currentAvg / Math.max(mapping.peak, 50), 1.5);
-		mapping.el.style.setProperty('--peak', ratio);
 
 		// --- 5. 更新數據與 UI ---
 		const targetVal = min + (max - min) * ratio;
@@ -816,7 +816,12 @@ class AudioMap {
 		const N = data.length;
 		let result = 0;
 
-		// --- 根據 mapping.key 選擇計算邏輯 ---
+		// 先算總振幅判斷是否有訊號
+		let totalAmp = 0;
+		for(let i=0; i<N; i++) totalAmp += data[i];
+		const hasSignal = totalAmp > 1.0; 
+
+		// 1. 各項特徵計算 (你原本的 Switch 內容)
 		switch (mapping.key) {
 			case 'intensity': // 全域重心 (Spectral Centroid)
 				let weightedSum = 0;
@@ -825,20 +830,7 @@ class AudioMap {
 					weightedSum += i * data[i];
 					totalAmplitude += data[i];
 				}
-				let rawIntensity = totalAmplitude > 0 ? (weightedSum / totalAmplitude) / N : 0;
-
-				// 動態範圍適應
-				if (this.minObserved === undefined) this.minObserved = rawIntensity;
-				if (this.maxObserved === undefined) this.maxObserved = rawIntensity;
-				this.minObserved = Math.min(this.minObserved, rawIntensity) * 0.999 + rawIntensity * 0.001;
-				this.maxObserved = Math.max(this.maxObserved, rawIntensity) * 0.999 + rawIntensity * 0.001;
-
-				let rangeI = this.maxObserved - this.minObserved;
-				let autoMappedI = rangeI > 0.001 ? (rawIntensity - this.minObserved) / rangeI : 0.5;
-
-				// 映射到 0.1 ~ 1.0 並增加非線性張力
-				result = 0.1 + (1.0 - 0.1) * autoMappedI;
-				result = Math.sqrt(Math.max(0, result));
+				result = totalAmplitude > 0 ? (weightedSum / totalAmplitude) / N : 0;
 				break;
 
 			case 'speed': // 全域飽滿度 (Spectral Flatness)
@@ -858,19 +850,7 @@ class AudioMap {
 
 				// 3. 計算平坦度 (0.0 ~ 1.0)
 				// 如果 am 為 0，平坦度設為 0
-				// 在計算出 flatness 之後
-				let flatness = am > 0 ? (gm / am) : 0;
-
-				// 妙招：使用冪運算 (例如 0.2 次方) 來「提亮」低數值
-				// 這樣原本 0.02 的數值會變成 0.02^(0.2) ≈ 0.45
-				let enhancedFlatness = Math.pow(flatness, 0.1); 
-
-				// 更新 Peak 邏輯 (用加強後的數值)
-				if (enhancedFlatness > mapping.peak) mapping.peak = enhancedFlatness;
-				else mapping.peak *= 0.99;
-
-				// 最終結果映射
-				result = 0.1 + (0.9 * enhancedFlatness);
+				result = am > 0 ? (gm / am) : 0;
 				break;
 
 			case 'complexity': // 全域複雜度 (Spectral Flux)
@@ -885,31 +865,45 @@ class AudioMap {
 				let rawComplexity = Math.min(flux / (N * 8), 1.0); 
 				let processedComplexity = Math.sqrt(rawComplexity); 
 
-				this.lastComplexity = (this.lastComplexity || 0) * 0.8 + processedComplexity * 0.2;
-				let currentComplexity = this.lastComplexity;
-
-				// 映射到 0.1 ~ 1.0
-				if (currentComplexity > mapping.peak) mapping.peak = currentComplexity;
-				else mapping.peak *= 0.98; // Complexity 掉得稍快，增加打擊感
-
-				let ratioC = currentComplexity / Math.max(mapping.peak, 0.2); // 門檻稍高防止過敏
-				result = 0.1 + (1.0 - 0.1) * ratioC;
+				this.lastComplexity = (this.lastComplexity || 0) * 0.9 + processedComplexity * 0.1;
+				result = this.lastComplexity;
 				break;
 		}
 
-		// --- 最終輸出階段 ---
-		// 將計算出的 0.1 ~ 1.0 映射回 User 設定的 min/max
-		const targetVal = min + (max - min) * Math.min(1.0, result);
-		
-		// 平滑更新至 params (控制 Slider 移動的絲滑感)
-		this.params[mapping.key] += (targetVal - this.params[mapping.key]) * 0.1;
-		
-		// 更新 UI 元素
-		if (mapping.el) mapping.el.value = this.params[mapping.key];
-		if (mapping.peak > 0.1) mapping.el.style.setProperty('--peak', mapping.peak);
+		// 初始化狀態對象 (防止 undefined 報錯)
+		if (!mapping.state) {
+			mapping.state = { min: result, max: result };
+		}
 
-		// Debug Log
-		// console.log(`${mapping.key}: ${result.toFixed(3)} | Peak: ${mapping.peak.toFixed(3)}`);
+		// 2. 動態觀察範圍 (僅在有訊號時更新)
+		if (hasSignal) {
+			mapping.state.min = Math.min(mapping.state.min, result) * 0.999 + result * 0.001;
+			mapping.state.max = Math.max(mapping.state.max, result) * 0.999 + result * 0.001; // 稍微拉快 Max 更新
+		}
+
+		// 3. 區間對映與非線性縮放
+		let range = mapping.state.max - mapping.state.min;
+		let normalized = range > 0.0001 ? (result - mapping.state.min) / range : 0.5;
+		
+		// 增加一點張力
+		result = Math.sqrt(Math.max(0, normalized)); 
+
+		// 4. 更新 Peak (快升慢降)
+		if (result > (mapping.peak || 0)) {
+			mapping.peak = result;
+		} else {
+			mapping.peak *= 0.992; // 稍快一點的下降，視覺較俐落
+		}
+
+		// 5. 映射回 User 設定的 min/max 並平滑化輸出
+		const targetVal = min + (max - min) * result;
+		this.params[mapping.key] += (targetVal - this.params[mapping.key]) * 0.15; // 增加反應速度
+
+		// 更新 UI (CSS Variable)
+		if (mapping.el) {
+			mapping.el.value = this.params[mapping.key];
+			mapping.el.style.setProperty('--peak', mapping.peak);
+		}
 	}
 	
 	async initAudio(audioPath = null) {
