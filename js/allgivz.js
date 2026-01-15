@@ -802,8 +802,9 @@ class AudioMap {
 		const peakBar = document.getElementById('main-peak-bar');
 
 		if (volBar) {
+			const uiVol = Math.sqrt(currentTarget);
 			// 將 0~1 轉換為 0%~100%
-			volBar.style.height = `${currentTarget * 100}%`;
+			volBar.style.height = `${uiVol * 100}%`;
 		}
 		if (peakBar) {
 			peakBar.style.height = `${currentPeak * 100}%`;
