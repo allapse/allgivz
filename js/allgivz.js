@@ -93,6 +93,7 @@ class AudioMap {
 		this.material = null;
 		this.params = { intensity: 0, speed: 0, complexity: 0 };
 		this.orient = { x: 0.0, y: 0.0 };
+		this.isGyroLocked = true;
 		this.audioMappings = [];
 		this.smoothedVolume = null;
 		this.lastVolume = null;
@@ -193,12 +194,12 @@ class AudioMap {
 			<div id="overlay" style="white-space: pre;">${overlayText}</div>
 			<div id="ui-layer" style="display: none;"></div>
 			<div id="link" style="position:fixed; bottom:20px; left:20px; z-index:1200; cursor:pointer; color:#999; font-size:10px;">${linkText}</div>
+			<div id="lockGyro" style="position:fixed; top:20px; right:20px; z-index:1200; cursor:pointer; color:#999; font-size:10px; display: none;">LOCK GYRO</div>
 		`;
 
 		// 3. 邏輯綁定 (改用 root.querySelector 避免抓錯人)
 		const overlay = this.root.querySelector('#overlay');
-		const link = this.root.querySelector('#link');
-
+		
 		overlay.addEventListener('click', async () => {
 			try {
 				// 啟動邏輯...
@@ -226,7 +227,21 @@ class AudioMap {
 			}
 		});
 
+		const link = this.root.querySelector('#link');
 		link.addEventListener('click', () => window.location.assign(url));
+		
+		const lockGyro = this.root.querySelector('#lockGyro');
+		lockGyro.style.color = this.isGyroLocked ? "#999" : "#fff";
+		lockGyro.addEventListener('click', () => {
+			// 切換布林值狀態
+			this.isGyroLocked = !this.isGyroLocked;
+
+			// 根據狀態切換顏色
+			// 鎖定時（true）顯示灰色 #999，解鎖時（false）顯示白色 #fff
+			lockGyro.style.color = this.isGyroLocked ? "#999" : "#fff";
+			
+			console.log(`Gyro locked: ${this.isGyroLocked}`);
+		});
 	}
 
     /**
@@ -515,7 +530,7 @@ class AudioMap {
 					// 攔截邏輯
 					if (overlay && overlay.style.display !== 'none') return;
 					if (e.target.closest('#ui-layer') || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
-					if (e.target.id === 'overlay' || e.target.closest('#link')) return;
+					if (e.target.id === 'overlay' || e.target.closest('#link') || e.target.closest('#lockGyro')) return;
 
 					toggleDarkGlow();
 					
@@ -909,7 +924,7 @@ class AudioMap {
 	async initAudio(audioPath = null) {
 		// 1. UI 與 陀螺儀 (保持不變)
 		document.getElementById('overlay').style.display = 'none';
-		const uiElements = ['ui-layer', 'mode-hint', 'link'];
+		const uiElements = ['ui-layer', 'mode-hint', 'link', 'lockGyro'];
 		uiElements.forEach(id => {
 			const el = document.getElementById(id);
 			if (el) el.style.display = 'block';
@@ -1066,7 +1081,7 @@ class AudioMap {
 		};
 		
 		const handleOrientation = (event) => {
-			if (event.beta === null || event.gamma === null) return;
+			if (event.beta === null || event.gamma === null || !this.isGyroLocked) return;
 
 			const currentQ = eulerToQuaternion(event.alpha, event.beta, event.gamma);
 			const [qx, qy, qz, qw] = currentQ;
@@ -1114,6 +1129,8 @@ class AudioMap {
 				setTimeout(() => el.style.color = '#999', 300);
 			});
 		});
+		
+		this.isGyroLocked = false;
 		
 		return {
 			success: true,
