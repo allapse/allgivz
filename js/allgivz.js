@@ -108,6 +108,8 @@ class AudioMap {
 		this.beatHistory = []; // 用來紀錄前幾拍的間隔
 		
 		this.darkGlowMode = false;
+		this.idleTimer = null;
+		this.currentShaderIndex = 0;
 	}
 	
 	async buildMainUI(overlayText, linkText, url, audioPath) {
@@ -224,7 +226,7 @@ class AudioMap {
 				]);
 				
 				// 1. UI 與 陀螺儀 (保持不變)
-				document.getElementById('overlay').style.display = 'none';
+				overlay.style.display = 'none';
 				const uiElements = ['ui-layer', 'mode-hint', 'link', 'lockGyro'];
 				uiElements.forEach(id => {
 					const el = document.getElementById(id);
@@ -536,7 +538,7 @@ class AudioMap {
 			}).filter(m => m !== null);
 			
 			// bind glow
-			const toggleDarkGlow = () => {
+			/*const toggleDarkGlow = () => {
 				// 切換布林值
 				this.darkGlowMode = !this.darkGlowMode;
 				
@@ -554,7 +556,7 @@ class AudioMap {
 					}
 				}
 				console.log("Glow Mode:", this.darkGlowMode);
-			};
+			};*/
 
 			// 監聽事件
 			['click', 'touchend'].forEach(eventType => {
@@ -619,7 +621,29 @@ class AudioMap {
 
 		// 開始嘗試綁定
 		bindLogic();
+		
+		//this.updateIdleMode(3000);
     }
+	
+	toggleDarkGlow() {
+		// 切換布林值
+		this.darkGlowMode = !this.darkGlowMode;
+		
+		if(this.material)
+			this.material.uniforms.u_darkGlow.value = this.darkGlowMode ? 1.0 : 0.0;
+		
+		const hint = document.getElementById('mode-hint');
+		
+		// 更新 UI
+		if (hint) {
+			if (this.darkGlowMode) {
+				hint.style.color = "#fff";
+			} else {
+				hint.style.color = "#999";
+			}
+		}
+		console.log("Glow Mode:", this.darkGlowMode);
+	};
 	
 	changeEQ(index){
 		// 1. 檢查基礎環境
@@ -1274,5 +1298,38 @@ class AudioMap {
 		}
 
 		this.renderer.render(this.scene, this.camera);
+	}
+	
+	updateIdleMode(interval) {
+		const overlay = document.getElementById('overlay');
+		const shaderSelect = document.getElementById('shader-select');
+		
+		// 取得所有可用的 Shader 選項 (排除掉第一個 "VISUALIZER" 提示)
+		const options = Array.from(shaderSelect.options).filter(opt => opt.value !== "");
+
+		// 啟動或維持定時器
+		if (!this.idleTimer) {
+			this.idleTimer = setInterval(() => {
+				// 只有在 overlay 顯示時才自動切換
+				if (overlay.style.display !== 'none' && options.length > 0) {
+					
+					// 1. 計算下一個索引
+					this.currentShaderIndex = (this.currentShaderIndex + 1) % options.length;
+					const nextShaderPath = options[this.currentShaderIndex].value;
+
+					// 2. 更新 select 的顯示狀態（讓使用者知道現在換到哪了）
+					shaderSelect.value = nextShaderPath;
+
+					// 3. 執行加載
+					console.log("Idle Mode: Switching to", options[this.currentShaderIndex].innerText);
+					this.loadShader(nextShaderPath);
+					if (Math.random() < 0.33) this.toggleDarkGlow();
+				} else if (overlay.style.display === 'none') {
+					// 如果音樂開始了 (overlay 消失)，清除定時器省電
+					clearInterval(this.idleTimer);
+					this.idleTimer = null;
+				}
+			}, interval); // 3000ms = 3秒
+		}
 	}
 }
