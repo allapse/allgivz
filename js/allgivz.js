@@ -1301,6 +1301,7 @@ class AudioMap {
 	}
 	
 	updateIdleMode(interval) {
+		this.isShaderLoading = false; // 新增一個狀態鎖
 		const overlay = document.getElementById('overlay');
 		const shaderSelect = document.getElementById('shader-select');
 		
@@ -1310,20 +1311,31 @@ class AudioMap {
 		// 啟動或維持定時器
 		if (!this.idleTimer) {
 			this.idleTimer = setInterval(() => {
+				// 1. 檢查鎖定狀態：如果正在加載中，則跳過這一次循環
+				if (this.isShaderLoading) return;
+				
 				// 只有在 overlay 顯示時才自動切換
 				if (overlay.style.display !== 'none' && options.length > 0) {
+					this.isShaderLoading = true; // 上鎖：開始信息重塑
 					
-					// 1. 計算下一個索引
-					this.currentShaderIndex = (this.currentShaderIndex + 1) % options.length;
-					const nextShaderPath = options[this.currentShaderIndex].value;
+					try {
+						// 1. 計算下一個索引
+						this.currentShaderIndex = (this.currentShaderIndex + 1) % options.length;
+						const nextShaderPath = options[this.currentShaderIndex].value;
 
-					// 2. 更新 select 的顯示狀態（讓使用者知道現在換到哪了）
-					shaderSelect.value = nextShaderPath;
+						// 2. 更新 select 的顯示狀態（讓使用者知道現在換到哪了）
+						shaderSelect.value = nextShaderPath;
 
-					// 3. 執行加載
-					console.log("Idle Mode: Switching to", options[this.currentShaderIndex].innerText);
-					this.loadShader(nextShaderPath);
-					if (Math.random() < 0.33) this.toggleDarkGlow();
+						// 3. 執行加載
+						console.log("Idle Mode: Switching to", options[this.currentShaderIndex].innerText);
+						this.loadShader(nextShaderPath);
+						if (Math.random() < 0.33) this.toggleDarkGlow();
+						
+					} catch (err) {
+						console.error("顯化失敗:", err);
+					} finally {
+						this.isShaderLoading = false; // 開鎖：完成信息對齊
+					}
 				} else if (overlay.style.display === 'none') {
 					// 如果音樂開始了 (overlay 消失)，清除定時器省電
 					clearInterval(this.idleTimer);
