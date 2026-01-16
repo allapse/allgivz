@@ -1438,7 +1438,7 @@ class CameraManager {
             this.isCameraActive = true;
             return true;
         } catch (err) {
-            console.error("無法存取鏡頭:", err);
+            this.useCamera.style.color="red";
             return false;
         }
     }
