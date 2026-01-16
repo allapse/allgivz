@@ -281,6 +281,8 @@ class AudioMap {
 			} else {
 				this.material.uniforms.u_useCamera.value = 0.0;
 			}
+			
+			this.material.needsUpdate = true;
 		});
 		
 		document.addEventListener("visibilitychange", () => {
