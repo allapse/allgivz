@@ -290,6 +290,25 @@ class AudioMap {
 				console.log("現實信息已屏蔽");
 			}
 		});
+		
+		document.addEventListener("visibilitychange", () => {
+			if (document.hidden) {
+				console.log("進入虛空：暫停計算與鏡頭");
+				// 暫停鏡頭以省電
+				if (this.cameraManager && this.cameraManager.isCameraActive) {
+					this.cameraManager.stop(); 
+				}
+				// 也可以暫停音訊
+				this.audioContext.suspend();
+			} else {
+				console.log("重回現實：恢復對齊");
+				this.audioContext.resume();
+				// 這裡可以選擇不自動重開鏡頭，保護隱私也省電
+				if (this.userWantsCamera) {
+					this.cameraManager.toggleCamera();
+				}
+			}
+		});
 	}
 	
 	async unlockGyro(){
@@ -1319,6 +1338,9 @@ class AudioMap {
 		// 3. 啟動渲染迴圈
 		const animate = () => {
 			requestAnimationFrame(animate);
+			
+			if (document.hidden) return;
+			
 			this.internalUpdate(); // 處理音訊、時間、Uniforms 同步
 			this.renderer.render(this.scene, this.camera);
 		};
