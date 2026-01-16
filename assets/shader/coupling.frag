@@ -122,7 +122,7 @@ void main() {
         // 這樣鏡頭會出現在大理石亮部，且帶有大理石的色澤
         //vec3 blended = mix(marbleBase, sceneColor * colorB * 2.0, kaleidoscopeMask);
 		
-		finalCol = marbleBase + cam * 0.5;
+		finalCol = cam;
         
         // 疊加模式 (Additive) 讓 Peak 來時更有衝擊力
         //finalCol = blended + (sceneColor * u_peak * 0.5);
