@@ -232,7 +232,7 @@ class AudioMap {
 				
 				// 1. UI 與 陀螺儀 (保持不變)
 				this.overlay.style.display = 'none';
-				const uiElements = ['ui-layer', 'mode-hint', 'link', 'lockGyro', 'useCamera'];
+				const uiElements = ['ui-layer', 'mode-hint', 'link', 'lockGyro'];
 				uiElements.forEach(id => {
 					const el = document.getElementById(id);
 					if (el) el.style.display = 'block';
