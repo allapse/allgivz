@@ -223,7 +223,7 @@ class AudioMap {
 			<div id="useCamera" style="position:fixed; top:20px; left:20px; z-index:1200; cursor:pointer; color:#999; font-size:10px; display: none;">CAMERA</div>
 			<div id="lockGyro" style="position:fixed; top:20px; right:20px; z-index:1200; cursor:pointer; color:#fff; font-size:10px; display: none;">LOCK GYRO</div>
 			<div id="link" style="position:fixed; bottom:20px; left:20px; z-index:1200; cursor:pointer; color:#999; font-size:10px;">${linkText}</div>
-			<div id="hideUI" style="position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index:1200; cursor:pointer; color:#999; font-size:10px; display: none;">HIDE UI</div>
+			<div id="hideUI" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index:1200; cursor:pointer; color:#999; font-size:10px; display: none;">HIDE UI</div>
 		`;
 
 		// 3. 邏輯綁定 (改用 root.querySelector 避免抓錯人)
@@ -580,15 +580,16 @@ class AudioMap {
 					pointer-events: none; z-index: 9999;
 					mix-blend-mode: difference;
 				}
+			
 				.gyro-indicator {
 					position: absolute; background: transparent;
 					display: none;  color: #999; padding: 5px; font-weight: bold;
 					pointer-events: auto;
 				}
-				#gyro-up    { top: 10px; left: 50%; transform: translateX(-50%); }
-				#gyro-down  { bottom: 10px; left: 50%; transform: translateX(-50%); }
-				#gyro-left  { left: 10px; top: 50%; transform: translateY(-50%); }
-				#gyro-right { right: 10px; top: 50%; transform: translateY(-50%); }
+				#gyro-up    { top: 13px; left: 50%; transform: translateX(-50%); }
+				#gyro-down  { bottom: 13px; left: 65%; transform: translateX(-50%); }
+				#gyro-left  { left: 13px; top: 50%; transform: translateY(-50%); }
+				#gyro-right { right: 13px; top: 50%; transform: translateY(-50%); }
 				
 				#mode-hint {
 					position: absolute; bottom: 20px; right: 20px; font-size: 9px; color: #999;
@@ -659,7 +660,7 @@ class AudioMap {
 					if (this.overlay && this.overlay.style.display !== 'none') return;
 					if (e.target.closest('#ui-layer') || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
 					if (e.target.id === 'overlay' || e.target.closest('#link') || e.target.closest('#lockGyro') 
-						|| e.target.closest('#useCamera') || e.target.closest('#hideUI')) return;
+						|| e.target.closest('#useCamera') || e.target.closest('#hideUI') || e.target.id.startsWith('gyro-')) return;
 
 					this.toggleDarkGlow();
 					
