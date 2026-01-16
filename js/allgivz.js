@@ -600,7 +600,7 @@ class AudioMap {
 					if (e.target.closest('#ui-layer') || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
 					if (e.target.id === 'overlay' || e.target.closest('#link') || e.target.closest('#lockGyro')) return;
 
-					toggleDarkGlow();
+					this.toggleDarkGlow();
 					
 					// 手機版防止重複觸發 (如果是 touchend 就停止後續模擬的 click)
 					if (eventType === 'touchend' && e.cancelable) {
