@@ -95,7 +95,7 @@ void main() {
     // --- 尋找隱藏的窗格 ---
     // 使用 f 的平方來增強對比度，這會讓大理石的紋路邊界變得很清晰
     // 這就是你看到的「窗格玻璃」邊緣
-    float kaleidoscopeMask = pow(f, 2.0) * 2.0; 
+    float kaleidoscopeMask = pow(f, 4.0) * 2.0; 
     kaleidoscopeMask = clamp(kaleidoscopeMask, 0.0, 1.0);
     
     // --- 2. 處理現實世界的畫面與融合 ---
@@ -123,12 +123,10 @@ void main() {
         vec3 blended = mix(marbleBase, sceneColor * colorB * 2.0, kaleidoscopeMask);
         
         // 疊加模式 (Additive) 讓 Peak 來時更有衝擊力
-        //finalCol = blended + (sceneColor * u_peak * 0.5);
-		finalCol = cam;
+        finalCol = blended + (sceneColor * u_peak * 0.5);
     } else {
         finalCol = col;
     }
 
     gl_FragColor = vec4(finalCol, 1.0);
 }
-
