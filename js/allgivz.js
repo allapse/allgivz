@@ -120,7 +120,7 @@ class AudioMap {
 	
 	async buildMainUI(overlayText, linkText, url, audioPath) {
 		// 1. 建立一個唯一的根容器
-		const rootId = 'my-visual-app-root';
+		const rootId = 'allgivz-ui';
 		this.root = document.getElementById(rootId);
 		if (!this.root) {
 			this.root = document.createElement('div');
@@ -205,7 +205,14 @@ class AudioMap {
 					transition: all 1.2s cubic-bezier(0.34, 1.56, 0.64, 1); /* 帶點彈性的曲線 */
 				}
 				
-				#link, #lockGyro, #useCamera, #gyro-up, #gyro-down, #gyro-left, #gyro-right{
+				#${rootId} #ui-layer.hide {
+					opacity: 0;
+					transform: translate(50%, 50%) scale(0.9);
+					filter: blur(10px);
+					transition: all 1.2s cubic-bezier(0.34, 1.56, 0.64, 1); /* 帶點彈性的曲線 */
+				}
+				
+				#link, #lockGyro, #useCamera, #gyro-up, #gyro-down, #gyro-left, #gyro-right, #hideUI{
 					mix-blend-mode: difference;
 				}
 			</style>
@@ -214,12 +221,14 @@ class AudioMap {
 			<div id="overlay" style="white-space: pre;">${overlayText}</div>
 			<div id="ui-layer" style="display: none;"></div>
 			<div id="useCamera" style="position:fixed; top:20px; left:20px; z-index:1200; cursor:pointer; color:#999; font-size:10px; display: none;">CAMERA</div>
-			<div id="link" style="position:fixed; bottom:20px; left:20px; z-index:1200; cursor:pointer; color:#999; font-size:10px;">${linkText}</div>
 			<div id="lockGyro" style="position:fixed; top:20px; right:20px; z-index:1200; cursor:pointer; color:#fff; font-size:10px; display: none;">LOCK GYRO</div>
+			<div id="link" style="position:fixed; bottom:20px; left:20px; z-index:1200; cursor:pointer; color:#999; font-size:10px;">${linkText}</div>
+			<div id="hideUI" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index:1200; cursor:pointer; color:#999; font-size:10px; display: none;">HIDE UI</div>
 		`;
 
 		// 3. 邏輯綁定 (改用 root.querySelector 避免抓錯人)
 		this.overlay = this.root.querySelector('#overlay');
+		const uiLayer = document.getElementById('ui-layer');
 		this.overlay.addEventListener('click', async () => {
 			try {
 				// 啟動邏輯...
@@ -233,15 +242,12 @@ class AudioMap {
 				
 				// 1. UI 與 陀螺儀 (保持不變)
 				this.overlay.style.display = 'none';
-				const uiElements = ['ui-layer', 'mode-hint', 'link', 'lockGyro'];
+				const uiElements = ['ui-layer', 'mode-hint', 'link', 'lockGyro', 'hideUI'];
 				uiElements.forEach(id => {
 					const el = document.getElementById(id);
 					if (el) el.style.display = 'block';
 				});
 				
-				// 在你的點擊事件邏輯中
-				const uiLayer = document.getElementById('ui-layer');
-
 				// 1. 先把 display 設回 auto/block (這時它是透明的)
 				uiLayer.style.display = 'block';
 
@@ -305,6 +311,42 @@ class AudioMap {
 				if (this.userWantsCamera) {
 					this.cameraManager.toggleCamera();
 				}
+			}
+		});
+		
+		const hideUI = this.root.querySelector('#hideUI');
+		hideUI.addEventListener('click', () => {
+			const uiElements = ['ui-layer', 'mode-hint', 'link', 'lockGyro'];
+			if (!uiLayer.classList.contains('show')) {
+				// --- 顯示過程 ---
+				uiElements.forEach(id => {
+					const el = document.getElementById(id);
+					if (el) el.style.display = 'block';
+				});
+				
+				// 2. 稍微延遲（讓瀏覽器意識到 display 變了），再觸發動畫
+				requestAnimationFrame(() => {
+					uiLayer.classList.remove('hide');
+					uiLayer.classList.add('show');
+				});
+				
+				hideUI.style.color = "#999";
+			} else {
+				// --- 隱藏過程 ---
+				uiLayer.classList.remove('show');
+				uiLayer.classList.add('hide'); // 1. 先跑動畫
+				
+				// 2. 等動畫跑完 (1.2s = 1200ms) 再隱藏 display
+				setTimeout(() => {
+					if (uiLayer.classList.contains('hide')) {
+						uiElements.forEach(id => {
+							const el = document.getElementById(id);
+							if (el) el.style.display = 'none';
+						});
+					}
+				}, 200); 
+				
+				hideUI.style.color = "#fff";
 			}
 		});
 	}
@@ -616,7 +658,8 @@ class AudioMap {
 					// 攔截邏輯
 					if (this.overlay && this.overlay.style.display !== 'none') return;
 					if (e.target.closest('#ui-layer') || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
-					if (e.target.id === 'overlay' || e.target.closest('#link') || e.target.closest('#lockGyro')) return;
+					if (e.target.id === 'overlay' || e.target.closest('#link') || e.target.closest('#lockGyro') 
+						|| e.target.closest('#useCamera') || e.target.closest('#hideUI')) return;
 
 					this.toggleDarkGlow();
 					
