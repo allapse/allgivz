@@ -86,27 +86,47 @@ void main() {
     // 邊緣壓暗 (Vignette) 受 volume 影響
     float vgn = smoothstep(1.5, 0.5 - u_volume * 0.2, length(uv));
     col *= vgn;
+	
+	if (u_darkGlow > 0.5) {
+        // 模式 1：深淵黑金 (Dark Mode)
+        colorA = vec3(0.02, 0.02, 0.05);
+        colorB = vec4(vec3(0.8, 0.5, 0.2) * u_intensity, 1.0).rgb; // 金色受重心影響
+    } else {
+        // 模式 2：大理石白 (Light Mode)
+        colorA = vec3(0.95, 0.95, 1.0);
+        colorB = vec3(0.4, 0.5, 0.6) * (1.0 - u_intensity); // 翡翠色
+    }
 
-    // 2. 處理現實世界的畫面
-    vec3 sceneColor;
-	vec3 finalCol;
-    // 找到大理石的「暗部」或「紋路深處」作為窗口
-	// 1.0 - f 會選取 fbm 的低值區
-	float mask = smoothstep(0.4, 0.7, f); 
+    // --- 2. 處理現實世界的畫面與融合 ---
+    vec3 finalCol;
+    
+    // 找到大理石的「窗口」：讓鏡頭畫面只出現在特定紋理區域
+    float mask = smoothstep(0.4, 0.7, f); 
 
-	vec3 marbleBase = mix(colorA, colorB, f);
-
-	if (u_useCamera > 0.5) {
-		// 讓鏡頭畫面不要只是單純疊加，而是像「浮雕」一樣被刻在紋理裡
-		// 我們用 sceneColor 取代原本 marbleBase 的一部分
-		vec3 mixedScene = mix(sceneColor, marbleBase * sceneColor * 2.0, 0.5); // Multiply 模式增加質感
-		finalCol = mix(marbleBase, mixedScene, mask);
-	} else {
-		finalCol = col; // 使用你原本計算好的 col
-	}
-
-    // 4. 最後加上 Peak 的光芒
-    finalCol += u_peak * 0.2 * sceneColor;
+    if (u_useCamera > 0.5) {
+        // 鏡頭取樣邏輯 (保持原本的扭曲與翻轉)
+        vec2 camUV = gl_FragCoord.xy / u_res; // 使用原始比例避免拉伸
+        camUV.x = 1.0 - camUV.x; // 水平翻轉
+        
+        // 讓鏡頭畫面也受 fbm 扭曲 (distort)
+        vec2 distortUV = camUV + vec2(f * 0.02 * u_volume);
+        vec3 cam = texture2D(u_camera, distortUV).rgb;
+        
+        // 處理鏡頭亮度與飽和度
+        vec3 sceneColor = mix(vec3(dot(cam, vec3(0.299, 0.587, 0.114))), cam, u_intensity);
+        
+        // 融合模式：將鏡頭畫面與大理石基底做 Multiply 混合增加深度感
+        vec3 mixedScene = mix(sceneColor, marbleBase * sceneColor * 2.0, 0.5);
+        
+        // 根據 mask 顯化現實
+        finalCol = mix(marbleBase, mixedScene, mask);
+        
+        // 4. 加上 Peak 閃光 (放在 if 內確保 sceneColor 已定義)
+        finalCol += u_peak * 0.2 * sceneColor;
+    } else {
+        // 沒開鏡頭，直接使用你原本的大理石 col
+        finalCol = col;
+    }
 
     gl_FragColor = vec4(finalCol, 1.0);
 }
