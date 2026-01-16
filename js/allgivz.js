@@ -1,7 +1,3 @@
-/**
- * Universe UI & Audio Utility
- * 整合 Web Components 與音訊反應邏輯
- */
 
 class MapSlider extends HTMLElement {
     constructor() {
@@ -35,7 +31,6 @@ class MapSlider extends HTMLElement {
 					border-radius: 5px;
 					border: 1px solid #999;
 					
-					/* 核心：JS 傳入 1.0 時是純白 + 爆亮，0.0 時是暗灰 */
 					background: rgb(
 						calc(128 + var(--flash) * 175), 
 						calc(128 + var(--flash) * 175), 
@@ -45,7 +40,7 @@ class MapSlider extends HTMLElement {
 				
 				/* 讓軌道能顯示 Peak 區間 */
 				input[type=range]::-webkit-slider-runnable-track {
-					width: 100%; height: 1px; /* 稍微加粗一點點 */
+					width: 100%; height: 1px;
 					background: linear-gradient(to right, 
 						rgba(51,51,51, 1) 0%, 
 						rgba(255,255,255, 1) calc(var(--peak, 0) * 100%), 
@@ -354,13 +349,6 @@ class AudioMap {
 	}
 	
 	async unlockGyro(){
-		/*if(this.isGyroLocked){
-			await this.initGyro({ range: 20 }, (data) => {
-				this.orient.x = data.x * 1.5;
-				this.orient.y = data.y * 1.5;
-			});
-		}*/
-		
 		// 切換布林值狀態
 		this.isGyroLocked = !this.isGyroLocked;
 
@@ -370,11 +358,6 @@ class AudioMap {
 		console.log(`Gyro locked: ${this.isGyroLocked}`);
 	}
 
-    /**
-     * 生成 UI 並綁定邏輯
-     * @param {string} containerId - 容器的 ID (如 'ui-layer')
-     * @param {Array} configs - Slider 的配置陣列
-     */
     async buildUI(containerId, configs, jsonPath, canSelectView = false) {
         const container = document.getElementById(containerId);
 		
@@ -387,7 +370,7 @@ class AudioMap {
 				{ id: 'ui-complexity', key: 'complexity', label: 'Complexity', min: 0, max: 1, step: 0.01 },
 			];
 
-        // A. 動態生成 HTML
+        // 動態生成 HTML
         let slidersHtml = configs.map(cfg => `
             <map-slider 
                 id="${cfg.id}" 
@@ -399,7 +382,7 @@ class AudioMap {
             </map-slider>
         `).join('');
 		
-			// 1. 讀取音樂清單 JSON
+		// 讀取音樂清單 JSON
 		let musicList = [];
 		try {
 			const response = await fetch('assets/audio/list.json?t='+Date.now());
@@ -425,7 +408,6 @@ class AudioMap {
 		}
 		
 		let shadersHtml = this.fragList.map(m => {
-			// 如果 m.canCam 為 true，則加上 " (CAM)"，否則為空字串
 			const displayName = m.canCam ? `${m.name} (CAM)` : m.name;
 			
 			return `<option value="${m.path}">${displayName}</option>`;
@@ -613,7 +595,7 @@ class AudioMap {
 		else
 			document.body.appendChild(gyroUI);
 
-        // B. 定義綁定邏輯的函式
+        // 定義綁定邏輯的函式
 		const bindLogic = () => {
 			this.audioMappings = configs.map(cfg => {
 				const customEl = document.getElementById(cfg.id);
@@ -633,27 +615,6 @@ class AudioMap {
 
 				return { ...cfg, el, peak: 0.1 };
 			}).filter(m => m !== null);
-			
-			// bind glow
-			/*const toggleDarkGlow = () => {
-				// 切換布林值
-				this.darkGlowMode = !this.darkGlowMode;
-				
-				if(this.material)
-					this.material.uniforms.u_darkGlow.value = this.darkGlowMode ? 1.0 : 0.0;
-				
-				const hint = document.getElementById('mode-hint');
-				
-				// 更新 UI
-				if (hint) {
-					if (this.darkGlowMode) {
-						hint.style.color = "#fff";
-					} else {
-						hint.style.color = "#999";
-					}
-				}
-				console.log("Glow Mode:", this.darkGlowMode);
-			};*/
 
 			// 監聽事件
 			['click', 'touchend'].forEach(eventType => {
@@ -674,7 +635,7 @@ class AudioMap {
 			});
 			
 			
-			// --- 2. 綁定音樂選單 (新增邏輯) ---
+			// --- 綁定音樂選單 (新增邏輯) ---
 			const musicSelect = document.getElementById('music-select');
 			if (musicSelect) {
 				// 這裡使用 change 事件來實時切換
@@ -683,8 +644,8 @@ class AudioMap {
 				};
 			}
 			
-			// --- 3. 綁定視覺選單 (新增邏輯) ---
-			// --- 3. 綁定 Shader 選單 ---
+			// --- 綁定視覺選單 (新增邏輯) ---
+			// --- 綁定 Shader 選單 ---
 			this.shaderSelect = document.getElementById('shader-select');
 			if (this.shaderSelect) {
 				this.shaderSelect.onchange = async (e) => {
@@ -742,7 +703,7 @@ class AudioMap {
 	};
 	
 	changeEQ(index){
-		// 1. 檢查基礎環境
+		// 檢查基礎環境
 		if (!this.audioContext || !this.source || !this.analyser) {
 			console.error("音訊元件未就緒");
 			return;
@@ -818,11 +779,6 @@ class AudioMap {
 		}
 	}
 
-    /**
-     * 在 animate 循環中更新音訊反應
-     * @param {Uint8Array} dataArray - 分析器傳出的頻率數據
-     * @param {Object} material - Three.js 的 ShaderMaterial
-     */
     updateAudioReaction() {
         if (!this.dataArray || !this.audioMappings.length) return;
 		this.analyser.getByteFrequencyData(this.dataArray);
@@ -879,7 +835,7 @@ class AudioMap {
 			// 算出 0.0 ~ 1.0 的比例
 			const percent = (val - min) / (max - min);
 
-			// 1. 執行閃爍 (門檻設為 1% 的開度)
+			// 執行閃爍 (門檻設為 1% 的開度)
 			if (customEl && customEl.flash) {
 				// 只有當開度 > 1% 且 beatValue 真的有值時才閃
 				if (percent > 0.01) {
@@ -933,7 +889,7 @@ class AudioMap {
 		const currentTarget = sum / len / 255.0;
 		const currentPeak = peak / 255.0;
 		
-		// 3. 取得 DOM 並更新
+		// 取得 DOM 並更新
 		const volBar = document.getElementById('main-vol-bar');
 		const peakBar = document.getElementById('main-peak-bar');
 
@@ -973,16 +929,16 @@ class AudioMap {
 	}
 	
 	handleLegacy(mapping, min, max){
-		// --- 1~4. 你的核心計算邏輯 (平均值、峰值、Power 縮放) ---
+		// --- 核心計算邏輯 (平均值、峰值、Power 縮放) ---
 		let sum = 0;
 		for (let i = mapping.range[0]; i <= mapping.range[1]; i++) sum += this.dataArray[i];
 		let currentAvg = Math.max(0, (sum / (mapping.range[1] - mapping.range[0] + 1)));
 		
-		// 2. 強化：扣除底噪門檻 (讓數值更有「空間」呼吸)
+		// 強化：扣除底噪門檻 (讓數值更有「空間」呼吸)
 		const noiseFloor = 30; 
 		currentAvg = Math.max(0, currentAvg - noiseFloor);
 
-		// 3. 強化：動態峰值 (快速上升，極慢下降)
+		// 強化：動態峰值 (快速上升，極慢下降)
 		if (currentAvg > mapping.peak) mapping.peak += (currentAvg - mapping.peak) * 0.2;
 		else mapping.peak *= 0.995;
 		
@@ -990,7 +946,7 @@ class AudioMap {
 		
 		let ratio = Math.pow(currentAvg / Math.max(mapping.peak, 50), 1.5);
 
-		// --- 5. 更新數據與 UI ---
+		// --- 更新數據與 UI ---
 		const targetVal = min + (max - min) * ratio;
 
 		// 核心：更新這個被引用的 params 物件
@@ -1007,7 +963,7 @@ class AudioMap {
 		for(let i=0; i<N; i++) totalAmp += data[i];
 		const hasSignal = totalAmp > 1.0; 
 
-		// 1. 各項特徵計算 (你原本的 Switch 內容)
+		// 各項特徵計算 (你原本的 Switch 內容)
 		switch (mapping.key) {
 			case 'intensity': // 全域重心 (Spectral Centroid)
 				let weightedSum = 0;
@@ -1028,13 +984,13 @@ class AudioMap {
 					sumLog += Math.log(cleanVal);
 					sumArithmetic += val;
 				}
-				// 1. 計算算術平均 (Arithmetic Mean)
+				// 計算算術平均 (Arithmetic Mean)
 				const am = sumArithmetic / N;
 				
-				// 2. 計算幾何平均 (Geometric Mean) -> 使用 Exp(Avg(Log))
+				// 計算幾何平均 (Geometric Mean) -> 使用 Exp(Avg(Log))
 				const gm = Math.exp(sumLog / N);
 
-				// 3. 計算平坦度 (0.0 ~ 1.0)
+				// 計算平坦度 (0.0 ~ 1.0)
 				// 如果 am 為 0，平坦度設為 0
 				result = am > 0 ? (gm / am) : 0;
 				break;
@@ -1061,7 +1017,7 @@ class AudioMap {
 			mapping.state = { min: result, max: result };
 		}
 
-		// 2. 動態觀察範圍 (僅在有訊號時更新)
+		// 動態觀察範圍 (僅在有訊號時更新)
 		if (hasSignal) {
 			// 正常的 Min 更新
 			mapping.state.min = Math.min(mapping.state.min, result) * 0.999 + result * 0.001;
@@ -1075,21 +1031,21 @@ class AudioMap {
 			}
 		}
 
-		// 3. 區間對映與非線性縮放
+		// 區間對映與非線性縮放
 		let range = mapping.state.max - mapping.state.min;
 		let normalized = range > 0.0001 ? (result - mapping.state.min) / range : 0.5;
 		
 		// 增加一點張力
 		result = Math.sqrt(Math.max(0, normalized)); 
 
-		// 4. 更新 Peak (快升慢降)
+		// 更新 Peak (快升慢降)
 		if (result > (mapping.peak || 0)) {
 			mapping.peak = result;
 		} else {
 			mapping.peak *= 0.992; // 稍快一點的下降，視覺較俐落
 		}
 
-		// 5. 映射回 User 設定的 min/max 並平滑化輸出
+		// 映射回 User 設定的 min/max 並平滑化輸出
 		const targetVal = min + (max - min) * result;
 		this.params[mapping.key] += (targetVal - this.params[mapping.key]) * 0.15; // 增加反應速度
 
@@ -1101,7 +1057,7 @@ class AudioMap {
 	}
 	
 	async initAudio(audioPath = null) {
-		// 1. UI 與 陀螺儀 (保持不變) for legacy page
+		// UI 與 陀螺儀 (保持不變) for legacy page
 		document.getElementById('overlay').style.display = 'none';
 		const uiElements = ['ui-layer', 'mode-hint', 'link', 'lockGyro'];
 		uiElements.forEach(id => {
@@ -1109,7 +1065,7 @@ class AudioMap {
 			if (el) el.style.display = 'block';
 		});
 		
-		// 2. 初始化核心組件 (只做一次)
+		// 初始化核心組件 (只做一次)
 		if (!this.audioContext) {
 			this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
 			this.analyser = this.audioContext.createAnalyser();
@@ -1117,11 +1073,11 @@ class AudioMap {
 			this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
 		}
 
-		// 3. 模式切換邏輯
+		// 模式切換邏輯
 		if (audioPath === 'mic') {
 			// --- 進入麥克風模式 ---
 			
-			// A. 停止並斷開 MP3
+			// 停止並斷開 MP3
 			if (this.audio) {
 				this.audio.pause();
 				// 如果有 MP3 source，斷開它與分析器的連線
@@ -1130,7 +1086,7 @@ class AudioMap {
 
 			try {
 				const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-				// B. 建立麥克風 Source
+				// 建立麥克風 Source
 				this.micSource = this.audioContext.createMediaStreamSource(stream);
 				this.analyser.smoothingTimeConstant = 0.8;
 				this.micSource.connect(this.analyser);
@@ -1146,13 +1102,13 @@ class AudioMap {
 		} else {
 			// --- 進入 MP3 模式 ---
 			
-			// A. 斷開麥克風連線
+			// 斷開麥克風連線
 			if (this.micSource) {
 				this.micSource.disconnect();
 				this.micSource = null;
 			}
 
-			// B. 初始化或更新 MP3 播放器
+			// 初始化或更新 MP3 播放器
 			if (!this.audio) {
 				this.audio = new Audio();
 				this.audio.crossOrigin = "anonymous";
@@ -1160,11 +1116,11 @@ class AudioMap {
 				this.source = this.audioContext.createMediaElementSource(this.audio);
 			}
 
-			// C. 重新連接連線並導向喇叭
+			// 重新連接連線並導向喇叭
 			this.source.connect(this.analyser);
 			this.analyser.connect(this.audioContext.destination);
 
-			// D. 換歌並播放
+			// 換歌並播放
 			this.dataArray.fill(0)
 			this.audio.src = audioPath;
 			await this.audio.play();
@@ -1181,7 +1137,7 @@ class AudioMap {
 	
 	// 在你的 AudioMap 類別內
 	async switchTrack(audioPath) {
-		// 1. 清理舊的 audio 物件
+		// 清理舊的 audio 物件
 		if (this.audio) {
 			this.audio.pause();
 			this.audio.src = "";
@@ -1190,13 +1146,11 @@ class AudioMap {
 			// 建議維持同一個 Context，只換 Audio 物件的 src。
 		}
 
-		// 2. 重新呼叫 initAudio
+		// 重新呼叫 initAudio
 		this.isReady = false; 
 		await this.initAudio(audioPath);
 	}
 	
-	// util.js
-
 	/**
 	 * 啟動陀螺儀
 	 * @param {Object} config - 設定參數 { range: 45 }
@@ -1321,9 +1275,6 @@ class AudioMap {
 		};
 	}
 
-	/**
-	 * 更新 UI 數值的方法
-	 */
 	updateGyroUI() {
 		const { x, y } = this.orient; // 這是你處理後的 -1 ~ 1 數值
 		
@@ -1348,14 +1299,14 @@ class AudioMap {
 	}
 	
 	async startEngine(shaderPath) {
-		// 1. 將 init 的邏輯搬進來
+		// 將 init 的邏輯搬進來
 		this.scene = new THREE.Scene();
 		this.camera = new THREE.Camera();
 		this.renderer = new THREE.WebGLRenderer({ antialias: true });
 		this.renderer.setSize(window.innerWidth, window.innerHeight);
 		document.getElementById('container').appendChild(this.renderer.domElement);
 
-		// 2. 設定 Material (使用 this.params)
+		// 設定 Material (使用 this.params)
 		this.material = new THREE.ShaderMaterial({
 			uniforms: {
 				u_res: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
@@ -1382,7 +1333,7 @@ class AudioMap {
 		const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.material);
 		this.scene.add(mesh);
 
-		// 3. 啟動渲染迴圈
+		// 啟動渲染迴圈
 		const animate = () => {
 			requestAnimationFrame(animate);
 			
@@ -1393,7 +1344,7 @@ class AudioMap {
 		};
 		animate();
 		
-		// 4. 處理 Resize
+		// 處理 Resize
 		window.addEventListener('resize', () => {
 			this.renderer.setSize(window.innerWidth, window.innerHeight);
 			this.material.uniforms.u_res.value.set(window.innerWidth, window.innerHeight);
@@ -1426,7 +1377,7 @@ class AudioMap {
 		// 啟動或維持定時器
 		if (!this.idleTimer) {
 			this.idleTimer = setInterval(() => {
-				// 1. 檢查鎖定狀態：如果正在加載中，則跳過這一次循環
+				// 檢查鎖定狀態：如果正在加載中，則跳過這一次循環
 				if (this.isShaderLoading) return;
 				
 				// 只有在 overlay 顯示時才自動切換
@@ -1434,14 +1385,14 @@ class AudioMap {
 					this.isShaderLoading = true; // 上鎖：開始信息重塑
 					
 					try {
-						// 1. 計算下一個索引
+						// 計算下一個索引
 						this.currentShaderIndex = (this.currentShaderIndex + 1) % options.length;
 						const nextShaderPath = options[this.currentShaderIndex].value;
 
-						// 2. 更新 select 的顯示狀態（讓使用者知道現在換到哪了）
+						// 更新 select 的顯示狀態（讓使用者知道現在換到哪了）
 						this.shaderSelect.value = nextShaderPath;
 
-						// 3. 執行加載
+						// 執行加載
 						console.log("Idle Mode: Switching to", options[this.currentShaderIndex].innerText);
 						this.loadShader(nextShaderPath);
 						if (Math.random() < 0.33) this.toggleDarkGlow();
@@ -1456,7 +1407,7 @@ class AudioMap {
 					clearInterval(this.idleTimer);
 					this.idleTimer = null;
 				}
-			}, interval); // 3000ms = 3秒
+			}, interval);
 		}
 	}
 }
