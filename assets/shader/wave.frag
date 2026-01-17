@@ -47,7 +47,10 @@ float map(vec3 p) {
 void main() {
     vec2 res = u_res + 0.01;
     // Peak (震動): 在 UV 層級加入基於峰值的隨機抖動
-    float shake = (hash(u_time) - 0.5) * u_peak * 0.05;
+	float shake = 0.0;
+	if(u_peak > 0.98){
+		shake = (hash(u_time) - 0.5) * u_peak * 0.01;
+	}
     vec2 uv = (gl_FragCoord.xy - 0.5 * res) / min(res.y, res.x) + shake;
     
     vec2 look = (u_orient - 0.5); 
@@ -95,4 +98,5 @@ void main() {
 
     gl_FragColor = vec4(finalCol, 1.0);
 }
+
 
