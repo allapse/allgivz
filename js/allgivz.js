@@ -431,7 +431,7 @@ class AudioMap {
 					/* 初始高度為 0 */
 					height: 0%;			
 					/* 如果想要絲滑一點，可以加極短的過渡 */
-					transition: height 0.8s ease-out;
+					
 				}
 				
 				.side-label-bottom {
@@ -448,7 +448,7 @@ class AudioMap {
 			<div class="pro-audio-rack">
 				<div class="main-vu-side">
 					<div class="vu-meter vertical-large">
-						<div class="vu-bar" id="main-vol-bar"></div>
+						<div class="vu-bar" id="main-vol-bar" style="transition: height 0.3s ease-out;"></div>
 					</div>
 					<div class="side-label-bottom">VOL</div>
 				</div>
@@ -459,7 +459,7 @@ class AudioMap {
 
 				<div class="main-vu-side">
 					<div class="vu-meter vertical-large">
-						<div id="main-peak-bar"></div>
+						<div id="main-peak-bar" style="transition: height 0.1s ease-out;"></div>
 					</div>
 					<div class="side-label-bottom">PEAK</div>
 				</div>
@@ -546,10 +546,12 @@ class AudioMap {
 					letter-spacing: 1px; pointer-events: auto; display: none; z-index: 1200; cursor:pointer;
 				}
 			</style>
-			<div id="gyro-up" class="gyro-indicator">+</div>
-			<div id="gyro-down" class="gyro-indicator">+</div>
-			<div id="gyro-left" class="gyro-indicator">+</div>
-			<div id="gyro-right" class="gyro-indicator">+</div>
+			<div id="indicators" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%;">
+				<div id="gyro-up" class="gyro-indicator">+</div>
+				<div id="gyro-down" class="gyro-indicator">+</div>
+				<div id="gyro-left" class="gyro-indicator">+</div>
+				<div id="gyro-right" class="gyro-indicator">+</div>
+			</div>
 			
 			<div id="mode-hint" style="display: none; cursor: pointer; transition: all 0.3s; white-space: pre;"> TAP TO GLOW</div>
 			<div id="hideUI" style="position: absolute; bottom: 20px; right: 20px; z-index:1200; pointer-events: auto; cursor:pointer; color:#999; font-size:10px; display: none;">HIDE UI</div>
@@ -602,7 +604,7 @@ class AudioMap {
 			const hideUI = document.getElementById('hideUI');
 			const uiLayer = document.getElementById('ui-layer');
 			hideUI.addEventListener('click', () => {
-				const uiElements = ['ui-layer', 'mode-hint', 'link', 'lockGyro', 'useCamera', 'gyro-up', 'gyro-down', 'gyro-left', 'gyro-right'];
+				const uiElements = ['ui-layer', 'mode-hint', 'link', 'lockGyro', 'useCamera', 'indicators'];
 
 				if (!uiLayer.classList.contains('show')) {
 					// --- 顯示過程 ---
@@ -902,12 +904,13 @@ class AudioMap {
 		const peakBar = document.getElementById('main-peak-bar');
 
 		if (volBar) {
-			const uiVol = Math.sqrt(currentTarget);
+			const uiVol = Math.sqrt(Math.sqrt(Math.sqrt(currentTarget)));
 			// 將 0~1 轉換為 0%~100%
 			volBar.style.height = `${uiVol * 100}%`;
 		}
 		if (peakBar) {
-			peakBar.style.height = `${currentPeak * 100}%`;
+			const uiPeak = 0.99 * currentPeak;
+			peakBar.style.height = `${uiPeak * 100}%`;
 		}
 
 		// 平滑化處理
@@ -1259,11 +1262,11 @@ class AudioMap {
 		window.addEventListener('deviceorientation', handleOrientation);
 		
 		const indicators = document.querySelectorAll('.gyro-indicator');
-
 		indicators.forEach(el => {
 			el.addEventListener('click', () => {
 				// 將 baseQ 設為 null，下次 handleOrientation 執行時就會觸發 resetBase
 				baseQ = null;
+				this.updateGyroUI();
 				
 				// 可加入視覺回饋，讓使用者知道有點到
 				el.style.color = '#fff';
