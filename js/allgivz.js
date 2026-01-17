@@ -198,17 +198,17 @@ class AudioMap {
 					opacity: 1;
 					transform: translate(-50%, -50%) scale(1);
 					filter: blur(0px);
-					transition: all 1.2s cubic-bezier(0.34, 1.56, 0.64, 1); /* 帶點彈性的曲線 */
+					transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* 帶點彈性的曲線 */
 				}
 				
 				#${rootId} #ui-layer.hide {
 					opacity: 0;
 					transform: translate(50%, 50%) scale(0.9);
 					filter: blur(10px);
-					transition: all 1.2s cubic-bezier(0.34, 1.56, 0.64, 1); /* 帶點彈性的曲線 */
+					transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); /* 帶點彈性的曲線 */
 				}
 				
-				#link, #lockGyro, #useCamera, #gyro-up, #gyro-down, #gyro-left, #gyro-right, #hideUI{
+				#link, #lockGyro, #useCamera{
 					transition: all 0.3s;
 					mix-blend-mode: difference;
 				}
@@ -220,7 +220,6 @@ class AudioMap {
 			<div id="useCamera" style="position:fixed; top:20px; left:20px; z-index:1200; cursor:pointer; color:#999; font-size:10px; display: none;">CAMERA</div>
 			<div id="lockGyro" style="position:fixed; top:20px; right:20px; z-index:1200; cursor:pointer; color:#fff; font-size:10px; display: none;">LOCK GYRO</div>
 			<div id="link" style="position:fixed; bottom:20px; left:20px; z-index:1200; cursor:pointer; color:#999; font-size:10px;">${linkText}</div>
-			<div id="hideUI" style="position: fixed; bottom: 20px; right: 20px; z-index:1200; cursor:pointer; color:#999; font-size:10px; display: none;">HIDE UI</div>
 		`;
 
 		// 3. 邏輯綁定 (改用 root.querySelector 避免抓錯人)
@@ -239,8 +238,8 @@ class AudioMap {
 				
 				// 1. UI 與 陀螺儀 (保持不變)
 				this.overlay.style.display = 'none';
-				const uiElements = ['ui-layer', 'mode-hint', 'link', 'lockGyro', 'hideUI'];
-				uiElements.forEach(id => {
+				const uiElements = ['ui-layer', 'mode-hint', 'link', 'lockGyro', 'useCamera', 'hideUI'];
+				uiElements.filter(id => !(id === 'useCamera' && !this.canCam)).forEach(id => {
 					const el = document.getElementById(id);
 					if (el) el.style.display = 'block';
 				});
@@ -311,44 +310,7 @@ class AudioMap {
 			}
 		});
 		
-		const hideUI = this.root.querySelector('#hideUI');
-		hideUI.addEventListener('click', () => {
-			const uiElements = ['ui-layer', 'mode-hint', 'link', 'lockGyro', 'useCamera', 'gyro-debug-ui'];
-
-			if (!uiLayer.classList.contains('show')) {
-				// --- 顯示過程 ---
-				uiElements.filter(id => !(id === 'useCamera' && !this.canCam)).forEach(id => {
-					const el = document.getElementById(id);
-					if (el) el.style.display = 'block';
-				});
-				
-				// 2. 稍微延遲（讓瀏覽器意識到 display 變了），再觸發動畫
-				requestAnimationFrame(() => {
-					uiLayer.classList.remove('hide');
-					uiLayer.classList.add('show');
-				});
-				
-				hideUI.style.color = "#999";
-				hideUI.textContent = "HIDE UI";
-			} else {
-				// --- 隱藏過程 ---
-				uiLayer.classList.remove('show');
-				uiLayer.classList.add('hide'); // 1. 先跑動畫
-				
-				// 2. 等動畫跑完 (1.2s = 1200ms) 再隱藏 display
-				setTimeout(() => {
-					if (uiLayer.classList.contains('hide')) {
-						uiElements.forEach(id => {
-							const el = document.getElementById(id);
-							if (el) el.style.display = 'none';
-						});
-					}
-				}, 50); 
-				
-				hideUI.style.color = "#fff";
-				hideUI.textContent = "▲";
-			}
-		});
+		
 	}
 	
 	async unlockGyro(){
@@ -444,7 +406,7 @@ class AudioMap {
 				}
 				.vertical-large {
 					height: 90%;
-					width: 3px;
+					width: 5px;
 					background: #555;
 					position: relative;
 				}
@@ -572,7 +534,7 @@ class AudioMap {
 				.gyro-indicator {
 					position: absolute; background: transparent;
 					display: none;  color: #999; padding: 5px; font-weight: bold;
-					pointer-events: auto;
+					pointer-events: auto; cursor:pointer;
 				}
 				#gyro-up    { top: 13px; left: 50%; transform: translateX(-50%); }
 				#gyro-down  { bottom: 13px; left: 50%; transform: translateX(-50%); }
@@ -581,7 +543,7 @@ class AudioMap {
 				
 				#mode-hint {
 					position: absolute; bottom: 10%; left: 50%; transform: translateX(-50%); font-size: 9px; color: #999;
-					letter-spacing: 1px; pointer-events: none; display: none; z-index: 1200;
+					letter-spacing: 1px; pointer-events: auto; display: none; z-index: 1200; cursor:pointer;
 				}
 			</style>
 			<div id="gyro-up" class="gyro-indicator">+</div>
@@ -590,6 +552,7 @@ class AudioMap {
 			<div id="gyro-right" class="gyro-indicator">+</div>
 			
 			<div id="mode-hint" style="display: none; cursor: pointer; transition: all 0.3s; white-space: pre;"> TAP TO GLOW</div>
+			<div id="hideUI" style="position: absolute; bottom: 20px; right: 20px; z-index:1200; pointer-events: auto; cursor:pointer; color:#999; font-size:10px; display: none;">HIDE UI</div>
 		`;
 		
 		if(this.root)
@@ -634,6 +597,46 @@ class AudioMap {
 						// e.preventDefault(); // 視情況決定是否開啟
 					}
 				}, { passive: true });
+			});
+			
+			const hideUI = document.getElementById('hideUI');
+			const uiLayer = document.getElementById('ui-layer');
+			hideUI.addEventListener('click', () => {
+				const uiElements = ['ui-layer', 'mode-hint', 'link', 'lockGyro', 'useCamera', 'gyro-up', 'gyro-down', 'gyro-left', 'gyro-right'];
+
+				if (!uiLayer.classList.contains('show')) {
+					// --- 顯示過程 ---
+					uiElements.filter(id => !(id === 'useCamera' && !this.canCam)).forEach(id => {
+						const el = document.getElementById(id);
+						if (el) el.style.display = 'block';
+					});
+					
+					// 2. 稍微延遲（讓瀏覽器意識到 display 變了），再觸發動畫
+					requestAnimationFrame(() => {
+						uiLayer.classList.remove('hide');
+						uiLayer.classList.add('show');
+					});
+					
+					hideUI.style.color = "#999";
+					hideUI.textContent = "HIDE UI";
+				} else {
+					// --- 隱藏過程 ---
+					uiLayer.classList.remove('show');
+					uiLayer.classList.add('hide'); // 1. 先跑動畫
+					
+					// 2. 等動畫跑完 (0.2s = 1200ms) 再隱藏 display
+					setTimeout(() => {
+						if (uiLayer.classList.contains('hide')) {
+							uiElements.forEach(id => {
+								const el = document.getElementById(id);
+								if (el) el.style.display = 'none';
+							});
+						}
+					}, 150); 
+					
+					hideUI.style.color = "#fff";
+					hideUI.textContent = "▲";
+				}
 			});
 			
 			
@@ -749,10 +752,9 @@ class AudioMap {
 			const config = this.fragList.find(s => s.path === path);
 			
 			// 如果該 Shader 不支援鏡頭，就強制關閉鏡頭以節省效能
-			if(this.overlay.style.display === "none"){
-				if (config) {
-					this.canCam = config.canCam;
-					console.log(this.canCam);
+			if (config) {
+				this.canCam = config.canCam;
+				if(this.overlay.style.display === "none"){
 					if(!this.canCam){
 						if (this.cameraManager && this.cameraManager.isCameraActive) {
 							await this.cameraManager.toggleCamera();
@@ -1065,7 +1067,7 @@ class AudioMap {
 	async initAudio(audioPath = null) {
 		// UI 與 陀螺儀 (保持不變) for legacy page
 		document.getElementById('overlay').style.display = 'none';
-		const uiElements = ['ui-layer', 'mode-hint', 'link', 'lockGyro'];
+		const uiElements = ['ui-layer', 'mode-hint', 'link', 'lockGyro', 'hideUI'];
 		uiElements.forEach(id => {
 			const el = document.getElementById(id);
 			if (el) el.style.display = 'block';
