@@ -8,5 +8,6 @@
 	{ "name": "COUPLING", "path": "./assets/shader/coupling.frag", "canCam": true },
 	{ "name": "SINGULARITY", "path": "./assets/shader/singularity.frag", "canCam": true },
 	{ "name": "FREEDOM", "path": "./assets/shader/freedom.frag", "canCam": true },
-	{ "name": "CHOICE", "path": "./assets/shader/choice.frag", "canCam": true }
+	{ "name": "CHOICE", "path": "./assets/shader/choice.frag", "canCam": true },
+	{ "name": "VOID", "path": "./assets/shader/void.frag", "canCam": true }
 ]

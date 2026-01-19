@@ -9,6 +9,7 @@ uniform float u_speed;
 uniform vec2 u_orient;
 uniform float u_darkGlow;    // 模式切換
 uniform sampler2D u_camera;
+uniform float u_useCamera;
 uniform sampler2D u_prevFrame;
 
 // 旋轉函數
@@ -61,23 +62,31 @@ void main() {
     // 4. 顏色：純粹的能量映射
     // 我們不定義顏色，而是定義「光譜偏移」
     vec3 color = 0.5 + 0.5 * cos(vec3(0,2,4) + d * 2.0 + u_intensity * 5.0);
-    
-    // 5. 現實融合：讓現實畫面被這股「勢能」扭曲
-    vec2 distortion = uv * final_map * 0.05 * u_volume_smooth;
-    vec3 scene = texture2D(u_camera, oriUV + distortion).rgb;
-	
+  
+	// 宣告 scene 並初始化為黑
+	vec3 scene = vec3(0.0);
+
+	// 只有當開關開啟時，才去取相機畫面並進行扭曲
+	if (u_useCamera > 0.5) {
+		vec2 distortion = uv * final_map * 0.05 * u_volume_smooth;
+		scene = texture2D(u_camera, oriUV + distortion).rgb;
+	}
+  
 	// 讀取過去
     vec3 past = texture2D(u_prevFrame, oriUV).rgb;
     
     // 這裡就是「值得」的地方：
     // 如果 mix 比例是 0.9，舊畫面會慢慢淡去，形成流動感
     // 如果加上一點點位移，畫面就會像液體一樣擴散
-	vec3 emission = color * abs(final_map) * (u_volume_smooth * 0.8 + 0.2) * 5.0;
+	vec3 emission = color * abs(final_map) * (u_volume_smooth * 0.5 + 0.5) * 5.0;
 	// 將新顏色與場景先融合，再與過去的畫面做混合
-	vec3 currentFrame = mix(scene, emission, 0.5); 
-	vec3 finalColor = mix(currentFrame, past, 0.95);
+	vec3 currentFrame = mix(emission, scene, 0.5); 
+	
+	vec3 finalColor = vec3(0.0);
 	
 	if(u_darkGlow > 0.5) {
+		finalColor = mix(currentFrame, past, 0.95);
+	
 		// Step A: 提高對比度，讓暗部深邃
 		finalColor *= finalColor * 2.0; 
 		
@@ -92,6 +101,9 @@ void main() {
 		
 		// Step E: 最終曝光壓縮，維持發光質感
 		finalColor = 1.0 - exp(-finalColor * 3.0);
+	}
+	else {
+		finalColor = mix(currentFrame, past, 0.2);
 	}
 
     // 最終輸出：當音樂強烈時，干涉條紋清晰且明亮；當音樂溫柔時，條紋會變寬、變慢

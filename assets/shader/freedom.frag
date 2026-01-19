@@ -10,6 +10,7 @@ uniform float u_speed;
 uniform vec2 u_orient;
 uniform float u_darkGlow;    // 模式切換
 uniform sampler2D u_camera;
+uniform float u_useCamera;
 
 // 利用質數構造的非週期性向量 (Primes: 13, 17, 19, 23, 29...)
 const vec3 p1 = vec3(13.1, 17.3, 19.7);
@@ -59,9 +60,15 @@ void main() {
     vec3 color = sin(p1 * orbit * 0.1 + u_intensity * 6.28) * 0.5 + 0.5;
     color *= shade;
 
-    // 結合相機：相機畫面只在「能量邊界」出現
-    vec3 cam = texture2D(u_camera, oriUV + uv * 0.01).rgb;
-    vec3 finalColor = mix(cam, color, u_volume_smooth * 0.5 + 0.5);
+	// 宣告 scene 並初始化為黑
+	vec3 cam = vec3(0.0);
+
+	// 只有當開關開啟時，才去取相機畫面並進行扭曲
+	if (u_useCamera > 0.5) {
+		cam = texture2D(u_camera, oriUV + uv * 0.01).rgb;
+	}
+
+    vec3 finalColor = mix(color, cam, u_intensity);
     
     // 5. 強度修正：讓 Peak 決定最後的「數學清晰度」
     finalColor += (1.0 - smoothstep(0.0, 0.1, abs(shade - 0.5))) * u_peak;

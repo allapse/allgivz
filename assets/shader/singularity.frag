@@ -19,7 +19,7 @@ vec3 spectrum(float t) {
     vec3 b = vec3(0.5, 0.5, 0.5);
     vec3 c = vec3(1.0, 1.0, 1.0);
     vec3 d = vec4(0.0, 0.33, 0.67, 0.1).rgb;
-    return a + b * cos(6.28318 * (c * t + d + pow(u_intensity*0.1, 3.0)));
+    return a + b * cos(6.28318 * (c * t + d + pow(u_intensity * 0.3, 3.0)));
 }
 
 // 旋轉矩陣
@@ -46,9 +46,9 @@ void main() {
     
     // 2. 維度碎片 (7次疊加)
     // 這裡是產生「波動格子」的核心
-	float iterLimit = mix(1.0, 3.0, pow(u_complexity * u_intensity * u_speed, 3.0))*7.0;
+	float iterLimit = mix(1.0, 3.0, pow(u_complexity * u_intensity * u_speed, 3.0)) * 7.0;
     for(float i = 0.0; i < iterLimit; i++) {
-        uv = abs(uv + sin(u_time * 0.2 + i) * u_intensity) - u_complexity;
+        uv = abs(uv) - sin(u_complexity) - cos(u_intensity);
 		uv *= rot(u_complexity + u_time * 0.1);
     }
 
@@ -72,7 +72,7 @@ void main() {
     
     // 模式切換邏輯
     if(u_darkGlow < 0.5) {
-        soundColor = 1.0 - exp(-soundColor * 0.8);
+        soundColor = 1.0 - exp(-soundColor * 1.5);
         soundColor *= vec3(u_intensity, 0.5, 1.0 - u_intensity);
     }
 
