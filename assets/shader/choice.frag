@@ -7,6 +7,7 @@ uniform float u_intensity;
 uniform float u_complexity;  
 uniform float u_speed;       
 uniform sampler2D u_camera;
+uniform sampler2D u_prevFrame;
 
 void main() {
     vec2 uv = (gl_FragCoord.xy - 0.5 * u_res) / min(u_res.y, u_res.x) *5.0;
@@ -55,7 +56,15 @@ void main() {
     // 5. 現實融合：讓現實畫面被這股「勢能」扭曲
     vec2 distortion = uv * final_map * 0.05 * u_volume_smooth;
     vec3 scene = texture2D(u_camera, oriUV + distortion).rgb;
+	
+	// 讀取過去
+    vec3 past = texture2D(u_prevFrame, oriUV).rgb;
+    
+    // 這裡就是「值得」的地方：
+    // 如果 mix 比例是 0.9，舊畫面會慢慢淡去，形成流動感
+    // 如果加上一點點位移，畫面就會像液體一樣擴散
+    vec3 finalColor = mix(scene, past, 0.95) + color * abs(final_map) * u_volume_smooth * 2.0;
 
     // 最終輸出：當音樂強烈時，干涉條紋清晰且明亮；當音樂溫柔時，條紋會變寬、變慢
-    gl_FragColor = vec4(scene + color * abs(final_map) * u_volume_smooth * 2.0, 1.0);
+    gl_FragColor = vec4(finalColor, 1.0);
 }
