@@ -80,7 +80,7 @@ void main() {
 		vec3 carbon2 = vec3(0.0);
 		
         // 多分子 (例如 5 顆)
-        for (int m = 0; m < 20; m++) {
+        for (int m = 0; m < 10; m++) {
             // 用噪聲決定分子中心位置
             vec2 n = noise2(vec2(float(m), u_time*0.02));
 			mat3 rot = rotateY(float(m) /40.0 + u_time * (u_complexity * 0.01 + 0.49)); // 隨時間旋轉
@@ -129,7 +129,7 @@ void main() {
 			}
 			
 			// ---- 聚合檢查 ---- 
-			for (int k = m+1; k < 40; k++) { 
+			for (int k = m+1; k < 10; k++) { 
 				float distC = distance(carbon, carbon2); 
 				if (distC < 3.68) { 
 					// 新增 C–C 鍵 (用 glow 表現) 
@@ -183,4 +183,5 @@ void main() {
 
 	gl_FragColor = vec4(finalColor, 1.0);
 }
+
 
