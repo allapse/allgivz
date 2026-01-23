@@ -12,5 +12,6 @@
 	{ "name": "VOID", "path": "./assets/shader/void.frag", "canCam": true },
 	{ "name": "REGRET", "path": "./assets/shader/regret.frag", "canCam": false },
 	{ "name": "SYNAPSE", "path": "./assets/shader/synapse.frag", "canCam": true },
-	{ "name": "LOVE", "path": "./assets/shader/love.frag", "canCam": true }
+	{ "name": "LOVE", "path": "./assets/shader/love.frag", "canCam": true },
+	{ "name": "TORTURE", "path": "./assets/shader/torture.frag", "canCam": true }
 ]
