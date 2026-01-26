@@ -89,6 +89,7 @@ class AudioMap {
 		this.fxFilter = null;
 		// 在 constructor 裡先建好這三個閥門
 		this.distDriveGain = null; // 破音強度
+		this.reverbNode = null;
 		this.wetReverbGain = null; // 混響強度
 		this.mainGain = null;      // 總音量
 		this.eqList = null;
@@ -1131,7 +1132,10 @@ class AudioMap {
 			this.fxFilter.Q.value = 1;             // 標準品質，不產生尖峰
 			this.distDriveGain = this.audioContext.createGain(); // 破音強度
 			this.distDriveGain.gain.value = 1.0; // 確保訊號預設能通過
+			this.reverbNode = this.audioContext.createConvolver();
 			this.wetReverbGain = this.audioContext.createGain(); // 混響強度
+			this.wetReverbGain.gain.value = 0.1; // 預設一點點就好，不然會很糊
+			this.loadReverbImpulse();
 			this.mainGain = this.audioContext.createGain();      // 總音量
 			
 			this.feedback = new FeedbackManager(this.renderer, {
@@ -1188,10 +1192,18 @@ class AudioMap {
 
 			// --- 重新接水管 ---
 			this.source.connect(this.panner);
-			this.panner.connect(this.fxFilter);        // 先過你的濾鏡
-			this.fxFilter.connect(this.distDriveGain); // 接破音控制
-			this.distDriveGain.connect(this.analyser); // 接分析器（這樣視覺才會反映濾鏡後的結果）
-			// 最後接總音量到喇叭
+			this.panner.connect(this.fxFilter);
+
+			// 路線 A：主幹線 (Dry)
+			this.fxFilter.connect(this.distDriveGain);
+			this.distDriveGain.connect(this.analyser);
+
+			// 路線 B：混響支線 (Wet) 
+			this.fxFilter.connect(this.reverbNode);      // 支線分流
+			this.reverbNode.connect(this.wetReverbGain); // 經過 Reverb 後接閥門
+			this.wetReverbGain.connect(this.analyser);   // 混回分析器 (這樣視覺也會看到殘響)
+
+			// 最後匯合
 			this.analyser.connect(this.mainGain);
 			this.mainGain.connect(this.audioContext.destination);
 
@@ -1208,6 +1220,19 @@ class AudioMap {
 		if (this.audioContext.state === 'suspended') {
 			await this.audioContext.resume();
 		}
+	}
+	
+	loadReverbImpulse() {
+		const length = this.audioContext.sampleRate * 2; // 2秒的殘響
+		const impulse = this.audioContext.createBuffer(2, length, this.audioContext.sampleRate);
+		for (let i = 0; i < 2; i++) {
+			const channelData = impulse.getChannelData(i);
+			for (let j = 0; j < length; j++) {
+				// 生成指數衰減的白噪音
+				channelData[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / length, 2);
+			}
+		}
+		this.reverbNode.buffer = impulse;
 	}
 	
 	// 在你的 AudioMap 類別內
@@ -1646,14 +1671,14 @@ class FeedbackManager {
     applyAudioFeedback() {
         const data = this.pixelBuffer;
         const now = this.audioCtx.currentTime;
-        const rampTime = 0.15; // 避震器時間，讓過渡平滑
+        const rampTime = 0.3; // 避震器時間，讓過渡平滑
 
         // R -> Gain (範圍 0.2 ~ 1.2)
-        const gainVal = (data[0] / 255) * 1.0 + 0.2;
+        const gainVal = (data[0] / 255) * 0.9 + 0.1;
         this.targets.gain.gain.setTargetAtTime(gainVal, now, rampTime);
 
         // G -> Filter Q (範圍 0 ~ 20)
-        const qVal = 1.0 + (data[1] / 255) * 7.0;
+        const qVal = 1.0 + (data[1] / 255) * 20.0;
         this.targets.filter.Q.setTargetAtTime(qVal, now, rampTime);
 
         // B -> Reverb Wet (範圍 0 ~ 0.8)
