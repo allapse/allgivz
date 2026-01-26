@@ -84,6 +84,7 @@ class AudioMap {
 		this.source = null;
 		this.analyser = null;
 		this.audioContext = null;
+		this.panner = null;
 		this.dataArray = null;
 		this.fxFilter = null;
 		this.eqList = null;
@@ -236,6 +237,20 @@ class AudioMap {
 					this.initGyro({ range: 20 }, (data) => {
 						this.orient.x = data.x * 1.5;
 						this.orient.y = data.y * 1.5;
+						
+						
+						if(this.panner){
+							const t = this.audioContext.currentTime;
+
+							// 左右
+							this.panner.positionX.setTargetAtTime(x, t, 0.05);
+
+							// 上下（可選）
+							this.panner.positionY.setTargetAtTime(y * 0.5, t, 0.05);
+
+							// 前後：固定在聽者前方一點點
+							this.panner.positionZ.setTargetAtTime(-1, t, 0.05);
+						}
 					}),
 					this.initAudio(audioPath)
 				]);
@@ -731,7 +746,8 @@ class AudioMap {
 		if (!this.fxFilter) {
 			this.fxFilter = this.audioContext.createBiquadFilter();
 			this.source.disconnect();
-			this.source.connect(this.fxFilter);
+			this.source.connect(this.panner);
+			this.panner.connect(this.fxFilter);
 			this.fxFilter.connect(this.analyser);
 			this.analyser.connect(this.audioContext.destination);
 		}
@@ -763,6 +779,10 @@ class AudioMap {
 			if (config) {
 				this.canCam = config.canCam;
 				if(this.overlay.style.display === "none"){
+					if(path.includes('void')){
+						this.audio.pause();
+					}
+					
 					if(!this.canCam){
 						if (this.cameraManager && this.cameraManager.isCameraActive) {
 							await this.cameraManager.toggleCamera();
@@ -1099,6 +1119,14 @@ class AudioMap {
 			this.analyser = this.audioContext.createAnalyser();
 			this.analyser.fftSize = 256;
 			this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+			
+			// ⭐ 新增 Panner
+			this.panner = this.audioContext.createPanner();
+			this.panner.panningModel = 'HRTF';     // 立體空間感
+			this.panner.distanceModel = 'inverse';
+			this.panner.refDistance = 1;
+			this.panner.maxDistance = 100;
+			this.panner.rolloffFactor = 1;
 		}
 
 		// 模式切換邏輯
@@ -1118,6 +1146,7 @@ class AudioMap {
 				this.micSource = this.audioContext.createMediaStreamSource(stream);
 				this.analyser.smoothingTimeConstant = 0.8;
 				this.micSource.connect(this.analyser);
+				//this.analyser.connect(this.panner);
 				
 				// 注意：麥克風不要接 destination，否則會出現恐怖的迴授音(嘯叫)
 				this.analyser.disconnect();
@@ -1145,7 +1174,8 @@ class AudioMap {
 			}
 
 			// 重新連接連線並導向喇叭
-			this.source.connect(this.analyser);
+			this.source.connect(this.panner);
+			this.panner.connect(this.analyser);
 			this.analyser.connect(this.audioContext.destination);
 
 			// 換歌並播放
@@ -1275,6 +1305,7 @@ class AudioMap {
 				});
 			}
 		};
+
 
 		window.addEventListener('deviceorientation', handleOrientation);
 		
