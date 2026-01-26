@@ -241,7 +241,7 @@ class AudioMap {
 						
 						if(this.panner){
 							const t = this.audioContext.currentTime;
-							const factor = 2.0;
+							const factor = 10.0;
 							// 左右
 							this.panner.positionX.setTargetAtTime(this.orient.x * factor, t, 0.05);
 
@@ -1123,10 +1123,10 @@ class AudioMap {
 			// ⭐ 新增 Panner
 			this.panner = this.audioContext.createPanner();
 			this.panner.panningModel = 'HRTF';     // 立體空間感
-			this.panner.distanceModel = 'inverse';
+			this.panner.distanceModel = 'linear';
 			this.panner.refDistance = 1;
 			this.panner.maxDistance = 100;
-			this.panner.rolloffFactor = 1;
+			this.panner.rolloffFactor = 0.1;
 		}
 
 		// 模式切換邏輯
