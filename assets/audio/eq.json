@@ -1,8 +1,8 @@
 [
   {
     "name": "ORIGIN (原始)",
-    "type": "allpass",
-    "freq": 0,
+    "type": "lowpass",
+    "freq": 20000,
     "q": 1,
     "color": "#999999",
     "desc": "無任何濾鏡，最純粹的音訊流。"
