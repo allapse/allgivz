@@ -10,7 +10,7 @@
   {
     "name": "LOWPASS (低通)",
     "type": "lowpass",
-    "frequency": 800,
+    "freq": 800,
     "q": 1.0,
     "color": "#1e90ff",
     "desc": "削掉高頻，只留下沉厚的低音。"
@@ -18,7 +18,7 @@
   {
     "name": "HIGHPASS (高通)",
     "type": "highpass",
-    "frequency": 2000,
+    "freq": 2000,
     "q": 1.0,
     "color": "#00ffff",
     "desc": "去掉低頻，只留下清脆的高音。"
@@ -26,7 +26,7 @@
   {
     "name": "BANDPASS (帶通)",
     "type": "bandpass",
-    "frequency": 1000,
+    "freq": 1000,
     "q": 2.5,
     "color": "#ffff00",
     "desc": "聚焦在中頻，像電話或收音機音效。"
@@ -34,7 +34,7 @@
   {
     "name": "NOTCH (陷波)",
     "type": "notch",
-    "frequency": 2500,
+    "freq": 2500,
     "q": 10.0,
     "color": "#00ff00",
     "desc": "切掉特定頻段，製造冷冽或 glitch 感。"
@@ -42,7 +42,7 @@
   {
     "name": "ALLPASS (全通)",
     "type": "allpass",
-    "frequency": 1200,
+    "freq": 1200,
     "q": 1.0,
     "color": "#999999",
     "desc": "不改變頻率響應，只改變相位，適合特殊空間感。"
@@ -50,7 +50,7 @@
   {
     "name": "PEAKING (峰值)",
     "type": "peaking",
-    "frequency": 80,
+    "freq": 80,
     "q": 6.0,
     "gain": 12,
     "color": "#ff0000",
@@ -59,7 +59,7 @@
   {
     "name": "LOWSHELF (低頻架)",
     "type": "lowshelf",
-    "frequency": 150,
+    "freq": 150,
     "gain": 8,
     "color": "#8b4513",
     "desc": "整體提升低頻，聲音更厚重溫暖。"
@@ -67,7 +67,7 @@
   {
     "name": "HIGHSHELF (高頻架)",
     "type": "highshelf",
-    "frequency": 6000,
+    "freq": 6000,
     "gain": 10,
     "color": "#ff69b4",
     "desc": "整體提升高頻，聲音更亮更閃爍。"
