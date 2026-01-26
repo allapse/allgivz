@@ -35,7 +35,7 @@
     "name": "NOTCH (陷波)",
     "type": "notch",
     "freq": 2500,
-    "q": 10.0,
+    "q": 15.0,
     "color": "#00ff00",
     "desc": "切掉特定頻段，製造冷冽或 glitch 感。"
   },
@@ -51,8 +51,8 @@
     "name": "PEAKING (峰值)",
     "type": "peaking",
     "freq": 80,
-    "q": 6.0,
-    "gain": 12,
+    "q": 10.0,
+    "gain": 15,
     "color": "#ff0000",
     "desc": "強化重低音，鼓點更有衝擊力。"
   },
