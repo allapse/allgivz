@@ -107,6 +107,7 @@ class AudioMap {
 		this.targetB = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, params);
 		this.params = { intensity: 0, speed: 0, complexity: 0 };
 		this.feedback = null;
+		this.feedbackMode = false;
 		
 		this.orient = { x: 0.0, y: 0.0 };
 		this.isGyroLocked = true;
@@ -270,7 +271,7 @@ class AudioMap {
 				
 				// 1. UI 與 陀螺儀 (保持不變)
 				this.overlay.style.display = 'none';
-				const uiElements = ['ui-layer', 'mode-hint', 'link', 'lockGyro', 'useCamera', 'hideUI'];
+				const uiElements = ['ui-layer', 'mode-hint', 'feedback-hint', 'link', 'lockGyro', 'useCamera', 'hideUI'];
 				uiElements.filter(id => !(id === 'useCamera' && !this.canCam)).forEach(id => {
 					const el = document.getElementById(id);
 					if (el) el.style.display = 'block';
@@ -573,8 +574,8 @@ class AudioMap {
 				#gyro-left  { left: 13px; top: 50%; transform: translateY(-50%); }
 				#gyro-right { right: 13px; top: 50%; transform: translateY(-50%); }
 				
-				#mode-hint {
-					position: absolute; bottom: 10%; left: 50%; transform: translateX(-50%); font-size: 9px; color: #999;
+				#mode-hint, #feedback-hint {
+					position: absolute; transform: translateX(-50%); font-size: 9px; color: #999;
 					letter-spacing: 1px; pointer-events: auto; display: none; z-index: 1200; cursor:pointer;
 				}
 			</style>
@@ -585,7 +586,8 @@ class AudioMap {
 				<div id="gyro-right" class="gyro-indicator">+</div>
 			</div>
 			
-			<div id="mode-hint" style="display: none; cursor: pointer; transition: all 0.3s; white-space: pre;"> TAP TO GLOW</div>
+			<div id="feedback-hint" style="top: 10%; left: 50%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre;">ACTIVE FEEDBACK</div>
+			<div id="mode-hint" style="bottom: 10%; left: 50%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre;"> TAP TO GLOW</div>
 			<div id="hideUI" style="position: absolute; bottom: 20px; right: 20px; z-index:1200; pointer-events: auto; cursor:pointer; color:#999; font-size:10px; display: none;">HIDE UI</div>
 		`;
 		
@@ -624,7 +626,17 @@ class AudioMap {
 					if (e.target.id === 'overlay' || e.target.closest('#link') || e.target.closest('#lockGyro') 
 						|| e.target.closest('#useCamera') || e.target.closest('#hideUI') || e.target.id.startsWith('gyro-')) return;
 
-					this.toggleDarkGlow();
+					// --- 獲取 Y 座標 ---
+					const clientY = eventType === 'touchend' ? e.changedTouches[0].clientY : e.clientY;
+					const screenHeight = window.innerHeight;
+
+					if (clientY > screenHeight / 2) {
+						// --- 下半部：控制畫面效果 ---
+						this.toggleDarkGlow();
+					} else {
+						// --- 上半部：控制音訊回饋 ---
+						this.toggleAudioFeedbackControl(); // 你需要新增這個方法
+					}
 					
 					// 手機版防止重複觸發 (如果是 touchend 就停止後續模擬的 click)
 					if (eventType === 'touchend' && e.cancelable) {
@@ -636,7 +648,7 @@ class AudioMap {
 			const hideUI = document.getElementById('hideUI');
 			const uiLayer = document.getElementById('ui-layer');
 			hideUI.addEventListener('click', () => {
-				const uiElements = ['ui-layer', 'mode-hint', 'link', 'lockGyro', 'useCamera', 'indicators'];
+				const uiElements = ['ui-layer', 'mode-hint', 'feedback-hint', 'link', 'lockGyro', 'useCamera', 'indicators'];
 
 				if (!uiLayer.classList.contains('show')) {
 					// --- 顯示過程 ---
@@ -741,6 +753,22 @@ class AudioMap {
 			}
 		}
 		//console.log("Glow Mode:", this.darkGlowMode);
+	};
+	
+	toggleAudioFeedbackControl() {
+		// 切換布林值
+		this.feedbackMode = !this.feedbackMode;
+		
+		const hint = document.getElementById('feedback-hint');
+		
+		// 更新 UI
+		if (hint) {
+			if (this.feedbackMode) {
+				hint.style.color = "#fff";
+			} else {
+				hint.style.color = "#999";
+			}
+		}
 	};
 	
 	changeEQ(index){
@@ -1478,7 +1506,7 @@ class AudioMap {
 
 		// 1. 數據分析：趁 A 還是熱騰騰的新畫面的時候，趕快分析
 		// 這樣所有 Shader（不論有沒有殘影）都能支持音訊回饋
-		if (this.feedback) {
+		if (this.feedback && this.feedbackMode) {
 			this.feedback.update(this.targetA.texture);
 		}
 
@@ -1637,7 +1665,7 @@ class FeedbackManager {
 					float B = abs(R - prevR) * 10.0;
 
 					// --- A: 脈衝 ---
-					float A = step(0.9, R);
+					float A = smoothstep(0.6, 1.0, R);
 
 					// 記得把 G 傳出去！
 					gl_FragColor = vec4(R, G, B, A);
