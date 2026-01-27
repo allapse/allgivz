@@ -1472,28 +1472,33 @@ class AudioMap {
 			this.material.uniforms.u_orient.value.set(this.orient.x, this.orient.y);
 		}
 		
+		// 不管有沒有 needsFeedback，都要先畫出這一幀
+		this.renderer.setRenderTarget(this.targetA);
+		this.renderer.render(this.scene, this.camera);
+
+		// 1. 數據分析：趁 A 還是熱騰騰的新畫面的時候，趕快分析
+		// 這樣所有 Shader（不論有沒有殘影）都能支持音訊回饋
+		if (this.feedback) {
+			this.feedback.update(this.targetA.texture);
+		}
+
+		// 2. 顯示到螢幕
+		this.renderer.setRenderTarget(null);
+		this.renderer.render(this.scene, this.camera);
+
 		// 2. 檢測：這個 Shader 到底需不需要「記憶」？
 		// 檢查 fragmentShader 的原始碼字串
 		const needsFeedback = this.material.fragmentShader.includes('u_prevFrame');
-		
+		// 3. 視覺殘影邏輯：只有需要時才交換 A B
 		if (needsFeedback) {
-			// --- 走記憶模式 ---
-			this.material.uniforms.u_prevFrame.value = this.targetB.texture;
-
-			this.renderer.setRenderTarget(this.targetA);
-			this.renderer.render(this.scene, this.camera);
-			this.renderer.setRenderTarget(null);
-			
-			if(this.feedback)
-				this.feedback.update(this.targetA.texture);
-
-			// 交換 A B
+			// 交換，讓這一幀的 A 變成下一幀的「過去 B」
 			let temp = this.targetA;
 			this.targetA = this.targetB;
 			this.targetB = temp;
+			
+			// 預先設定好下一幀要用的 Uniform (如果 Shader 沒這變數，Three.js 會自動忽略)
+			this.material.uniforms.u_prevFrame.value = this.targetB.texture;
 		}
-		
-		this.renderer.render(this.scene, this.camera);
 	}
 	
 	updateIdleMode(interval) {
