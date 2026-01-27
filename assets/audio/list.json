@@ -9,5 +9,7 @@
 	{ "name": "刺耳(老六)", "path": "./assets/audio/刺耳(老六).mp3" },
 	{ "name": "刺耳(還癢)", "path": "./assets/audio/刺耳(還癢).mp3" },
 	{ "name": "爛貨", "path": "./assets/audio/爛貨.mp3" },
+	{ "name": "愛好(蛤啦)", "path": "./assets/audio/愛好(蛤啦).mp3" },
+	{ "name": "愛好(災啦)", "path": "./assets/audio/愛好(災啦).mp3" },
     { "name": "麥克風輸入", "path": "mic" }
 ]
