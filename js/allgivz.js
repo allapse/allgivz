@@ -94,6 +94,7 @@ class AudioMap {
 		this.mainGain = null;      // 總音量
 		this.eqList = null;
 		this.material = null;
+		this.currentMesh= null;
 		
 		const params = {
 			// 必須使用 Mipmap 濾鏡，否則 textureLod 會讀不到數據
@@ -827,23 +828,77 @@ class AudioMap {
 			}
 			
 			// 從 assets 路徑抓取新的片段著色器
-			const response = await fetch(`${path}?t=${Date.now()}`);
-			if (!response.ok) throw new Error('Shader file not found');
-			
-			const newFragCode = await response.text();
+			const vertPath = path.replace('.frag', '.vert');
+			const defaultVert = `void main() { gl_Position = vec4(position, 1.0); }`;
 
-			// 假設你的 ShaderMaterial 存放在 this.material
+			// 2. 同時抓取兩者 (使用 Promise.all 比較快)
+			const [fragRes, vertRes] = await Promise.all([
+				fetch(`${path}?t=${Date.now()}`),
+				fetch(`${vertPath}?t=${Date.now()}`).catch(() => ({ ok: false })) // 抓不到也不要噴錯
+			]);
+
+			if (!fragRes.ok) throw new Error('Fragment shader not found');
+
+			const newFragCode = await fragRes.text();
+			const newVertCode = vertRes.ok ? await vertRes.text() : defaultVert;
+
+			// 3. 更新材質
 			if (this.material) {
+				this.material.vertexShader = newVertCode;
 				this.material.fragmentShader = newFragCode;
-				
-				// 關鍵：通知 Three.js 重新編譯此材質
-				this.material.needsUpdate = true;
-				
-				//console.log(`Successfully switched to shader: ${path}`);
+				this.material.needsUpdate = true; // 強制重新編譯
 			}
+			
+			// --- 關鍵：換體邏輯 ---
+			if (this.currentMesh) {
+				this.scene.remove(this.currentMesh);
+				this.currentMesh.geometry.dispose(); // 這裡最重要，不釋放手機會燙到爆
+			}
+
+			let geo;
+			if (config.mesh?.type === "Points") {
+				geo = this.createStarField(config.mesh.count);
+				this.currentMesh = new THREE.Points(geo, this.material);
+				this.material.transparent = true;
+				this.material.blending = THREE.AdditiveBlending; // 這是光學疊加的神器
+				this.material.depthWrite = false; // 讓星星不要去計算誰擋住誰，效能會噴發
+			} else if (config.mesh?.type === "Plane") {
+				const [w, h] = config.mesh.segments;
+				geo = new THREE.PlaneGeometry(10, 10, w, h);
+				this.currentMesh = new THREE.Mesh(geo, this.material);
+			} else {
+				// 預設 2D 畫布
+				geo = new THREE.PlaneGeometry(2, 2);
+				this.currentMesh = new THREE.Mesh(geo, this.material);
+			}
+
+			this.scene.add(this.currentMesh);
 		} catch (err) {
 			console.error('Failed to switch shader:', err);
 		}
+	}
+	
+	createStarField(count = 10000) {
+		const geometry = new THREE.BufferGeometry();
+		
+		// 每顆星需要 x, y, z 三個座標
+		const positions = new Float32Array(count * 3);
+		// 額外給每顆星一個獨特的 ID，方便在 Shader 裡做隨機運算
+		const ids = new Float32Array(count);
+
+		for (let i = 0; i < count; i++) {
+			// 在一個直徑 10 的立方體空間內隨機散佈
+			positions[i * 3] = (Math.random() - 0.5) * 10.0;
+			positions[i * 3 + 1] = (Math.random() - 0.5) * 10.0;
+			positions[i * 3 + 2] = (Math.random() - 0.5) * 10.0;
+			
+			ids[i] = i;
+		}
+
+		geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+		geometry.setAttribute('a_id', new THREE.BufferAttribute(ids, 1));
+		
+		return geometry;
 	}
 
     updateAudioReaction() {
@@ -1245,6 +1300,7 @@ class AudioMap {
 			// 換歌並播放
 			this.dataArray.fill(0)
 			this.audio.src = audioPath;
+			this.audio.type = "audio/mp4";
 			await this.audio.play();
 			this.isBPMLocked = false;
 			this.lastFlashTime = 0;  // 關鍵：歸零
@@ -1467,8 +1523,8 @@ class AudioMap {
 		});
 
 		await this.loadShader(shaderPath);
-		const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.material);
-		this.scene.add(mesh);
+		//const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.material);
+		//this.scene.add(mesh);
 		
 		// 啟動渲染迴圈
 		const animate = () => {
