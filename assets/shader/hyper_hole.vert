@@ -3,6 +3,7 @@ uniform float u_time;
 uniform float u_volume;
 uniform float u_volume_smooth;
 uniform float u_peak;
+uniform vec2 u_orient;
 uniform float u_intensity;
 uniform float u_complexity;
 uniform float u_speed;
@@ -45,12 +46,12 @@ void main() {
 
     // 4. 座標構建
     vec3 p;
-    p.x = cos(finalAngle) * currentRadius;
-    p.y = sin(finalAngle) * currentRadius;
+    p.x = cos(finalAngle) * currentRadius + u_orient.x;
+    p.y = sin(finalAngle) * currentRadius + u_orient.y;
     
     // 5. Z 軸震盪：保底微動
     float bpmSync = u_time * 0.05 * (u_bpm / 60.0) * 6.283185;
-	float wave = sin((currentRadius - 1.0) * u_peak - bpmSync);
+	float wave = sin((currentRadius - 1.0) * u_peak * 0.3 - bpmSync);
     float thickness = (pow(s3, 3.0) - 0.5) * currentRadius * 0.2;
     p.z = thickness + wave;
 
@@ -86,4 +87,5 @@ void main() {
     gl_PointSize = (7.0 + u_volume * 11.0 + s2 * 5.0) * perspective;
     gl_PointSize = clamp(gl_PointSize, 1.0, 30.0);
 }
+
 
