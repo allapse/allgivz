@@ -6,6 +6,7 @@ varying float vMode;
 
 uniform sampler2D u_camera;
 uniform float u_useCamera;
+uniform sampler2D u_prevFrame;
 
 void main() {
     float d = length(gl_PointCoord - 0.5);
@@ -33,6 +34,10 @@ void main() {
     if (vMode > 0.5) {
         finalColor += (1.0 - smoothstep(0.0, 0.1, vDist)) * 0.5;
     }
+	
+	// 讀取過去
+    vec3 past = texture2D(u_prevFrame, vUv).rgb;
+    finalColor = mix(finalColor * glow, past, 0.3);
 
-    gl_FragColor = vec4(finalColor * glow, vAlpha * glow * hole);
+    gl_FragColor = vec4(finalColor, vAlpha * glow * hole);
 }
