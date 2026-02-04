@@ -856,20 +856,34 @@ class AudioMap {
 			}
 
 			let geo;
+			// 先把 material 的狀態重設回「標準值」
+			this.material.blending = THREE.NormalBlending;
+			this.material.depthWrite = true;
+			this.material.depthTest = true;
+			this.material.side = THREE.FrontSide;
+			this.material.transparent = false;
+
 			if (config.mesh?.type === "Points") {
 				geo = this.createStarField(config.mesh.count);
 				this.currentMesh = new THREE.Points(geo, this.material);
+				
+				// Points 專屬
 				this.material.transparent = true;
-				this.material.blending = THREE.AdditiveBlending; // 這是光學疊加的神器
-				this.material.depthWrite = false; // 讓星星不要去計算誰擋住誰，效能會噴發
-			} else if (config.mesh?.type === "Plane") {
-				const [w, h] = config.mesh.segments;
-				geo = new THREE.PlaneGeometry(10, 10, w, h);
+				this.material.blending = THREE.AdditiveBlending;
+				this.material.depthWrite = false; 
+			} else if (config.mesh?.type === "Sphere") {
+				geo = new THREE.SphereGeometry(1, 64, 64); 
 				this.currentMesh = new THREE.Mesh(geo, this.material);
+				
+				// Sphere 專屬
+				this.material.transparent = true;
+				this.material.side = THREE.DoubleSide; 
+				this.material.depthWrite = false; 
 			} else {
 				// 預設 2D 畫布
 				geo = new THREE.PlaneGeometry(2, 2);
 				this.currentMesh = new THREE.Mesh(geo, this.material);
+				// 這裡會套用最上方的重置值
 			}
 
 			this.scene.add(this.currentMesh);
