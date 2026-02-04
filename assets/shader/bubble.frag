@@ -48,7 +48,8 @@ void main() {
 	
 	// 讀取過去
     vec3 past = texture2D(u_prevFrame, vUv).rgb;
-    color = mix(color + spec * 0.8, past, 0.92);
+    color = mix(color + spec * 0.8, past, 0.7);
 
     gl_FragColor = vec4(color, finalAlpha * sharpCircle);
+
 }
