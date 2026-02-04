@@ -56,9 +56,9 @@ void main() {
     vec3 noise = vec3(hash(s1), hash(s2), hash(s1+s2)) * u_peak * 0.2 * (1.0 - life);
     vec3 pos = spherePos * r + noise;
 	
-	pos.yz *= rotate(u_orient.y * 1.5 + u_time * 0.2); // 繞 X 軸轉
-    pos.xz *= rotate(u_orient.x * 1.5 + u_time * 0.1); // 繞 Y 軸轉
-	pos.xy *= rotate(u_time * 0.1); // 繞 Y 軸轉
+	pos.yz *= rotate(u_orient.y * 1.5 + u_time/s2 + s1); // 繞 X 軸轉
+    pos.xz *= rotate(u_orient.x * 1.5 + u_time/s1 + s2); // 繞 Y 軸轉
+	pos.xy *= rotate(u_time/s1 * s2 + s1 - s2); // 繞 Y 軸轉
 
     // 3. 視角運算
     vNormal = normalize(spherePos) * u_complexity; // 始終向外
@@ -84,10 +84,10 @@ void main() {
 
 	// 計算 3D 遠近感的大小衰減
 	// 這裡假設一個虛擬的相機距離為 2.0
-	float perspective = 1.5 / (2.5 - pos.z); 
+	float perspective = 1.5  / (2.5 - pos.z); 
 	// 剛噴出時點很小，成形時變大，消失前變薄
     float sizeGrowth = smoothstep(0.0, 0.5, vLife); 
-	gl_PointSize = (2.0 + sizeGrowth * 1.0) * perspective;
+	gl_PointSize = (2.0 + sizeGrowth * 1.0) * perspective + s1 - s2;
 	
 	// 將 [-1, 1] 的裁剪空間轉為 [0, 1] 的螢幕空間
     vScreenUv = gl_Position.xy * 0.5 + 0.5;
