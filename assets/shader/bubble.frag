@@ -11,6 +11,8 @@ varying float vNoise;
 varying vec2 vUv;
 varying float vLife;
 varying vec2 vScreenUv;
+varying float vS1;
+varying float vS2;
 
 void main() {
     // 1. 調整點的形狀：從模糊變銳利
@@ -19,18 +21,18 @@ void main() {
     
     // 讓邊緣更銳利：使用 pow 或 smoothstep 而非單純的 (1.0 - d)
     // 這樣粒子會看起來像紮實的小珍珠而非光暈
-    float sharpCircle = smoothstep(0.5, 0.45, d); 
+    float sharpCircle = smoothstep(0.5, 0.45 , d); 
 
     // 2. 菲涅耳與彩虹
     float fresnel = pow(1.0 - dot(vNormal, vViewDir), 5.0);
-    vec3 rainbow = 0.5 + 0.5 * cos(6.28 * (vNormal.y + vLife + vec3(0.0, 0.1, 0.2)));
+    vec3 rainbow = 0.5 + 0.5 * cos(6.28 * (vNormal.y + vLife + vec3(0.0, vS1, vS2)));
     vec3 dustColor = vec3(1.0 - u_intensity, u_speed, u_intensity);
     
     // 讓顏色轉換更快一點，減少中心「白沫」的時間
-    vec3 color = mix(dustColor, rainbow, smoothstep(0.05, 0.2, vLife));
+    vec3 color = mix(dustColor, rainbow, smoothstep(0.05 * vS1, 0.2 * vS2, vLife));
 	
 	// 3. 高光修正：泡泡的亮點要夠白
-    float spec = pow(1.0 - d * 2.0, 20.0);
+    float spec = pow(1.0 - d * 2.0, 20.0 * (vS1 + vS2));
 	
     if (u_useCamera > 0.5) {
 		// 1. 使用螢幕位置作為基礎，加上法線帶來的折射偏移
@@ -50,7 +52,7 @@ void main() {
 
     // 4. 透明度修正：
     // 修改消失邏輯，讓它在生命週期中後段保持強健，最後才快速消失
-    float fadeOut = 1.0 - pow(vLife, 10.0); 
+    float fadeOut = 1.0 - pow(vLife, 10.0 * (vS1 + vS2)); 
     float bubbleAlpha = (fresnel * 0.8 + 0.2) * fadeOut;
     
     // 修正你的 finalAlpha 邏輯，確保最大值能接近 1.0
@@ -58,7 +60,7 @@ void main() {
 	
 	// 讀取過去
     vec3 past = texture2D(u_prevFrame, vUv).rgb;
-    color = mix(color + spec * 0.8, past, 0.7);
+    color = mix(color + spec * 0.8, past, 0.35 * vS1 + 0.35 * vS2);
 
     gl_FragColor = vec4(color, finalAlpha * sharpCircle);
 }
