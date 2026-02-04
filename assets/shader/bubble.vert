@@ -1,4 +1,6 @@
 attribute float a_id;
+
+uniform vec2 u_res;
 uniform float u_time;
 uniform float u_volume;
 uniform float u_volume_smooth;
@@ -25,6 +27,7 @@ mat2 rotate(float a) {
 }
 
 void main() {
+	float aspect = u_res.x / u_res.y;
     float s1 = hash(a_id);
     float s2 = hash(a_id + 0.5);
     
@@ -40,20 +43,21 @@ void main() {
     float theta = s2 * 6.283185;
     
     // 理想球體座標
-    vec3 spherePos = vec3(sin(phi)*cos(theta), sin(phi)*sin(theta), cos(phi)) * sqrt((u_volume_smooth * 0.7 + 0.3) * 2.0);
+    vec3 spherePos = vec3(sin(phi)*cos(theta), sin(phi)*sin(theta), cos(phi)) * sqrt((u_volume * 0.7 + 0.3));
     
     // 噴射邏輯：
     // 初期：半徑從 0 快速擴大
     // 中期：形成球體 (r=1.0)
     // 隨音量震盪
-    float r = smoothstep(0.0, 0.4, life) * (0.8 + u_volume * 0.3);
+    float r = smoothstep(0.0, 0.4, life) * (0.5 + u_volume_smooth * 0.5);
     
     // 加上一點噴射時的抖動
     vec3 noise = vec3(hash(s1), hash(s2), hash(s1+s2)) * u_peak * 0.2 * (1.0 - life);
     vec3 pos = spherePos * r + noise;
 	
-	pos.yz *= rotate(u_orient.y * 1.5 + u_volume * 0.2); // 繞 X 軸轉
-    pos.xz *= rotate(u_orient.x * 1.5 + u_volume * 0.1); // 繞 Y 軸轉
+	pos.yz *= rotate(u_orient.y * 1.5 + u_time * 0.2); // 繞 X 軸轉
+    pos.xz *= rotate(u_orient.x * 1.5 + u_time * 0.1); // 繞 Y 軸轉
+	pos.xy *= rotate(u_time * 0.1); // 繞 Y 軸轉
 
     // 3. 視角運算
     vNormal = normalize(spherePos) * u_complexity; // 始終向外
@@ -72,15 +76,17 @@ void main() {
     // 2. 視差增強（關鍵！）：
     // 讓靠近相機的點（pos.z 大）移動多一點，遠處的點移動少一點
     // 這會讓球體在移動時看起來像「立體的」在晃，而不是一張扁平的照片
+	offsetPos.x /= aspect;
     offsetPos.xy += u_orient * pos.z * 0.2;
 
 	gl_Position = vec4(offsetPos.xy * 1.2, depthForGPU, 1.0);
 
 	// 計算 3D 遠近感的大小衰減
 	// 這裡假設一個虛擬的相機距離為 2.0
-	float perspective = 1.2 / (2.5 - pos.z); 
+	float perspective = 1.5 / (2.5 - pos.z); 
 	// 剛噴出時點很小，成形時變大，消失前變薄
     float sizeGrowth = smoothstep(0.0, 0.5, vLife); 
 	gl_PointSize = (2.0 + sizeGrowth * 1.0) * perspective;
 
 }
+

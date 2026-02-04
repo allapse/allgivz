@@ -3,6 +3,7 @@ uniform float u_useCamera;
 uniform float u_darkGlow;
 uniform float u_intensity;
 uniform float u_speed;
+uniform sampler2D u_prevFrame;
 
 varying vec3 vNormal;
 varying vec3 vViewDir;
@@ -30,8 +31,8 @@ void main() {
     if (u_useCamera > 0.5) {
         // 邊緣扭曲強烈，模擬厚膜折射
         vec2 distortUv = vUv + vNormal.xy * fresnel * 0.2;
-        vec3 cam = texture2D(u_camera, clamp(distortUv, 0.0, 1.0)).rgb;
-        color = mix(cam, rainbow, 0.3 + fresnel * 0.5);
+        vec3 cam = texture2D(u_camera, clamp(distortUv, 0.0, 0.5)).rgb;
+        color = mix(cam, rainbow, 0.1 + fresnel * 0.5);
     }
     
     // 3. 高光修正：泡泡的亮點要夠白
@@ -44,6 +45,10 @@ void main() {
     
     // 修正你的 finalAlpha 邏輯，確保最大值能接近 1.0
     float finalAlpha = bubbleAlpha * smoothstep(0.0, 0.1, vLife);
+	
+	// 讀取過去
+    vec3 past = texture2D(u_prevFrame, vUv).rgb;
+    color = mix(color + spec * 0.8, past, 0.92);
 
-    gl_FragColor = vec4(color + spec * 0.8, finalAlpha * sharpCircle);
+    gl_FragColor = vec4(color, finalAlpha * sharpCircle);
 }
