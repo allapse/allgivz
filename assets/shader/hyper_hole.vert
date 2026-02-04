@@ -52,7 +52,7 @@ void main() {
     float bpmSync = u_time * 0.01 * (u_bpm / 60.0) * 6.283185;
 	float wave = sin((currentRadius - 1.0 * cos(s1 - s2 - s3)) * (u_peak - s2));
     float thickness = (pow(s3, 3.0) - 0.5 * s1) * currentRadius * (0.2 + s2);
-    p.z = thickness + wave + sin(dot(p.xyz, vec3(1.0)) * (1.0 - u_speed));
+    p.z = thickness + wave;// + sin(dot(p.xyz, vec3(1.0)) * (1.0 - u_speed));
 
     // 6. 傾斜 45 度
     float rad = 0.785398;
@@ -84,6 +84,6 @@ void main() {
     gl_Position = vec4(p.x, p.y, 0.0, 1.0);
     
     // 8. 點的大小：保底尺寸 2.0，確保看得見
-    gl_PointSize = (5.0 * s1 + u_volume * 11.0 * s2 + s3 * 7.0) * perspective;
+    gl_PointSize = (5.0 * s1 + u_volume * 11.0 * s2 + s3 * 7.0) * 2.0 * perspective;
     gl_PointSize = clamp(gl_PointSize, 1.0, 20.0 * (s1 + s2 + s3));
 }
