@@ -37,7 +37,7 @@ void main() {
 	
 	// 讀取過去
     vec3 past = texture2D(u_prevFrame, vUv).rgb;
-    finalColor = mix(finalColor * glow, past, 0.3);
+    finalColor = mix(finalColor * glow, past, vAlpha - vDist);
 
     gl_FragColor = vec4(finalColor, vAlpha * glow * hole);
 }
