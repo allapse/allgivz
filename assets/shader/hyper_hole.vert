@@ -45,8 +45,8 @@ void main() {
 
     // 4. 座標構建
     vec3 p;
-    p.x = cos(finalAngle) * currentRadius / (0.5 + length(p.xyz));
-    p.y = sin(finalAngle) * currentRadius / (0.9 + length(p.xyz));
+    p.x = cos(finalAngle) * currentRadius / (0.3 + length(p.xyz));
+    p.y = sin(finalAngle) * currentRadius / (0.1 + length(p.xyz));
     
     // 5. Z 軸震盪：保底微動
     float bpmSync = u_time * 0.01 * (u_bpm / 60.0) * 6.283185;
