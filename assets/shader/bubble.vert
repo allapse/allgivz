@@ -40,7 +40,7 @@ void main() {
     float theta = s2 * 6.283185;
     
     // 理想球體座標
-    vec3 spherePos = vec3(sin(phi)*cos(theta), sin(phi)*sin(theta), cos(phi)) * sqrt((u_volume_smooth * 0.7 + 0.3) * 3.0);
+    vec3 spherePos = vec3(sin(phi)*cos(theta), sin(phi)*sin(theta), cos(phi)) * sqrt((u_volume_smooth * 0.7 + 0.3) * 2.0);
     
     // 噴射邏輯：
     // 初期：半徑從 0 快速擴大
@@ -78,8 +78,9 @@ void main() {
 
 	// 計算 3D 遠近感的大小衰減
 	// 這裡假設一個虛擬的相機距離為 2.0
-	float perspective = 1.0 / (2.5 - pos.z); 
+	float perspective = 1.2 / (2.5 - pos.z); 
 	// 剛噴出時點很小，成形時變大，消失前變薄
     float sizeGrowth = smoothstep(0.0, 0.5, vLife); 
 	gl_PointSize = (2.0 + sizeGrowth * 1.0) * perspective;
+
 }
