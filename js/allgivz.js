@@ -653,7 +653,7 @@ class AudioMap {
 
 				if (!uiLayer.classList.contains('show')) {
 					// --- 顯示過程 ---
-					uiElements.filter(id => !(id === 'useCamera' && !this.canCam)).forEach(id => {
+					uiElements.filter(id => !((id === 'useCamera' && !this.canCam) || (id === 'feedback-hint' && !this.material))).forEach(id => {
 						const el = document.getElementById(id);
 						if (el) el.style.display = 'block';
 					});
