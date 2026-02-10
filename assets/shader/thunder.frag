@@ -31,9 +31,16 @@ vec3 heatmap(float t) {
 void main() {
     // 增加不合理點 1：視線扭曲
     // 讓視線在邊緣產生輕微的魚眼畸變
-    vec2 distortedUV = v_centered_uv * (1.0 + length(v_centered_uv) * 0.2);
-    vec3 rd = normalize(vec3(distortedUV, 1.0));
-    vec3 ro = vec3(0.0, 0.0, -1.2); 
+    // 1. 極座標轉換 (不合理的第一步)
+    float r = length(v_centered_uv);
+    float a = atan(v_centered_uv.y, v_centered_uv.x);
+    
+    // 讓半徑產生隨音量震動的「黑洞引力」
+    r = pow(r, 0.5 + u_volume_smooth * 0.5); 
+    
+    // 把極座標轉回類 3D 空間視線
+    vec3 rd = normalize(vec3(cos(a) * r, sin(a) * r, 1.0));
+    vec3 ro = vec3(0.0, 0.0, -1.0);
     
     // 模擬擺弄：旋轉空間（加入隨機微震動）
     float shake = u_peak * 0.1;
@@ -43,7 +50,7 @@ void main() {
     vec3 finalCol = vec3(0.0);
     
     // 2. 無限反射迭代
-    for (int i = 0; i < 80; i++) { // 100次太多，80次並增加單次複雜度更划算
+    for (float i = 0.0; i < 24.0 * u_speed; i++) {
         float fi = float(i);
         vec3 p = ro + rd * (fi * 0.12);
         
@@ -52,7 +59,7 @@ void main() {
         float foldSize = (0.4 + u_complexity * 0.4) + sin(u_time * 0.5) * 0.1;
         foldSize += u_volume_smooth * 0.2; 
 
-        for (int j = 0; j < 12; j++) { 
+        for (float j = 0.0; j < 7.0 * u_speed; j++) { 
             p = abs(p) - foldSize;
             // 增加不合理點 3：非線性旋轉
             // 越深層的空間旋轉越快，產生螺旋感
@@ -69,14 +76,14 @@ void main() {
         float glow = thickness / (d + 0.004);
         
         vec3 col;
+		float beam = 0.01 / abs(p.x * p.y);
+		vec3 neon = vec3(0.2, 0.6, 1.0) * (0.5 + 0.5 * sin(u_time + float(i)));
+		col = neon * beam * u_volume_smooth * 2.0;
+		
         if (u_useCamera > 0.5) {
             vec2 camUV = fract(p.xy + 0.5);
-            col = texture2D(u_camera, camUV).rgb;
-        } else {
-            float beam = 0.01 / abs(p.x * p.y);
-            vec3 neon = vec3(0.2, 0.6, 1.0) * (0.5 + 0.5 * sin(u_time + float(i)));
-            col = neon * beam * u_volume_smooth * 2.0;
-        }
+            col *= (1.0 - texture2D(u_camera, camUV).rgb);
+		}
         
         float fade = pow(0.88, fi);
         
@@ -85,13 +92,13 @@ void main() {
         finalCol.g += col.g * fade;
         finalCol.b += col.b * fade * 0.9;
 		
-		if(u_darkGlow == 1.0){
-			float lineMatch = smoothstep(0.1, 0.0, d);
-			float colorIndex = fi * 0.02 + d * 2.0 - u_time * 0.2;
+		if(u_darkGlow > 0.5){
+			float lineMatch = smoothstep(0.2, 0.0, d);
+			float colorIndex = fi * 0.2 + d * 2.0 - u_time * 0.2;
             finalCol += pow(heatmap(colorIndex) * lineMatch, vec3(0.8));
 		}
         
-        if (fade < 0.005) break; 
+        if (fade < 0.02) break; 
     }
     
     // 5. 後處理
@@ -101,7 +108,7 @@ void main() {
     // 增加不合理點 5：時間殘影拖累
     // 這裡我們不只混色，我們讓過去的畫面帶有一點點色彩偏移
     vec3 past = texture2D(u_prevFrame, v_uv).rgb;
-    finalCol = mix(finalCol, past, 0.6 + u_speed * 0.2); 
+    finalCol = mix(finalCol, past, 0.3 + pow(u_speed, 3.0) * 0.2); 
     
     gl_FragColor = vec4(finalCol * u_intensity, 1.0);
 }
