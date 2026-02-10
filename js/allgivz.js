@@ -132,6 +132,8 @@ class AudioMap {
 		this.cameraManager = null;
 		this.useCamera = null;
 		this.canCam = false;
+		
+		this.shaderQueue = [];
 	}
 	
 	async buildMainUI(overlayText, linkText, url, audioPath) {
@@ -1608,41 +1610,46 @@ class AudioMap {
 			this.idleTimer = setInterval(async () => {
 				if (this.isShaderLoading) return;
 
-				if (this.overlay.style.display !== 'none' && options.length > 1) {
-					this.isShaderLoading = true; 
+				if (this.overlay.style.display !== 'none' && options.length > 0) {
+					this.isShaderLoading = true;
 
 					try {
-						// 1. 隨機算法：確保不選到目前的 Shader
-						let nextIndex;
-						do {
-							nextIndex = Math.floor(Math.random() * options.length);
-						} while (nextIndex === this.currentShaderIndex);
-						
-						this.currentShaderIndex = nextIndex;
+						// 1. 如果隊列空了，重新洗牌
+						if (this.shaderQueue.length === 0) {
+							// 產生一個索引數組 [0, 1, 2, ...]
+							this.shaderQueue = options.map((_, i) => i);
+							// 洗牌 (Fisher-Yates Shuffle)
+							for (let i = this.shaderQueue.length - 1; i > 0; i--) {
+								const j = Math.floor(Math.random() * (i + 1));
+								[this.shaderQueue[i], this.shaderQueue[j]] = [this.shaderQueue[j], this.shaderQueue[i]];
+							}
+							// 避免連續兩輪的結尾和開頭選到同一個
+							if (this.shaderQueue[0] === this.currentShaderIndex) {
+								this.shaderQueue.push(this.shaderQueue.shift());
+							}
+						}
+
+						// 2. 從隊列取出下一個索引
+						this.currentShaderIndex = this.shaderQueue.shift();
 						const nextShaderPath = options[this.currentShaderIndex].value;
 
 						// 同步 UI 顯示
 						this.shaderSelect.value = nextShaderPath;
-
-						// 2. 解決亂序問題：
-						// 使用 await 確保兩者都完成（或 loadShader 完成）才進入下一步
-						// 如果 toggleDarkGlow 是為了切換時的視覺過渡，建議在這裡精確控制
+						
 						await Promise.all([
 							this.loadShader(nextShaderPath),
 							this.toggleDarkGlow(0.33) // 假設這是一個返回 Promise 的動畫函數
 						]);
 
 					} catch (err) {
-						console.error("隨機顯化失敗:", err);
+						console.error("顯化失敗:", err);
 					} finally {
-						// 3. 延遲開鎖：給予一點額外的緩衝時間，避免連續切換的視覺閃爍
-						setTimeout(() => {
-							this.isShaderLoading = false;
-						}, 500); 
+						this.isShaderLoading = false;
 					}
 				} else if (this.overlay.style.display === 'none') {
 					clearInterval(this.idleTimer);
 					this.idleTimer = null;
+					this.shaderQueue = []; // 清空隊列
 				}
 			}, interval);
 		}
