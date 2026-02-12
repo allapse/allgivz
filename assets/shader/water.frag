@@ -4,7 +4,9 @@ varying vec2 v_centered_uv;
 varying float v_z; // 接收山峰高度
 
 uniform float u_time;
+uniform float u_volume;
 uniform float u_volume_smooth;
+uniform float u_peak;
 uniform float u_intensity;
 uniform float u_complexity;
 uniform float u_speed;
@@ -16,8 +18,8 @@ uniform sampler2D u_prevFrame;
 vec2 refract_logic(vec2 uv, float t, float tension) {
     vec2 p = uv;
     for(float i = 1.0; i < 7.0 + 10.0 * u_complexity; i++) {
-        p.x += 0.3 / i * sin(i * 3.0 * p.y + t + u_volume_smooth * 0.5 * tension);
-        p.y += 0.5 / i * cos(i * 5.0 * p.x + t + u_volume_smooth * 0.3 * tension);
+        p.x += 0.3 / i * sin(i * 3.0 * p.y + t + (0.2 + 0.8 * u_volume_smooth) * 0.5 * tension);
+        p.y += 0.5 / i * cos(i * 5.0 * p.x + t + (0.2 + 0.8 * u_volume) * 0.3 * tension);
     }
     return p;
 }
@@ -30,7 +32,7 @@ void main() {
     float ridge = fwidth(v_z) * 100.0; 
     
     // 2. 你的核心折射邏輯
-    vec2 distortedUV = refract_logic(v_uv, t, u_intensity);
+    vec2 distortedUV = refract_logic(v_uv, t, (0.2 + 0.8 * u_intensity));
     
     // 3. 採樣：加入 Z 軸引發的視差偏移
     vec2 parallaxUV = distortedUV + (v_centered_uv * v_z * 0.1);
@@ -39,7 +41,7 @@ void main() {
     float b = texture2D(u_prevFrame, parallaxUV - vec2(u_darkGlow * 0.3 + 0.005, 0.0)).b;
     
     // 4. 計算水墨鈍痛感（加入 Z 軸高度的加成）
-    float tension = length(distortedUV - v_uv) * u_intensity;
+    float tension = length(distortedUV - v_uv) * (0.2 + 0.8 * u_intensity);
     // 山頂（v_z 高的地方）顏色更淡、更透；山谷更濃、更沉
     vec3 waterColor = vec3(0.7, 0.85, 0.9) * (1.0 - tension * 0.5 + v_z * 0.3);
     
@@ -58,11 +60,11 @@ void main() {
 	
 	// 2. 製造「湍流」擾動 (這是你的空間結構)
     float noise = sin(v_uv.x * 10.0 + u_time) * cos(v_uv.y * 10.0 - u_time);
-    float turbulence = v_z * 15.0 + noise * u_intensity;
+    float turbulence = v_z * 15.0 + noise * (0.2 + 0.8 * u_intensity);
 
     // 3. 強化版光柵 (你的柵欄玩具，這裡用 371/373)
     // 讓光柵不只是顏色，它在切開空間
-    float grill = smoothstep(0.4, 0.41, fract(v_uv.x * 371.0 + v_z * 373.0)) + u_speed;
+    float grill = smoothstep(0.4, 0.41, fract(v_uv.x * 371.0 + v_z * 373.0)) + u_peak;
     float tear = smoothstep(0.8, 0.2, length(fwidth(v_z * 20.0)));
     grill *= tear;
 
@@ -75,7 +77,7 @@ void main() {
     vec2 cameraUV = v_uv;
     
     // 讓相機畫面也跟隨你的 refract_logic 產生偏移
-    vec2 camDistortedUV = refract_logic(v_uv, u_time, u_intensity);
+    vec2 camDistortedUV = refract_logic(v_uv, u_time, (0.2 + 0.8 * u_intensity));
     vec4 camColor = texture2D(u_camera, camDistortedUV);
 
     // 2. 墨化處理：將彩色相機轉為「感性灰階」或「藍調水墨」
@@ -89,10 +91,24 @@ void main() {
         finalColor = mix(finalColor, inkCam * finalColor * 2.0, 0.6);
     }
 
-    // 5. 關鍵：把 finalColor 揉進波形 (Domain Remapping)
-    // 我們不是直接輸出 result，而是用 turbulence 去「擾動」原本的 mixedBase
-    // 這會讓 finalColor 看起來像是被湍流捲進去的絲綢
-    vec2 warpUV = v_uv + vec2(sin(turbulence), cos(turbulence)) * 0.05 * u_intensity;
+    // --- 模擬壓力投影 (Pressure Projection) 開始 ---
+    // 1. 計算局部「發散度」: 觀察你的 distortedUV 在空間中的擠壓程度
+    // 如果 UV 變化劇烈，代表流體在那裡被拉扯或擠壓
+    float div = dFdx(distortedUV.x) + dFdy(distortedUV.y);
+    
+    // 2. 取得壓力的梯度 (Pressure Gradient)
+    // 我們假設壓力 p 與發散度 div 成正比
+    // 這裡利用 dFdx/dFdy 找出壓力最強的「推力方向」
+    vec2 pressureGrad = vec2(dFdx(div), dFdy(div));
+    
+    // 3. 修正位移：讓原本的擾動 (turbulence) 受到壓力的制衡
+    // 如果不加這段，水墨只會隨波逐流；加了這段，水墨會「試圖填滿空隙」
+    vec2 pCorrection = pressureGrad * (0.2 + 0.8 * u_intensity);
+    // --- 模擬壓力投影 結束 ---
+
+    // 5. 關鍵：把 finalColor 揉進波形 (這裡加入了 pCorrection)
+    // 我們在原本的 warpUV 上減去壓力修正項
+    vec2 warpUV = v_uv + (vec2(sin(turbulence), cos(turbulence)) * 0.05 * pCorrection) * (0.2 + 0.8 * u_intensity);
     vec3 warpedColor = texture2D(u_prevFrame, warpUV).rgb;
     
     // 6. 最終混合
