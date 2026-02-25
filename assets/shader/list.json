@@ -19,8 +19,10 @@
 	{ "name": "BUBBLE", "path": "./assets/shader/bubble.frag", "canCam": false, "mesh": { "type": "Points", "count": 10000 } },
 	{ "name": "THUNDER", "path": "./assets/shader/thunder.frag", "canCam": true},
 	{ "name": "WATER", "path": "./assets/shader/water.frag", "canCam": true},
-	{ "name": "PRIME", "path": "./assets/shader/prime.frag", "canCam": true}
+	{ "name": "PRIME", "path": "./assets/shader/prime.frag", "canCam": true},
+	{ "name": "INFINITE", "path": "./assets/shader/infinite.frag", "canCam": true}
 ]
+
 
 
 
