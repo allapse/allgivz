@@ -32,18 +32,13 @@ void main() {
     z += sin((p.x + p.y) * 0.5 + t * 1.2) * 0.05;
     
     // 加上音量的張力：音量大時，紙張抖動劇烈
-    z *= (1.0 + u_volume_smooth * 2.0);
+    z *= (1.0 + u_volume_smooth * 5.0);
     
     // 保留中心隆起感，但讓邊緣也有波動
     v_z = z; 
 
     // 建立 3D 位置
     vec3 pos = vec3(position.xy, v_z);
-
-    // 套用你最喜歡的微小翻轉 (書頁感)
-    float angleX = sin(u_orient.y - 0.03 + t * 0.01) * cos(0.05 * t);
-    float angleY = cos(u_orient.x - 0.05 + t * 0.01) * sin(0.03 * t);
-    //pos = rotateX(angleX) * rotateY(angleY) * pos;
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
 }
