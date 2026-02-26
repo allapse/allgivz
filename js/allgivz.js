@@ -1696,10 +1696,9 @@ class CameraManager {
 class FeedbackManager {
     constructor(renderer, audioTargets) {
         this.renderer = renderer;
-        this.targets = audioTargets; // 預期包含 gain, filter, reverb, distortion 等節點
-        this.audioCtx = audioTargets.filter.context; // 自動取得 AudioContext
+        this.targets = audioTargets;
+        this.audioCtx = audioTargets.filter.context;
 
-        // 1. 初始化 1x1 渲染目標（使用雙緩衝來計算幀間變化）
         const rtParams = {
             format: THREE.RGBAFormat,
             type: THREE.UnsignedByteType,
@@ -1708,10 +1707,8 @@ class FeedbackManager {
         };
         this.rtCurrent = new THREE.WebGLRenderTarget(1, 1, rtParams);
         this.rtPrev = new THREE.WebGLRenderTarget(1, 1, rtParams);
-        
         this.pixelBuffer = new Uint8Array(4);
 
-        // 2. 建立專用的邏輯運算 Shader
         this.material = new THREE.ShaderMaterial({
             uniforms: {
                 u_currentFrame: { value: null },
@@ -1730,59 +1727,58 @@ class FeedbackManager {
                 varying vec2 vUv;
 
                 void main() {
-					// 取得全畫面平均色 (Level 10)
-					vec4 currAvg = textureLod(u_currentFrame, vec2(0.5), 10.0);
-					
-					// --- R: 亮度 ---
-					float R = dot(currAvg.rgb, vec3(0.299, 0.587, 0.114));
+                    // 全局平均色
+                    vec4 currAvg = textureLod(u_currentFrame, vec2(0.5), 10.0);
 
-					// --- G: 飽和度 (使用你提供的公式) ---
-					float maxC = max(currAvg.r, max(currAvg.g, currAvg.b));
-					float minC = min(currAvg.r, min(currAvg.g, currAvg.b));
-					float G = (maxC - minC) / (maxC + 0.001);
+                    // R: 亮度
+                    float R = dot(currAvg.rgb, vec3(0.299, 0.587, 0.114));
 
-					// --- B: 變化率 (與上一幀 1x1 數據比對) ---
-					float prevR = texture2D(u_prevFrame, vec2(0.5)).r;
-					float B = abs(R - prevR) * 10.0;
+                    // G: 飽和度
+                    float maxC = max(currAvg.r, max(currAvg.g, currAvg.b));
+                    float minC = min(currAvg.r, min(currAvg.g, currAvg.b));
+                    float G = (maxC - minC) / (maxC + 0.001);
 
-					// --- A: 脈衝 ---
-					float A = smoothstep(0.6, 1.0, R);
+                    // B: 變化率
+                    float prevR = texture2D(u_prevFrame, vec2(0.5)).r;
+                    float B = abs(R - prevR) * 10.0;
 
-					// 記得把 G 傳出去！
-					gl_FragColor = vec4(R, G, B, A);
-				}
+                    // A: 脈衝
+                    float A = smoothstep(0.6, 1.0, R);
+
+                    gl_FragColor = vec4(R, G, B, A);
+                }
             `
         });
 
-        // 3. 建立迷你場景
         this.scene = new THREE.Scene();
         this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
         this.quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.material);
         this.scene.add(this.quad);
+
+        // 新增平滑狀態
+        this.smoothed = [0, 0, 0, 0];
+        this.alpha = 0.2; // 平滑係數
     }
 
     update(mainSceneTexture) {
-        // 備份主渲染器狀態
         const currentRT = this.renderer.getRenderTarget();
-
-        // 設定輸入
         this.material.uniforms.u_currentFrame.value = mainSceneTexture;
         this.material.uniforms.u_prevFrame.value = this.rtPrev.texture;
 
-        // 執行 1x1 渲染
         this.renderer.setRenderTarget(this.rtCurrent);
         this.renderer.render(this.scene, this.camera);
         this.renderer.readRenderTargetPixels(this.rtCurrent, 0, 0, 1, 1, this.pixelBuffer);
-
-        // 還原主渲染器
         this.renderer.setRenderTarget(currentRT);
 
-        // 交換 Buffer
         let temp = this.rtPrev;
         this.rtPrev = this.rtCurrent;
         this.rtCurrent = temp;
 
-        // 執行改命邏輯
+        // 平滑處理 (EMA)
+        for (let i = 0; i < 4; i++) {
+            this.smoothed[i] = this.alpha * this.pixelBuffer[i] + (1 - this.alpha) * this.smoothed[i];
+        }
+
         this.applyAudioFeedback();
     }
 
