@@ -1787,30 +1787,43 @@ class FeedbackManager {
     }
 
     applyAudioFeedback() {
-        const data = this.pixelBuffer;
+        const data = this.smoothed;
         const now = this.audioCtx.currentTime;
-        const rampTime = 0.3; // 避震器時間，讓過渡平滑
+        const rampTime = 0.5; // 更長的平滑時間
+		
+		// 讀取 EQ 狀態
+		const currentType = this.targets.filter.type;
+		const currentFreq = this.targets.filter.frequency.value;
 
-        // R -> Gain (範圍 0.2 ~ 1.2)
-        const gainVal = (data[0] / 255) * 0.2 + 1.0;
+		// 根據 EQ 狀態決定模式
+		let mode = "smooth";
+		if (currentType === "lowpass" && currentFreq < 500) {
+			mode = "impact"; // 偏重低頻 → 震撼模式
+		} else if (currentType === "highpass") {
+			mode = "bright"; // 偏重高頻 → 閃爍模式
+		}
+
+        // R -> Gain (非線性放大)
+		const gainByEQ = (mode == "impact"? 1.2 : 1.0);
+        const gainVal = 0.5 + Math.pow(data[0] / 255, 1.2) * 1.5 * gainByEQ;
         this.targets.gain.gain.setTargetAtTime(gainVal, now, rampTime);
 
-        // G -> Filter Q (範圍 0 ~ 20)
-        const qVal = 1.0 + (data[1] / 255) * 20.0;
+        // G -> Filter Q
+        const qVal = 1.0 + Math.pow(data[1] / 255, 1.5) * 20.0 * gainByEQ;
         this.targets.filter.Q.setTargetAtTime(qVal, now, rampTime);
 
-        // B -> Reverb Wet (範圍 0 ~ 0.8)
-        const reverbVal = (data[2] / 255) * 1.0;
+        // B -> Reverb Wet
+		const reverbByEQ = (mode == "bright"? 1.5 : 1.0)
+        const reverbVal = Math.pow(data[2] / 255, 1.3) * 0.8 * reverbByEQ;
         if (this.targets.reverb) {
             this.targets.reverb.gain.setTargetAtTime(reverbVal, now, rampTime);
         }
 
-        // A -> Distortion (開關制)
+        // A -> Distortion
         if (this.targets.distortion) {
-            const distVal = data[3] > 128 ? 1.2 : 1.0;
-            // Distortion 通常是混音比例，或是 Drive 參數
+			const distBySmooth = (mode != "smooth"? 1.5 : 1.0);
+            const distVal = data[3] > 128 ? 1.5 * distBySmooth : 1.0;
             this.targets.distortion.gain.setTargetAtTime(distVal, now, 0.05);
-			//console.log(gainVal+'/'+qVal+'/'+reverbVal+'/'+distVal);
         }
     }
 }
