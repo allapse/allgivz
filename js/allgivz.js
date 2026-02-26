@@ -1800,7 +1800,7 @@ class FeedbackManager {
 		}
 
         // R -> Gain (非線性放大)
-		const gainByEQ = (mode == "impact"? 1.2 : 1.0);
+		const gainByEQ = (mode == "impact"? 1.0 : 1.0);
         const gainVal = 0.5 + Math.pow(data[0] / 255, 1.2) * 1.5 * gainByEQ;
         this.targets.gain.gain.setTargetAtTime(gainVal, now, rampTime);
 
