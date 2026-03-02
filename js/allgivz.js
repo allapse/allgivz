@@ -1800,25 +1800,25 @@ class FeedbackManager {
 		}
 
         // R -> Gain (非線性放大)
-		const gainByEQ = (mode == "impact"? 1.2 : 1.0);
+		const gainByEQ = (mode == "impact"? 1.1 : 1.0);
         const gainVal = 0.5 + Math.pow(data[0] / 255, 1.2) * 1.1 * gainByEQ;
         this.targets.gain.gain.setTargetAtTime(gainVal, now, rampTime);
 
         // G -> Filter Q
-        const qVal = 1.0 + Math.pow(data[1] / 255, 1.5) * 20.0 * gainByEQ;
+        const qVal = 1.0 + Math.pow(data[1] / 255, 1.5) * 15.0 * gainByEQ;
         this.targets.filter.Q.setTargetAtTime(qVal, now, rampTime);
 
         // B -> Reverb Wet
-		const reverbByEQ = (mode == "bright"? 1.5 : 1.0)
-        const reverbVal = Math.pow(data[2] / 255, 1.3) * 0.8 * reverbByEQ;
+		const reverbByEQ = (mode == "bright"? 1.1 : 1.0)
+        const reverbVal = Math.pow(data[2] / 255, 1.3) * 1.1 * reverbByEQ;
         if (this.targets.reverb) {
             this.targets.reverb.gain.setTargetAtTime(reverbVal, now, rampTime);
         }
 
         // A -> Distortion
         if (this.targets.distortion) {
-			const distBySmooth = (mode != "smooth"? 1.5 : 1.0);
-            const distVal = data[3] > 128 ? 1.5 * distBySmooth : 1.0;
+			const distBySmooth = (mode != "smooth"? 1.1 : 1.0);
+            const distVal = data[3] > 128 ? 1.1 * distBySmooth : 1.0;
             this.targets.distortion.gain.setTargetAtTime(distVal, now, 0.05);
         }
     }
