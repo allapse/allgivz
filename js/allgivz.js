@@ -1044,10 +1044,11 @@ class AudioMap {
 	handleVol() {
 		let sum = 0;
 		let peak = 0;
-		const len = this.dataArray.length;
+		const data = this.processData(this.dataArray);
+		const len = data.length;
 
 		for (let i = 0; i < len; i++) {
-			const val = this.dataArray[i];
+			const val = data[i];
 			sum += val;
 			// 計算峰值
 			if (val > peak) peak = val;
@@ -1267,7 +1268,7 @@ class AudioMap {
 				for (let k = 0; k < B.length; k++) {
 					sum += A[i][k] * B[k][j];
 				}
-				result[i][j] = sum > 4 ? 1 : 0; // threshold
+				result[i][j] = sum > 3 ? 1 : 0; // threshold
 			}
 		}
 		return result;
