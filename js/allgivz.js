@@ -96,9 +96,6 @@ class AudioMap {
 		this.material = null;
 		this.currentMesh = null;
 		
-		this.musicSelect = null;
-		this.shaderSelect = null;
-		
 		const params = {
 			// 必須使用 Mipmap 濾鏡，否則 textureLod 會讀不到數據
 			minFilter: THREE.LinearMipmapLinearFilter, 
@@ -131,13 +128,17 @@ class AudioMap {
 		this.darkGlowMode = false;
 		this.ueaMode = false;
 		this.idleTimer = null;
+		this.musicSelect = null;
+		this.shaderSelect = null;
+		this.shaderQueue = [];
 		this.currentShaderIndex = 0;
+		this.eqSelect = null;
+		this.eqQueue = [];
+		this.currentEQIndex = 0;
 		
 		this.cameraManager = null;
 		this.useCamera = null;
 		this.canCam = false;
-		
-		this.shaderQueue = [];
 	}
 	
 	async buildMainUI(overlayText, linkText, url, audioPath) {
@@ -596,7 +597,7 @@ class AudioMap {
 			<div id="feedback-hint" style="top: 10%; left: 50%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre;">ACTIVE FEEDBACK</div>
 			<div id="mode-hint" style="bottom: 10%; left: 50%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre;"> TAP TO GLOW</div>
 			<div id="uea-hint" style="top: 50%; left: 15%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre;">UEA</div>
-			<div id="die-hint" style="top: 50%; right: 10%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre;">DIE</div>
+			<div id="die-hint" style="top: 50%; right: 12%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre;">DIE</div>
 			<div id="hideUI" style="position: absolute; bottom: 20px; right: 20px; z-index:1200; pointer-events: auto; cursor:pointer; color:#999; font-size:10px; display: none;">HIDE UI</div>
 		`;
 		
@@ -730,10 +731,10 @@ class AudioMap {
 				};
 			}
 
-			const eqSelect = document.getElementById('eq-select');
-			if (eqSelect) {
+			this.eqSelect = document.getElementById('eq-select');
+			if (this.eqSelect) {
 				// 使用箭頭函數確保 this 指向你的主程式物件
-				eqSelect.onchange = (e) => {
+				this.eqSelect.onchange = (e) => {
 					this.changeEQ(e.target.value);
 				};
 			}
@@ -811,8 +812,13 @@ class AudioMap {
 		if (Math.random() > 0.50) this.toggleDarkGlow(); 
 		if (Math.random() > 0.47) this.toggleUEA(); 
 		
-		const options = Array.from(this.shaderSelect.options).filter(opt => opt.value !== "");
+		const shaderOptions = Array.from(this.shaderSelect.options).filter(opt => opt.value !== "");
+		const nextShader = this.updateSelect(shaderOptions, this.shaderQueue, this.currentShaderIndex, this.shaderSelect);
+		this.loadShader(nextShader);
 		
+		const eqOptions = Array.from(this.eqSelect.options).filter(opt => opt.value !== "");
+		const nextEQ = this.updateSelect(eqOptions, this.eqQueue, this.currentEQIndex, this.eqSelect);
+		this.changeEQ(nextEQ);
 	};
 	
 	changeEQ(index){
@@ -1723,30 +1729,10 @@ class AudioMap {
 					this.isShaderLoading = true;
 
 					try {
-						// 1. 如果隊列空了，重新洗牌
-						if (this.shaderQueue.length === 0) {
-							// 產生一個索引數組 [0, 1, 2, ...]
-							this.shaderQueue = options.map((_, i) => i);
-							// 洗牌 (Fisher-Yates Shuffle)
-							for (let i = this.shaderQueue.length - 1; i > 0; i--) {
-								const j = Math.floor(Math.random() * (i + 1));
-								[this.shaderQueue[i], this.shaderQueue[j]] = [this.shaderQueue[j], this.shaderQueue[i]];
-							}
-							// 避免連續兩輪的結尾和開頭選到同一個
-							if (this.shaderQueue[0] === this.currentShaderIndex) {
-								this.shaderQueue.push(this.shaderQueue.shift());
-							}
-						}
-
-						// 2. 從隊列取出下一個索引
-						this.currentShaderIndex = this.shaderQueue.shift();
-						const nextShaderPath = options[this.currentShaderIndex].value;
-
-						// 同步 UI 顯示
-						this.shaderSelect.value = nextShaderPath;
+						const nextValue = this.updateSelect(options, this.shaderQueue, this.currentShaderIndex, this.shaderSelect);
 						
 						await Promise.all([
-							this.loadShader(nextShaderPath),
+							this.loadShader(nextValue),
 							this.toggleDarkGlow(0.33) // 假設這是一個返回 Promise 的動畫函數
 						]);
 
@@ -1762,6 +1748,40 @@ class AudioMap {
 				}
 			}, interval);
 		}
+	}
+
+	// Fisher-Yates Shuffle
+	shuffle(array) {
+		for (let i = array.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[array[i], array[j]] = [array[j], array[i]];
+		}
+		return array;
+	}
+	
+	refreshQueue(options, currentIndex) {
+		let queue = options.map((_, i) => i);
+		queue = this.shuffle(queue);
+	
+		// 避免連續兩輪的結尾和開頭選到同一個
+		if (queue[0] === currentIndex) {
+			queue.push(queue.shift());
+		}
+	
+		return queue;
+	}
+
+	// 從 queue 取出下一個並更新 select
+	updateSelect(options, queue, currentIndex, selectElement) {
+		if (queue.length === 0) {
+			queue = this.refreshQueue(options, currentIndex);
+		}
+	
+		currentIndex = queue.shift();
+		const nextValue = options[currentIndex].value;
+		selectElement.value = nextValue;
+	
+		return nextValue;
 	}
 }
 
