@@ -126,6 +126,7 @@ class AudioMap {
 		this.beatHistory = []; // 用來紀錄前幾拍的間隔
 		
 		this.darkGlowMode = false;
+		this.ueaMode = false;
 		this.idleTimer = null;
 		this.currentShaderIndex = 0;
 		
@@ -274,7 +275,7 @@ class AudioMap {
 				
 				// 1. UI 與 陀螺儀 (保持不變)
 				this.overlay.style.display = 'none';
-				const uiElements = ['ui-layer', 'mode-hint', 'feedback-hint', 'link', 'lockGyro', 'useCamera', 'hideUI'];
+				const uiElements = ['ui-layer', 'mode-hint', 'feedback-hint', 'uea-hint', 'link', 'lockGyro', 'useCamera', 'hideUI'];
 				uiElements.filter(id => !(id === 'useCamera' && !this.canCam)).forEach(id => {
 					const el = document.getElementById(id);
 					if (el) el.style.display = 'block';
@@ -577,7 +578,7 @@ class AudioMap {
 				#gyro-left  { left: 13px; top: 50%; transform: translateY(-50%); }
 				#gyro-right { right: 13px; top: 50%; transform: translateY(-50%); }
 				
-				#mode-hint, #feedback-hint {
+				#mode-hint, #feedback-hint, #uea-hint {
 					position: absolute; transform: translateX(-50%); font-size: 9px; color: #999;
 					letter-spacing: 1px; pointer-events: auto; display: none; z-index: 1200; cursor:pointer;
 				}
@@ -591,6 +592,7 @@ class AudioMap {
 			
 			<div id="feedback-hint" style="top: 10%; left: 50%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre;">ACTIVE FEEDBACK</div>
 			<div id="mode-hint" style="bottom: 10%; left: 50%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre;"> TAP TO GLOW</div>
+			<div id="uea-hint" style="top: 50%; left: 15%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre;">UEA</div>
 			<div id="hideUI" style="position: absolute; bottom: 20px; right: 20px; z-index:1200; pointer-events: auto; cursor:pointer; color:#999; font-size:10px; display: none;">HIDE UI</div>
 		`;
 		
@@ -630,15 +632,27 @@ class AudioMap {
 						|| e.target.closest('#useCamera') || e.target.closest('#hideUI') || e.target.id.startsWith('gyro-')) return;
 
 					// --- 獲取 Y 座標 ---
+					const clientX = eventType === 'touchend' ? e.changedTouches[0].clientX : e.clientX;
 					const clientY = eventType === 'touchend' ? e.changedTouches[0].clientY : e.clientY;
+					const screenWidth = window.innerWidth;
 					const screenHeight = window.innerHeight;
+					
+					const centerX = screenWidth / 2;
+					const centerY = screenHeight / 2;
 
-					if (clientY > screenHeight / 2) {
-						// --- 下半部：控制畫面效果 ---
-						this.toggleDarkGlow();
+					const dx = clientX - centerX;
+					const dy = clientY - centerY;
+
+					const angle = Math.atan2(dy, dx) * 180 / Math.PI; // 角度轉成度數
+
+					if (angle >= -45 && angle < 45) {
+						//this.toggleUEA(); // 右
+					} else if (angle >= 45 && angle < 135) {
+						this.toggleDarkGlow(); // 正下方
+					} else if (angle >= -135 && angle < -45) {
+						this.toggleAudioFeedbackControl(); // 正上方
 					} else {
-						// --- 上半部：控制音訊回饋 ---
-						this.toggleAudioFeedbackControl(); // 你需要新增這個方法
+						this.toggleUEA(); // 左
 					}
 					
 					// 手機版防止重複觸發 (如果是 touchend 就停止後續模擬的 click)
@@ -651,7 +665,7 @@ class AudioMap {
 			const hideUI = document.getElementById('hideUI');
 			const uiLayer = document.getElementById('ui-layer');
 			hideUI.addEventListener('click', () => {
-				const uiElements = ['ui-layer', 'mode-hint', 'feedback-hint', 'link', 'lockGyro', 'useCamera', 'indicators'];
+				const uiElements = ['ui-layer', 'mode-hint', 'feedback-hint', 'uea-hint', 'link', 'lockGyro', 'useCamera', 'indicators'];
 
 				if (!uiLayer.classList.contains('show')) {
 					// --- 顯示過程 ---
@@ -767,6 +781,22 @@ class AudioMap {
 		// 更新 UI
 		if (hint) {
 			if (this.feedbackMode) {
+				hint.style.color = "#fff";
+			} else {
+				hint.style.color = "#999";
+			}
+		}
+	};
+	
+	toggleUEA() {
+		// 切換布林值
+		this.ueaMode = !this.ueaMode;
+		
+		const hint = document.getElementById('uea-hint');
+		
+		// 更新 UI
+		if (hint) {
+			if (this.ueaMode) {
 				hint.style.color = "#fff";
 			} else {
 				hint.style.color = "#999";
@@ -1104,7 +1134,7 @@ class AudioMap {
 	}
 	
 	handleGivz(mapping, min, max) {
-		const data = this.dataArray;
+		const data = this.processData(this.dataArray);
 		const N = data.length;
 		let result = 0;
 
@@ -1204,6 +1234,73 @@ class AudioMap {
 			mapping.el.value = this.params[mapping.key];
 			mapping.el.style.setProperty('--peak', mapping.peak);
 		}
+	}
+	
+	// 把一維 FFT data 轉成二進制矩陣
+	toBinaryMatrix(data, bitLength = 8) {
+		let matrix = [];
+		for (let i = 0; i < data.length; i++) {
+			// 把數值轉成二進制字串
+			let bin = data[i].toString(2).padStart(bitLength, "0");
+			// 拆成位元陣列
+			let row = bin.split("").map(b => parseInt(b));
+			matrix.push(row);
+		}
+		return matrix;
+	}
+	
+	binaryRowToInt(row) { 
+		return parseInt(row.join(""), 2); 
+	}
+	
+	transpose(M) { 
+		return M[0].map((_, colIndex) => M.map(row => row[colIndex])); 
+	}
+
+	// 簡單矩陣乘法 (只是示範)
+	multiplyMatrices(A, B) {
+		let result = [];
+		for (let i = 0; i < A.length; i++) {
+			result[i] = [];
+			for (let j = 0; j < B[0].length; j++) {
+				let sum = 0;
+				for (let k = 0; k < B.length; k++) {
+					sum += A[i][k] * B[k][j];
+				}
+				result[i][j] = sum > 0 ? 1 : 0; // threshold
+			}
+		}
+		return result;
+	}
+
+	// 把攤平的一維數列重新分組成位元陣列
+	flattenToRows(flatArray, bitLength = 8) {
+		let rows = [];
+		for (let i = 0; i < flatArray.length; i += bitLength) {
+			rows.push(flatArray.slice(i, i + bitLength));
+		}
+		return rows;
+	}
+
+	processData(data) {
+		let transformed = [...data];
+		if (this.ueaMode) {
+			let binMatrix = this.toBinaryMatrix(data);
+			// 做矩陣運算
+			let multiplied = this.multiplyMatrices(binMatrix, this.transpose(binMatrix));
+			// 攤平成一維
+			let flat = multiplied.flat();
+			// 重新分組成位元陣列
+			let rows = this.flattenToRows(flat, 8);
+			// 轉回整數
+			transformed = rows.map(this.binaryRowToInt);
+		}
+		
+		if (transformed.length !== data.length) { 
+			transformed = transformed.slice(0, data.length); 
+		}
+		
+		return transformed;
 	}
 	
 	async initAudio(audioPath = null) {
