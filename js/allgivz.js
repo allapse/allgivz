@@ -94,7 +94,10 @@ class AudioMap {
 		this.mainGain = null;      // 總音量
 		this.eqList = null;
 		this.material = null;
-		this.currentMesh= null;
+		this.currentMesh = null;
+		
+		this.musicSelect = null;
+		this.shaderSelect = null;
 		
 		const params = {
 			// 必須使用 Mipmap 濾鏡，否則 textureLod 會讀不到數據
@@ -275,7 +278,7 @@ class AudioMap {
 				
 				// 1. UI 與 陀螺儀 (保持不變)
 				this.overlay.style.display = 'none';
-				const uiElements = ['ui-layer', 'mode-hint', 'feedback-hint', 'uea-hint', 'link', 'lockGyro', 'useCamera', 'hideUI'];
+				const uiElements = ['ui-layer', 'mode-hint', 'feedback-hint', 'uea-hint', 'die-hint', 'link', 'lockGyro', 'useCamera', 'hideUI'];
 				uiElements.filter(id => !(id === 'useCamera' && !this.canCam)).forEach(id => {
 					const el = document.getElementById(id);
 					if (el) el.style.display = 'block';
@@ -578,7 +581,7 @@ class AudioMap {
 				#gyro-left  { left: 13px; top: 50%; transform: translateY(-50%); }
 				#gyro-right { right: 13px; top: 50%; transform: translateY(-50%); }
 				
-				#mode-hint, #feedback-hint, #uea-hint {
+				#mode-hint, #feedback-hint, #uea-hint, #die-hint {
 					position: absolute; transform: translateX(-50%); font-size: 9px; color: #999;
 					letter-spacing: 1px; pointer-events: auto; display: none; z-index: 1200; cursor:pointer;
 				}
@@ -593,6 +596,7 @@ class AudioMap {
 			<div id="feedback-hint" style="top: 10%; left: 50%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre;">ACTIVE FEEDBACK</div>
 			<div id="mode-hint" style="bottom: 10%; left: 50%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre;"> TAP TO GLOW</div>
 			<div id="uea-hint" style="top: 50%; left: 15%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre;">UEA</div>
+			<div id="die-hint" style="top: 50%; right: 10%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre;">DIE</div>
 			<div id="hideUI" style="position: absolute; bottom: 20px; right: 20px; z-index:1200; pointer-events: auto; cursor:pointer; color:#999; font-size:10px; display: none;">HIDE UI</div>
 		`;
 		
@@ -646,7 +650,7 @@ class AudioMap {
 					const angle = Math.atan2(dy, dx) * 180 / Math.PI; // 角度轉成度數
 
 					if (angle >= -45 && angle < 45) {
-						//this.toggleUEA(); // 右
+						this.toggleDIE(); // 右
 					} else if (angle >= 45 && angle < 135) {
 						this.toggleDarkGlow(); // 正下方
 					} else if (angle >= -135 && angle < -45) {
@@ -665,7 +669,7 @@ class AudioMap {
 			const hideUI = document.getElementById('hideUI');
 			const uiLayer = document.getElementById('ui-layer');
 			hideUI.addEventListener('click', () => {
-				const uiElements = ['ui-layer', 'mode-hint', 'feedback-hint', 'uea-hint', 'link', 'lockGyro', 'useCamera', 'indicators'];
+				const uiElements = ['ui-layer', 'mode-hint', 'feedback-hint', 'uea-hint', 'die-hint', 'link', 'lockGyro', 'useCamera', 'indicators'];
 
 				if (!uiLayer.classList.contains('show')) {
 					// --- 顯示過程 ---
@@ -702,17 +706,15 @@ class AudioMap {
 				}
 			});
 			
-			
 			// --- 綁定音樂選單 (新增邏輯) ---
-			const musicSelect = document.getElementById('music-select');
-			if (musicSelect) {
+			this.musicSelect = document.getElementById('music-select');
+			if (this.musicSelect) {
 				// 這裡使用 change 事件來實時切換
-				musicSelect.onchange = async (e) => {
+				this.musicSelect.onchange = async (e) => {
 					await this.switchTrack(e.target.value);
 				};
 			}
 			
-			// --- 綁定視覺選單 (新增邏輯) ---
 			// --- 綁定 Shader 選單 ---
 			this.shaderSelect = document.getElementById('shader-select');
 			if (this.shaderSelect) {
@@ -802,6 +804,15 @@ class AudioMap {
 				hint.style.color = "#999";
 			}
 		}
+	};
+	
+	toggleDIE() {
+		if (Math.random() > 0.52) this.toggleAudioFeedbackControl(); 
+		if (Math.random() > 0.50) this.toggleDarkGlow(); 
+		if (Math.random() > 0.47) this.toggleUEA(); 
+		
+		const options = Array.from(this.shaderSelect.options).filter(opt => opt.value !== "");
+		
 	};
 	
 	changeEQ(index){
