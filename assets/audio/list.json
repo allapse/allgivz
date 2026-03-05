@@ -11,5 +11,7 @@
 	{ "name": "爛貨", "path": "./assets/audio/爛貨.mp3" },
 	{ "name": "愛好(蛤啦)", "path": "./assets/audio/愛好(蛤啦).mp3" },
 	{ "name": "愛好(災啦)", "path": "./assets/audio/愛好(災啦).mp3" },
-    { "name": "麥克風輸入", "path": "mic" }
+    { "name": "麥克風輸入", "path": "mic" },
+	{ "name": "選擇檔案", "path": "file" }
 ]
+
