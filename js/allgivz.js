@@ -126,6 +126,7 @@ class AudioMap {
 		this.beatHistory = []; // 用來紀錄前幾拍的間隔
 		
 		this.darkGlowMode = false;
+		this.uea = new UEA();
 		this.ueaMode = false;
 		this.dieLock = false;
 		this.idleTimer = null;
@@ -796,6 +797,14 @@ class AudioMap {
 		// 切換布林值
 		this.ueaMode = !this.ueaMode;
 		
+		if(this.ueaMode) {
+			this.uea.refresh();
+			this.shuffle(this.uea.functions);
+		}
+		else {
+			this.uea.clear();
+		}
+		
 		const hint = document.getElementById('uea-hint');
 		
 		// 更新 UI
@@ -1070,7 +1079,7 @@ class AudioMap {
 	handleVol() {
 		let sum = 0;
 		let peak = 0;
-		const data = this.processData(this.dataArray);
+		const data = this.uea.process(this.dataArray);
 		const len = data.length;
 
 		for (let i = 0; i < len; i++) {
@@ -1161,7 +1170,7 @@ class AudioMap {
 	}
 	
 	handleGivz(mapping, min, max) {
-		const data = this.processData(this.dataArray);
+		const data = this.uea.process(this.dataArray);
 		const N = data.length;
 		let result = 0;
 
@@ -1261,73 +1270,6 @@ class AudioMap {
 			mapping.el.value = this.params[mapping.key];
 			mapping.el.style.setProperty('--peak', mapping.peak);
 		}
-	}
-	
-	// 把一維 FFT data 轉成二進制矩陣
-	toBinaryMatrix(data, bitLength = 8) {
-		let matrix = [];
-		for (let i = 0; i < data.length; i++) {
-			// 把數值轉成二進制字串
-			let bin = data[i].toString(2).padStart(bitLength, "0");
-			// 拆成位元陣列
-			let row = bin.split("").map(b => parseInt(b));
-			matrix.push(row);
-		}
-		return matrix;
-	}
-	
-	binaryRowToInt(row) { 
-		return parseInt(row.join(""), 2); 
-	}
-	
-	transpose(M) { 
-		return M[0].map((_, colIndex) => M.map(row => row[colIndex])); 
-	}
-
-	// 簡單矩陣乘法 (只是示範)
-	multiplyMatrices(A, B) {
-		let result = [];
-		for (let i = 0; i < A.length; i++) {
-			result[i] = [];
-			for (let j = 0; j < B[0].length; j++) {
-				let sum = 0;
-				for (let k = 0; k < B.length; k++) {
-					sum += A[i][k] * B[k][j];
-				}
-				result[i][j] = sum > 3 ? 1 : 0; // threshold
-			}
-		}
-		return result;
-	}
-
-	// 把攤平的一維數列重新分組成位元陣列
-	flattenToRows(flatArray, bitLength = 8) {
-		let rows = [];
-		for (let i = 0; i < flatArray.length; i += bitLength) {
-			rows.push(flatArray.slice(i, i + bitLength));
-		}
-		return rows;
-	}
-
-	processData(data) {
-		let transformed = [...data];
-		if (this.ueaMode) {
-			let binMatrix = this.toBinaryMatrix(data);
-			// 做矩陣運算
-			let multiplied = this.multiplyMatrices(binMatrix, this.transpose(binMatrix));
-			// 攤平成一維
-			let flat = multiplied.flat();
-			// 重新分組成位元陣列
-			let rows = this.flattenToRows(flat, 8);
-			// 轉回整數
-			transformed = rows.map(this.binaryRowToInt);
-		}
-		
-		if (transformed.length !== data.length) { 
-			transformed = transformed.slice(0, data.length); 
-		}
-		
-		return transformed;
 	}
 	
 	async initAudio(audioPath = null) {
@@ -1961,4 +1903,155 @@ class FeedbackManager {
             this.targets.distortion.gain.setTargetAtTime(distVal, now, 0.05);
         }
     }
+}
+
+class UEA {
+	constructor() {
+		this.functions = [];
+		this.octaveSize = 8;
+	}
+	
+	refresh() {
+		// 隨機決定倍頻程大小 (例如 6 ~ 24 之間) 
+		const minSize = 6; 
+		const maxSize = 24; 
+		this.octaveSize = Math.floor(Math.random() * (maxSize - minSize + 1)) + minSize;
+		
+		this.registerFunction(this.smoothing);
+		this.registerFunction(this.lowPassWeighting);
+		this.registerFunction(this.dynamicRangeCompression);
+		this.registerFunction(this.fractalWeighting);
+		this.registerFunction(this.stochasticPerturbation);
+		this.registerFunction(this.octaveBalancing);
+		this.registerFunction(this.processBinary);
+	}
+	
+	clear() {
+		this.functions = [];
+	}
+	
+	// 註冊新 function
+	registerFunction(fn) {
+		if (Math.random() > 0.5) { // 隨機決定要不要套用
+			this.functions.push(fn);
+		}
+	}
+	
+	// 隨機疊加呼叫
+	process(data) {
+		let result = data;
+		this.functions.forEach(fn => {
+			result = fn(result);
+		});
+		return result;
+	}
+	
+	// --- 六個柔和化 function ---
+
+	smoothing = (data) => {
+		// 移動平均或高斯平滑
+		return this.movingAverage(data, 5);
+	}
+	
+	lowPassWeighting(data) {
+		return data.map((val, i) => val * (1 / (1 + i))); // 高頻衰減
+	}
+	
+	dynamicRangeCompression(data) {
+		return data.map(val => Math.log(1 + val)); // 壓縮大值，提升小值
+	}
+	
+	fractalWeighting(data) {
+		return data.map((val, i) => val * (Math.sin(i) * 0.5 + 1)); // 分形感
+	}
+	
+	stochasticPerturbation(data) {
+		return data.map(val => val + (Math.random() - 0.5) * 0.05); // 微擾
+	}
+	
+	octaveBalancing = (data) => {
+		for (let i = 0; i < data.length; i += this.octaveSize) {
+			let segment = data.slice(i, i + this.octaveSize);
+			let avg = segment.reduce((a, b) => a + b, 0) / segment.length;
+			for (let j = 0; j < segment.length; j++) {
+				data[i + j] = avg;
+			}
+		}
+		return data;
+	}
+	
+	movingAverage(data, windowSize) { 
+		return data.map((_, i, arr) => { 
+			let start = Math.max(0, i - windowSize + 1); 
+			let subset = arr.slice(start, i + 1); 
+			return subset.reduce((a, b) => a + b, 0) / subset.length; 
+		}); 
+	}
+	
+	// 把一維 FFT data 轉成二進制矩陣
+	toBinaryMatrix(data, bitLength = 8) {
+		let matrix = [];
+		for (let i = 0; i < data.length; i++) {
+			// 把數值轉成二進制字串
+			let bin = data[i].toString(2).padStart(bitLength, "0");
+			// 拆成位元陣列
+			let row = bin.split("").map(b => parseInt(b));
+			matrix.push(row);
+		}
+		return matrix;
+	}
+	
+	binaryRowToInt(row) { 
+		return parseInt(row.join(""), 2); 
+	}
+	
+	transpose(M) { 
+		return M[0].map((_, colIndex) => M.map(row => row[colIndex])); 
+	}
+
+	// 簡單矩陣乘法 (只是示範)
+	multiplyMatrices(A, B) {
+		let result = [];
+		for (let i = 0; i < A.length; i++) {
+			result[i] = [];
+			for (let j = 0; j < B[0].length; j++) {
+				let sum = 0;
+				for (let k = 0; k < B.length; k++) {
+					sum += A[i][k] * B[k][j];
+				}
+				result[i][j] = sum > 3 ? 1 : 0; // threshold
+			}
+		}
+		return result;
+	}
+
+	// 把攤平的一維數列重新分組成位元陣列
+	flattenToRows(flatArray, bitLength = 8) {
+		let rows = [];
+		for (let i = 0; i < flatArray.length; i += bitLength) {
+			rows.push(flatArray.slice(i, i + bitLength));
+		}
+		return rows;
+	}
+
+	processBinary = (data) => {
+		let transformed = [...data];
+		if (this.ueaMode) {
+			let binMatrix = this.toBinaryMatrix(data);
+			// 做矩陣運算
+			let multiplied = this.multiplyMatrices(binMatrix, this.transpose(binMatrix));
+			// 攤平成一維
+			let flat = multiplied.flat();
+			// 重新分組成位元陣列
+			let rows = this.flattenToRows(flat, 8);
+			// 轉回整數
+			transformed = rows.map(this.binaryRowToInt);
+		}
+		
+		if (transformed.length !== data.length) { 
+			transformed = transformed.slice(0, data.length); 
+		}
+		
+		return transformed;
+	}
 }
