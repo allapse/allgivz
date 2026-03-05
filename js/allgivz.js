@@ -131,6 +131,7 @@ class AudioMap {
 		this.dieLock = false;
 		this.idleTimer = null;
 		this.musicSelect = null;
+		this.fileInput = null;
 		this.shaderSelect = null;
 		this.shaderQueue = [];
 		this.currentShaderIndex = 0;
@@ -525,6 +526,7 @@ class AudioMap {
 					<option value="" disabled selected>INPUT</option>
 					${optionsHtml}
 				</select>
+				<input type="file" id="fileInput" accept="audio/*" style="display:none">
 			</div>
 			<style>
 				.shader-group { margin-top: 20px; width: 180px; position: relative; display: ${canSelectView ? 'block' : 'none'};}
@@ -717,6 +719,29 @@ class AudioMap {
 					await this.switchTrack(e.target.value);
 				};
 			}
+			
+			// input 選檔
+			this.fileInput = document.getElementById("fileInput");
+			this.fileInput.addEventListener("change", (e) => {
+				const file = e.target.files[0];
+				if (file) {
+					const objectURL = URL.createObjectURL(file);
+	
+					// 加到 select
+					const option = document.createElement("option");
+					option.value = objectURL;
+					option.textContent = file.name;
+					this.musicSelect.appendChild(option);
+		
+					// 播放
+					this.switchTrack(objectURL);
+		
+					// 恢復 UI
+					this.fileInput.style.display = "none";
+					this.musicSelect.style.display = "block";
+					this.musicSelect.value = objectURL;
+				}
+			});
 			
 			// --- 綁定 Shader 選單 ---
 			this.shaderSelect = document.getElementById('shader-select');
@@ -1411,17 +1436,25 @@ class AudioMap {
 	// 在你的 AudioMap 類別內
 	async switchTrack(audioPath) {
 		// 清理舊的 audio 物件
-		if (this.audio) {
-			this.audio.pause();
-			this.audio.src = "";
-			this.audio.load();
-			// 註：MediaElementSource 建立後通常無法中斷，
-			// 建議維持同一個 Context，只換 Audio 物件的 src。
+		if (audioPath === "file") {
+			// 顯示 input，隱藏 select
+			this.musicSelect.style.display = "none";
+			this.fileInput.style.display = "block";
+			this.fileInput.click(); // 使用者必須自己點擊才會觸發
 		}
+		else {
+			if (this.audio) {
+				this.audio.pause();
+				this.audio.src = "";
+				this.audio.load();
+				// 註：MediaElementSource 建立後通常無法中斷，
+				// 建議維持同一個 Context，只換 Audio 物件的 src。
+			}
 
-		// 重新呼叫 initAudio
-		this.isReady = false; 
-		await this.initAudio(audioPath);
+			// 重新呼叫 initAudio
+			this.isReady = false; 
+			await this.initAudio(audioPath);
+		}
 	}
 	
 	/**
