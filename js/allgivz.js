@@ -127,6 +127,7 @@ class AudioMap {
 		
 		this.darkGlowMode = false;
 		this.ueaMode = false;
+		this.dieLock = false;
 		this.idleTimer = null;
 		this.musicSelect = null;
 		this.shaderSelect = null;
@@ -277,7 +278,7 @@ class AudioMap {
 					this.initAudio(audioPath)
 				]);
 				
-				// 1. UI 與 陀螺儀 (保持不變)
+				// UI 與 陀螺儀 (保持不變)
 				this.overlay.style.display = 'none';
 				const uiElements = ['ui-layer', 'mode-hint', 'feedback-hint', 'uea-hint', 'die-hint', 'link', 'lockGyro', 'useCamera', 'hideUI'];
 				uiElements.filter(id => !(id === 'useCamera' && !this.canCam)).forEach(id => {
@@ -679,7 +680,7 @@ class AudioMap {
 						if (el) el.style.display = 'block';
 					});
 					
-					// 2. 稍微延遲（讓瀏覽器意識到 display 變了），再觸發動畫
+					// 稍微延遲（讓瀏覽器意識到 display 變了），再觸發動畫
 					requestAnimationFrame(() => {
 						uiLayer.classList.remove('hide');
 						uiLayer.classList.add('show');
@@ -808,17 +809,23 @@ class AudioMap {
 	};
 	
 	toggleDIE() {
-		if (Math.random() > 0.52) this.toggleAudioFeedbackControl(); 
-		if (Math.random() > 0.50) this.toggleDarkGlow(); 
-		if (Math.random() > 0.47) this.toggleUEA(); 
+		this.dieLock = true;
 		
-		const shaderOptions = Array.from(this.shaderSelect.options).filter(opt => opt.value !== "");
-		const nextShader = this.updateSelect(shaderOptions, this.shaderQueue, this.currentShaderIndex, this.shaderSelect);
+		if (Math.random() > 0.47) this.toggleAudioFeedbackControl(); 
+		if (Math.random() > 0.53) this.toggleDarkGlow(); 
+		if (Math.random() > 0.62) this.toggleUEA(); 
+		
+		const nextEQ = this.randomSelect(this.eqQueue, this.currentEQIndex, this.eqSelect);
+		this.changeEQ(nextEQ);
+		
+		const nextShader = this.randomSelect(this.shaderQueue, this.currentShaderIndex, this.shaderSelect);
 		this.loadShader(nextShader);
 		
-		const eqOptions = Array.from(this.eqSelect.options).filter(opt => opt.value !== "");
-		const nextEQ = this.updateSelect(eqOptions, this.eqQueue, this.currentEQIndex, this.eqSelect);
-		this.changeEQ(nextEQ);
+		this.dieLock = false;
+		
+		const hint = document.getElementById('die-hint');
+		hint.style.color = '#fff';
+		setTimeout(() => hint.style.color = '#999', 300);
 	};
 	
 	changeEQ(index){
@@ -871,7 +878,9 @@ class AudioMap {
 						// 更新 UI 狀態
 						this.useCamera.style.display = "none"; 
 					} else {
-						this.useCamera.style.display = "block"; 
+						if(!this.dieLock) {
+							this.useCamera.style.display = "block"; 
+						}
 					}
 				} 
 			}
@@ -1702,10 +1711,10 @@ class AudioMap {
 		this.renderer.setRenderTarget(null);
 		this.renderer.render(this.scene, this.camera);
 
-		// 2. 檢測：這個 Shader 到底需不需要「記憶」？
+		// 3. 檢測：這個 Shader 到底需不需要「記憶」？
 		// 檢查 fragmentShader 的原始碼字串
 		const needsFeedback = this.material.fragmentShader.includes('u_prevFrame');
-		// 3. 視覺殘影邏輯：只有需要時才交換 A B
+		// 4. 視覺殘影邏輯：只有需要時才交換 A B
 		if (needsFeedback) {
 			// 交換，讓這一幀的 A 變成下一幀的「過去 B」
 			let temp = this.targetA;
@@ -1729,7 +1738,7 @@ class AudioMap {
 					this.isShaderLoading = true;
 
 					try {
-						const nextValue = this.updateSelect(options, this.shaderQueue, this.currentShaderIndex, this.shaderSelect);
+						const nextValue = this.randomSelect(this.shaderQueue, this.currentShaderIndex, this.shaderSelect);
 						
 						await Promise.all([
 							this.loadShader(nextValue),
@@ -1772,7 +1781,8 @@ class AudioMap {
 	}
 
 	// 從 queue 取出下一個並更新 select
-	updateSelect(options, queue, currentIndex, selectElement) {
+	randomSelect(queue, currentIndex, selectElement) {
+		const options = Array.from(selectElement.options).filter(opt => opt.value !== "");
 		if (queue.length === 0) {
 			queue = this.refreshQueue(options, currentIndex);
 		}
@@ -1939,7 +1949,7 @@ class FeedbackManager {
 
         // B -> Reverb Wet
 		const reverbByEQ = (mode == "bright"? 1.1 : 1.0)
-        const reverbVal = Math.pow(data[2] / 255, 1.3) * 1.1 * reverbByEQ;
+        const reverbVal = Math.pow(data[2] / 255, 1.3) * 1.2 * reverbByEQ;
         if (this.targets.reverb) {
             this.targets.reverb.gain.setTargetAtTime(reverbVal, now, rampTime);
         }
@@ -1947,7 +1957,7 @@ class FeedbackManager {
         // A -> Distortion
         if (this.targets.distortion) {
 			const distBySmooth = (mode != "smooth"? 1.1 : 1.0);
-            const distVal = data[3] > 128 ? 1.1 * distBySmooth : 1.0;
+            const distVal = data[3] > 128 ? 1.2 * distBySmooth : 1.0;
             this.targets.distortion.gain.setTargetAtTime(distVal, now, 0.05);
         }
     }
