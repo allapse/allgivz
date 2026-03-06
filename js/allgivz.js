@@ -539,7 +539,7 @@ class AudioMap {
 					<option value="" disabled selected>INPUT</option>
 					${optionsHtml}
 				</select>
-				<input type="file" id="fileInput" accept="audio/*" style="display:none; width: 100%;">
+				<input type="file" id="fileInput" accept=".mp3" style="display:none; width: 100%;">
 			</div>
 			<style>
 				.shader-group { margin-top: 20px; width: 180px; position: relative; display: ${canSelectView ? 'block' : 'none'};}
