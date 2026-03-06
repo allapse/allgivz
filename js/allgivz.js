@@ -599,8 +599,13 @@ class AudioMap {
 				#gyro-left  { left: 13px; top: 50%; transform: translateY(-50%); }
 				#gyro-right { right: 13px; top: 50%; transform: translateY(-50%); }
 				
-				#mode-hint, #feedback-hint, #uea-hint, #die-hint {
+				#mode-hint, #feedback-hint {
 					position: absolute; transform: translateX(-50%); font-size: 9px; color: #999;
+					letter-spacing: 1px; pointer-events: auto; display: none; z-index: 1200; cursor:pointer;
+				}
+				
+				#uea-hint, #die-hint {
+					position: absolute; font-size: 9px; color: #999;
 					letter-spacing: 1px; pointer-events: auto; display: none; z-index: 1200; cursor:pointer;
 				}
 				
@@ -621,17 +626,17 @@ class AudioMap {
 					transition: all 0.3s ease; /* 平滑移動 */
 				}
 				
-				#line1 { top: 46%; left: 46%; background: linear-gradient(to right top, transparent 49%, #000 49%, #999 51%, transparent 51%); }
-				#line2 { top: 46%; right: 46%; background: linear-gradient(to left top, transparent 49%, #000 49%, #999 51%, transparent 51%); }
-				#line3 { bottom: 46%; left: 46%; background: linear-gradient(to right bottom, transparent 49%, #000 49%, #999 51%, transparent 51%); }
-				#line4 { bottom: 46%; right: 46%; background: linear-gradient(to left bottom, transparent 49%, #000 49%, #999 51%, transparent 51%); }
+				#line1 { top: 46%; left: 46%; background: linear-gradient(to right top, transparent 48%, #000 48%, #666 52%, transparent 52%);}
+				#line2 { top: 46%; right: 46%; background: linear-gradient(to left top, transparent 48%, #000 48%, #666 52%, transparent 52%);}
+				#line3 { bottom: 46%; left: 46%; background: linear-gradient(to right bottom, transparent 48%, #000 48%, #666 52%, transparent 52%);}
+				#line4 { bottom: 46%; right: 46%; background: linear-gradient(to left bottom, transparent 48%, #000 48%, #666 52%, transparent 52%);}
 				
 				/* 加上 .move-center class 時，四個角落往中心移動 */
 				#linec.move-center #line1 { top: 10%; left: 12%; }
 				#linec.move-center #line2 { top: 10%; right: 12%; }
 				#linec.move-center #line3 { bottom: 10%; left: 12%; }
 				#linec.move-center #line4 { bottom: 10%; right: 12%; }
-				.highlight { filter: brightness(10); }
+				.highlight { filter: brightness(7); }
 				
 				@keyframes spin-once {
 				  0%   { transform: rotate(0deg); }
@@ -651,16 +656,16 @@ class AudioMap {
 			</div>
 			
 			<div id="linec" style="display: none;">
-				<div id="line1"></div>
-				<div id="line2"></div>
-				<div id="line3"></div>
-				<div id="line4"></div>
+				<div id="line1" style="translateX(-50%);"></div>
+				<div id="line2" style="translateX(-50%);"></div>
+				<div id="line3" style="translateX(-50%);"></div>
+				<div id="line4" style="translateX(-50%);"></div>
 			</div>
 
 			<div id="feedback-hint" style="top: 10%; left: 50%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre;">ACTIVE FEEDBACK</div>
 			<div id="mode-hint" style="bottom: 10%; left: 50%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre;"> TAP TO GLOW</div>
-			<div id="uea-hint" style="top: 50%; left: 15%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre;">UEA</div>
-			<div id="die-hint" style="top: 50%; right: 12%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre;">DIE</div>
+			<div id="uea-hint" style="top: 50%; left: 15%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre; translateX(-50%);">UEA</div>
+			<div id="die-hint" style="top: 50%; right: 15%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre; translateX(-50%);">DIE</div>
 			<div id="hideUI" style="position: absolute; bottom: 20px; right: 20px; z-index:1200; pointer-events: auto; cursor:pointer; color:#999; font-size:10px; display: none;">HIDE UI</div>
 		`;
 		
