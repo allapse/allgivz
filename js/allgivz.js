@@ -281,8 +281,9 @@ class AudioMap {
 				]);
 				
 				// UI 與 陀螺儀 (保持不變)
+				document.querySelector('#linec').classList.toggle('move-center');
 				this.overlay.style.display = 'none';
-				const uiElements = ['ui-layer', 'mode-hint', 'feedback-hint', 'uea-hint', 'die-hint', 'link', 'lockGyro', 'useCamera', 'hideUI'];
+				const uiElements = ['ui-layer', 'mode-hint', 'feedback-hint', 'uea-hint', 'die-hint', 'link', 'lockGyro', 'useCamera', 'hideUI', 'linec'];
 				uiElements.filter(id => !(id === 'useCamera' && !this.canCam)).forEach(id => {
 					const el = document.getElementById(id);
 					if (el) el.style.display = 'block';
@@ -305,7 +306,9 @@ class AudioMap {
 		});
 
 		const link = this.root.querySelector('#link');
-		link.addEventListener('click', () => window.location.assign(url));
+		link.addEventListener('click', () => {
+			window.location.assign(url)
+		});
 		
 		this.lockGyro = this.root.querySelector('#lockGyro');
 		this.lockGyro.addEventListener('click', async () => {
@@ -314,6 +317,7 @@ class AudioMap {
 		
 		this.useCamera = this.root.querySelector('#useCamera');
 		this.useCamera.addEventListener('click', async () => {
+			this.highlight('line1');
 			if(!this.cameraManager) this.cameraManager = new CameraManager();
 			
 			const isActive = await this.cameraManager.toggleCamera();
@@ -357,6 +361,13 @@ class AudioMap {
 		
 	}
 	
+	highlight(id){
+		document.getElementById(id).classList.add('highlight');
+		setTimeout(() => {
+		  document.getElementById(id).classList.remove('highlight');
+		}, 300);
+	}
+	
 	async unlockGyro(){
 		// 切換布林值狀態
 		this.isGyroLocked = !this.isGyroLocked;
@@ -365,6 +376,8 @@ class AudioMap {
 		// 鎖定時（true）顯示灰色 #999，解鎖時（false）顯示白色 #fff
 		if(this.lockGyro) this.lockGyro.style.color = this.isGyroLocked ? "#fff" : "#999";
 		//console.log(`Gyro locked: ${this.isGyroLocked}`);
+		
+		this.highlight('line2');
 	}
 
     async buildUI(containerId, configs, jsonPath, canSelectView = false) {
@@ -526,7 +539,7 @@ class AudioMap {
 					<option value="" disabled selected>INPUT</option>
 					${optionsHtml}
 				</select>
-				<input type="file" id="fileInput" accept=".mp3" style="display:none">
+				<input type="file" id="fileInput" accept="audio/*" style="display:none; width: 100%;">
 			</div>
 			<style>
 				.shader-group { margin-top: 20px; width: 180px; position: relative; display: ${canSelectView ? 'block' : 'none'};}
@@ -590,6 +603,35 @@ class AudioMap {
 					position: absolute; transform: translateX(-50%); font-size: 9px; color: #999;
 					letter-spacing: 1px; pointer-events: auto; display: none; z-index: 1200; cursor:pointer;
 				}
+				
+				#linec {
+					position: relative;
+					width: 100%;
+					height: 100%;
+					pointer-events: none; 
+					mix-blend-mode: difference;
+				}
+
+				/* 每個角落的 div 都要有固定寬高 */
+				#line1, #line2, #line3, #line4 {
+					position: absolute;
+					width: 3%;
+					height: 3%;
+					transition: all 0.3s ease; /* 平滑移動 */
+				}
+				
+				#line1 { top: 45%; left: 45%; background: linear-gradient(to right top, transparent 49.5%, #000 49.5%, #999 50.5%, transparent 50.5%); }
+				#line2 { top: 45%; right: 45%; background: linear-gradient(to left top, transparent 49.5%, #000 49.5%, #999 50.5%, transparent 50.5%); }
+				#line3 { bottom: 45%; left: 45%; background: linear-gradient(to right bottom, transparent 49.5%, #000 49.5%, #999 50.5%, transparent 50.5%); }
+				#line4 { bottom: 45%; right: 45%; background: linear-gradient(to left bottom, transparent 49.5%, #000 49.5%, #999 50.5%, transparent 50.5%); }
+				
+				/* 加上 .move-center class 時，四個角落往中心移動 */
+				#linec.move-center #line1 { top: 10%; left: 12%; }
+				#linec.move-center #line2 { top: 10%; right: 12%; }
+				#linec.move-center #line3 { bottom: 10%; left: 12%; }
+				#linec.move-center #line4 { bottom: 10%; right: 12%; }
+				.highlight { filter: brightness(2); }
+
 			</style>
 			<div id="indicators" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%;">
 				<div id="gyro-up" class="gyro-indicator">+</div>
@@ -598,6 +640,13 @@ class AudioMap {
 				<div id="gyro-right" class="gyro-indicator">+</div>
 			</div>
 			
+			<div id="linec" style="display: none;">
+				<div id="line1"></div>
+				<div id="line2"></div>
+				<div id="line3"></div>
+				<div id="line4"></div>
+			</div>
+
 			<div id="feedback-hint" style="top: 10%; left: 50%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre;">ACTIVE FEEDBACK</div>
 			<div id="mode-hint" style="bottom: 10%; left: 50%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre;"> TAP TO GLOW</div>
 			<div id="uea-hint" style="top: 50%; left: 15%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre;">UEA</div>
@@ -709,6 +758,8 @@ class AudioMap {
 					hideUI.style.color = "#fff";
 					hideUI.textContent = "▲";
 				}
+				
+				document.querySelector('#linec').classList.toggle('move-center');
 			});
 			
 			// --- 綁定音樂選單 (新增邏輯) ---
@@ -789,8 +840,10 @@ class AudioMap {
 		if(this.material)
 			this.material.uniforms.u_darkGlow.value = this.darkGlowMode ? 1.0 : 0.0;
 		
-		const hint = document.getElementById('mode-hint');
+		this.highlight('line3');
+		this.highlight('line4');
 		
+		const hint = document.getElementById('mode-hint');
 		// 更新 UI
 		if (hint) {
 			if (this.darkGlowMode) {
@@ -806,8 +859,10 @@ class AudioMap {
 		// 切換布林值
 		this.feedbackMode = !this.feedbackMode;
 		
-		const hint = document.getElementById('feedback-hint');
+		this.highlight('line1');
+		this.highlight('line2');
 		
+		const hint = document.getElementById('feedback-hint');
 		// 更新 UI
 		if (hint) {
 			if (this.feedbackMode) {
@@ -830,8 +885,10 @@ class AudioMap {
 			this.uea.clear();
 		}
 		
-		const hint = document.getElementById('uea-hint');
+		this.highlight('line3');
+		this.highlight('line1');
 		
+		const hint = document.getElementById('uea-hint');
 		// 更新 UI
 		if (hint) {
 			if (this.ueaMode) {
@@ -856,6 +913,9 @@ class AudioMap {
 		this.loadShader(nextShader);
 		
 		this.dieLock = false;
+		
+		this.highlight('line2');
+		this.highlight('line4');
 		
 		const hint = document.getElementById('die-hint');
 		hint.style.color = '#fff';
