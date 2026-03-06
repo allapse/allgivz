@@ -610,6 +610,7 @@ class AudioMap {
 					height: 100%;
 					pointer-events: none; 
 					mix-blend-mode: difference;
+					backdrop-filter: blur(10px) brightness(1.2);
 				}
 
 				/* 每個角落的 div 都要有固定寬高 */
@@ -620,17 +621,26 @@ class AudioMap {
 					transition: all 0.3s ease; /* 平滑移動 */
 				}
 				
-				#line1 { top: 45%; left: 45%; background: linear-gradient(to right top, transparent 49.5%, #000 49.5%, #999 50.5%, transparent 50.5%); }
-				#line2 { top: 45%; right: 45%; background: linear-gradient(to left top, transparent 49.5%, #000 49.5%, #999 50.5%, transparent 50.5%); }
-				#line3 { bottom: 45%; left: 45%; background: linear-gradient(to right bottom, transparent 49.5%, #000 49.5%, #999 50.5%, transparent 50.5%); }
-				#line4 { bottom: 45%; right: 45%; background: linear-gradient(to left bottom, transparent 49.5%, #000 49.5%, #999 50.5%, transparent 50.5%); }
+				#line1 { top: 46%; left: 46%; background: linear-gradient(to right top, transparent 49%, #000 49%, #999 51%, transparent 51%); }
+				#line2 { top: 46%; right: 46%; background: linear-gradient(to left top, transparent 49%, #000 49%, #999 51%, transparent 51%); }
+				#line3 { bottom: 46%; left: 46%; background: linear-gradient(to right bottom, transparent 49%, #000 49%, #999 51%, transparent 51%); }
+				#line4 { bottom: 46%; right: 46%; background: linear-gradient(to left bottom, transparent 49%, #000 49%, #999 51%, transparent 51%); }
 				
 				/* 加上 .move-center class 時，四個角落往中心移動 */
 				#linec.move-center #line1 { top: 10%; left: 12%; }
 				#linec.move-center #line2 { top: 10%; right: 12%; }
 				#linec.move-center #line3 { bottom: 10%; left: 12%; }
 				#linec.move-center #line4 { bottom: 10%; right: 12%; }
-				.highlight { filter: brightness(2); }
+				.highlight { filter: brightness(10); }
+				
+				@keyframes spin-once {
+				  0%   { transform: rotate(0deg); }
+				  50%  { transform: rotate(360deg); }
+				  100% { transform: rotate(0deg); }
+				}
+				#linec.spin-once {
+				  animation: spin-once 0.42s linear forwards;
+				}
 
 			</style>
 			<div id="indicators" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%;">
@@ -759,6 +769,7 @@ class AudioMap {
 					hideUI.textContent = "▲";
 				}
 				
+				document.querySelector('#linec').classList.toggle('spin-once');
 				document.querySelector('#linec').classList.toggle('move-center');
 			});
 			
