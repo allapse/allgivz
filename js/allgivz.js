@@ -129,6 +129,7 @@ class AudioMap {
 		this.uea = new UEA();
 		this.ueaMode = false;
 		this.dieLock = false;
+		this.uiHide = false;
 		this.idleTimer = null;
 		this.musicSelect = null;
 		this.fileInput = null;
@@ -639,12 +640,12 @@ class AudioMap {
 				.highlight { filter: brightness(7); }
 				
 				@keyframes spin-once {
-				  0%   { transform: rotate(0deg); }
-				  50%  { transform: rotate(360deg); }
-				  100% { transform: rotate(0deg); }
+					0%   { transform: rotate(0deg); }
+					50%  { transform: rotate(360deg); }
+					100% { transform: rotate(0deg); }
 				}
 				#linec.spin-once {
-				  animation: spin-once 0.42s linear forwards;
+					animation: spin-once 0.42s linear forwards;
 				}
 
 			</style>
@@ -738,6 +739,7 @@ class AudioMap {
 			const hideUI = document.getElementById('hideUI');
 			const uiLayer = document.getElementById('ui-layer');
 			hideUI.addEventListener('click', () => {
+				this.uiHide = !this.uiHide;
 				const uiElements = ['ui-layer', 'mode-hint', 'feedback-hint', 'uea-hint', 'die-hint', 'link', 'lockGyro', 'useCamera', 'indicators'];
 
 				if (!uiLayer.classList.contains('show')) {
@@ -988,7 +990,7 @@ class AudioMap {
 						// 更新 UI 狀態
 						this.useCamera.style.display = "none"; 
 					} else {
-						if(!this.dieLock) {
+						if(!this.uiHide) {
 							this.useCamera.style.display = "block"; 
 						}
 					}
