@@ -143,6 +143,14 @@ class AudioMap {
 		this.cameraManager = null;
 		this.useCamera = null;
 		this.canCam = false;
+		
+		this.positions = {
+			up:    [0, -1],
+			down:  [0, 1],
+			left:  [-Math.sqrt(3), 0],
+			right:  [Math.sqrt(3), 0]
+		};
+		this.moveList=[];
 	}
 	
 	async buildMainUI(overlayText, linkText, url, audioPath) {
@@ -282,7 +290,7 @@ class AudioMap {
 				]);
 				
 				// UI 與 陀螺儀 (保持不變)
-				document.querySelector('#linec').classList.toggle('move-center');
+				//document.querySelector('#linec').classList.toggle('move-center');
 				this.overlay.style.display = 'none';
 				const uiElements = ['ui-layer', 'mode-hint', 'feedback-hint', 'uea-hint', 'die-hint', 'link', 'lockGyro', 'useCamera', 'hideUI', 'linec'];
 				uiElements.filter(id => !(id === 'useCamera' && !this.canCam)).forEach(id => {
@@ -368,6 +376,32 @@ class AudioMap {
 		  document.getElementById(id).classList.remove('highlight');
 		}, 300);
 	}
+	
+	moveLinec(active) {
+		if(!this.uiHide) return;
+		
+		let x = 0, y = 0;
+		const linec = document.getElementById('linec');
+		if(active){
+			if(active.length > 0){
+				active.forEach(dir => {
+				x += this.positions[dir][0];
+				y += this.positions[dir][1];
+				});
+				x /= active.length;
+				y /= active.length;
+			} else {
+				x += this.positions.right[0];
+			}
+			linec.style.position = 'absolute'; // 確保可以定位
+			linec.style.left = `${x*50}px`;
+			linec.style.top = `${y*50}px`;
+		} else {
+			linec.style.left = `0px`;
+			linec.style.top = `0px`;
+		}
+	}
+
 	
 	async unlockGyro(){
 		// 切換布林值狀態
@@ -616,7 +650,6 @@ class AudioMap {
 					height: 100%;
 					pointer-events: none; 
 					mix-blend-mode: difference;
-					backdrop-filter: blur(10px) brightness(1.2);
 				}
 
 				/* 每個角落的 div 都要有固定寬高 */
@@ -627,16 +660,16 @@ class AudioMap {
 					transition: all 0.3s ease; /* 平滑移動 */
 				}
 				
-				#line1 { top: 46%; left: 46%; background: linear-gradient(to right top, transparent 48%, #000 48%, #666 52%, transparent 52%);}
-				#line2 { top: 46%; right: 46%; background: linear-gradient(to left top, transparent 48%, #000 48%, #666 52%, transparent 52%);}
-				#line3 { bottom: 46%; left: 46%; background: linear-gradient(to right bottom, transparent 48%, #000 48%, #666 52%, transparent 52%);}
-				#line4 { bottom: 46%; right: 46%; background: linear-gradient(to left bottom, transparent 48%, #000 48%, #666 52%, transparent 52%);}
+				#line1 { top: 10%; left: 12%; background: linear-gradient(to right top, transparent 48%, #000 48%, #666 52%, transparent 52%);}
+				#line2 { top: 10%; right: 12%; background: linear-gradient(to left top, transparent 48%, #000 48%, #666 52%, transparent 52%);}
+				#line3 { bottom: 10%; left: 12%; background: linear-gradient(to right bottom, transparent 48%, #000 48%, #666 52%, transparent 52%);}
+				#line4 { bottom: 10%; right: 12%; background: linear-gradient(to left bottom, transparent 48%, #000 48%, #666 52%, transparent 52%);}
 				
 				/* 加上 .move-center class 時，四個角落往中心移動 */
-				#linec.move-center #line1 { top: 10%; left: 12%; }
-				#linec.move-center #line2 { top: 10%; right: 12%; }
-				#linec.move-center #line3 { bottom: 10%; left: 12%; }
-				#linec.move-center #line4 { bottom: 10%; right: 12%; }
+				#linec.move-center #line1 { top: 46%; left: 46%; }
+				#linec.move-center #line2 { top: 46%; right: 46%; }
+				#linec.move-center #line3 { bottom: 46%; left: 46%; }
+				#linec.move-center #line4 { bottom: 46%; right: 46%; }
 				.highlight { filter: brightness(7); }
 				
 				@keyframes spin-once {
@@ -657,10 +690,10 @@ class AudioMap {
 			</div>
 			
 			<div id="linec" style="display: none;">
-				<div id="line1" style="translateX(-50%);"></div>
-				<div id="line2" style="translateX(-50%);"></div>
-				<div id="line3" style="translateX(-50%);"></div>
-				<div id="line4" style="translateX(-50%);"></div>
+				<div id="line1"></div>
+				<div id="line2"></div>
+				<div id="line3"></div>
+				<div id="line4"></div>
 			</div>
 
 			<div id="feedback-hint" style="top: 10%; left: 50%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre;">ACTIVE FEEDBACK</div>
@@ -717,16 +750,14 @@ class AudioMap {
 					const dx = clientX - centerX;
 					const dy = clientY - centerY;
 
-					const angle = Math.atan2(dy, dx) * 180 / Math.PI; // 角度轉成度數
-
-					if (angle >= -45 && angle < 45) {
-						this.toggleDIE(); // 右
-					} else if (angle >= 45 && angle < 135) {
-						this.toggleDarkGlow(); // 正下方
-					} else if (angle >= -135 && angle < -45) {
-						this.toggleAudioFeedbackControl(); // 正上方
-					} else {
+					if (dy > dx && dy > -dx) {
+						this.toggleDarkGlow(); // 下
+					} else if (dy < dx && dy < -dx) {
+						this.toggleAudioFeedbackControl(); // 上
+					} else if (dy > dx && dy < -dx) {
 						this.toggleUEA(); // 左
+					} else {
+						this.toggleDIE(); // 右
 					}
 					
 					// 手機版防止重複觸發 (如果是 touchend 就停止後續模擬的 click)
@@ -920,14 +951,28 @@ class AudioMap {
 	toggleDIE() {
 		this.dieLock = true;
 		
-		if (Math.random() > 0.47) this.toggleAudioFeedbackControl(); 
-		if (Math.random() > 0.53) this.toggleDarkGlow(); 
-		if (Math.random() > 0.62) this.toggleUEA(); 
+		if (Math.random() > 0.47) {
+			this.toggleAudioFeedbackControl(); 
+		}
+		if (Math.random() > 0.53) {
+			this.toggleDarkGlow(); 
+		}
+		if (Math.random() > 0.62) {
+			this.toggleUEA(); 
+		}
 		
-		const nextEQ = this.randomSelect(this.eqQueue, this.currentEQIndex, this.eqSelect);
+		if(this.feedbackMode) this.moveList.push('up');
+		if(this.darkGlowMode) this.moveList.push('down');
+		if(this.ueaMode) this.moveList.push('left');
+		
+		this.moveLinec(this.moveList);
+		setTimeout(() => this.moveLinec(), 300);
+		this.moveList = [];
+		
+		const nextEQ = this.randomSelect("eqQueue", "currentEQIndex", this.eqSelect);
 		this.changeEQ(nextEQ);
 		
-		const nextShader = this.randomSelect(this.shaderQueue, this.currentShaderIndex, this.shaderSelect);
+		const nextShader = this.randomSelect("shaderQueue", "currentShaderIndex", this.shaderSelect);
 		this.loadShader(nextShader);
 		
 		this.dieLock = false;
@@ -1791,7 +1836,7 @@ class AudioMap {
 					this.isShaderLoading = true;
 
 					try {
-						const nextValue = this.randomSelect(this.shaderQueue, this.currentShaderIndex, this.shaderSelect);
+						const nextValue = this.randomSelect("shaderQueue", "currentShaderIndex", this.shaderSelect);
 						
 						await Promise.all([
 							this.loadShader(nextValue),
@@ -1834,16 +1879,16 @@ class AudioMap {
 	}
 
 	// 從 queue 取出下一個並更新 select
-	randomSelect(queue, currentIndex, selectElement) {
+	randomSelect(queueName, inedxName, selectElement) {
 		const options = Array.from(selectElement.options).filter(opt => opt.value !== "");
-		if (queue.length === 0) {
-			queue = this.refreshQueue(options, currentIndex);
+		if (this[queueName].length === 0) {
+			this[queueName] = this.refreshQueue(options, this[inedxName]);
 		}
 	
-		currentIndex = queue.shift();
-		const nextValue = options[currentIndex].value;
+		this[inedxName] = this[queueName].shift();
+		const nextValue = options[this[inedxName]].value;
 		selectElement.value = nextValue;
-	
+		
 		return nextValue;
 	}
 }
