@@ -1640,7 +1640,6 @@ class AudioMap {
 		return waveforms[Math.floor(Math.random() * waveforms.length)];
 	}
 
-	// 建立一個聲部，帶隨機泛音
 	createVoice(audioCtx, masterGain, waveform, now) {
 		const osc = audioCtx.createOscillator();
 		osc.type = waveform;
@@ -1649,8 +1648,8 @@ class AudioMap {
 		osc.connect(gain);
 		gain.connect(masterGain);
 	
-		// 套用隨機 ADSR（這裡可以改成只做 Attack/Decay，持續保持 Sustain）
-		this.applyRandomADSR(gain, now, 9999); // 給一個很長的 duration，模擬持續播放
+		const duration = Math.random() * 2 + 1.5; // 每個聲部 1.5 ~ 3.5 秒
+		this.applyRandomADSR(gain, now, duration);
 	
 		// 隨機泛音層
 		const harmonicsCount = Math.floor(Math.random() * 3) + 2;
@@ -1663,12 +1662,16 @@ class AudioMap {
 			harmonicOsc.connect(harmonicGain);
 			harmonicGain.connect(masterGain);
 			harmonicOsc.start(now);
-			// ⭐ 不設定 stop，持續播放，切換時再清理
+			harmonicOsc.stop(now + duration); // ⭐ 泛音也要停
 			this.genVoices.push(harmonicOsc);
 		}
 	
 		osc.start(now);
-		// ⭐ 不設定 stop，持續播放
+		setInterval(() => {
+			const t = audioCtx.currentTime;
+			gain.gain.setValueAtTime(0, t);           // 暫停
+			gain.gain.setValueAtTime(0.1, t + 0.3);     // 恢復
+		}, duration * 1000); // 用 duration 當 interval
 		return osc;
 	}
 
@@ -1698,25 +1701,37 @@ class AudioMap {
 		};
 		
 		function updateFrequencies() {
+			const now = this.audioContext.currentTime;
 			const a = Math.pow(t / 10, 2/3);
 			const H2 = friedmannEquation(G, rho, k, a, Lambda);
-		
-			// ⭐ 降低範圍 + 音階映射
-			let f1 = Math.sqrt(H2) * 1e-20; // 原本太大，先縮小
+	
+			// 🎶 主奏 (動態旋律)
+			let f1 = Math.sqrt(H2) * 1e-20;
 			f1 = Math.min(Math.max(f1, 200), 2000);
-			osc1.frequency.setValueAtTime(this.mapToScale(f1), this.audioContext.currentTime);
-		
+			osc1.frequency.linearRampToValueAtTime(
+				this.mapToScale(f1), 
+				now + 0.5 // 平滑過渡，像旋律線條
+			);
+	
+			// 🎶 伴奏 (和聲背景)
 			let f2 = rho * 1e5;
 			f2 = Math.min(Math.max(f2, 200), 2000);
-			osc2.frequency.setValueAtTime(this.mapToScale(f2), this.audioContext.currentTime);
-		
+			osc2.frequency.exponentialRampToValueAtTime(
+				this.mapToScale(f2), 
+				now + 1.0 // 更慢的過渡，像和聲鋪陳
+			);
+	
+			// 🎶 節奏 (drop / syncopation)
 			let f3 = Lambda * 1e25;
 			f3 = Math.min(Math.max(f3, 200), 2000);
-			osc3.frequency.setValueAtTime(this.mapToScale(f3), this.audioContext.currentTime);
-		
+			osc3.frequency.setValueAtTime(
+				this.mapToScale(f3), 
+				now // 硬切，製造節奏衝擊
+			);
+	
 			t++;
 		}
-	
+
 		this.genInterval = setInterval(updateFrequencies.bind(this), 2357);
 	}
 	
