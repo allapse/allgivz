@@ -133,6 +133,7 @@ class AudioMap {
 		this.idleTimer = null;
 		this.musicSelect = null;
 		this.fileInput = null;
+		this.urlInput = null;
 		this.shaderSelect = null;
 		this.shaderQueue = [];
 		this.currentShaderIndex = 0;
@@ -575,6 +576,7 @@ class AudioMap {
 					${optionsHtml}
 				</select>
 				<input type="file" id="fileInput" accept=".mp3" style="display:none; width: 100%;">
+				<input type="text" id="urlInput" placeholder="Enter stream URL" style="display:none;">
 			</div>
 			<style>
 				.shader-group { margin-top: 20px; width: 180px; position: relative; display: ${canSelectView ? 'block' : 'none'};}
@@ -840,6 +842,23 @@ class AudioMap {
 					this.fileInput.style.display = "none";
 					this.musicSelect.style.display = "block";
 					this.musicSelect.value = objectURL;
+				}
+			});
+			this.urlInput = document.getElementById("urlInput");
+			this.urlInput.addEventListener("change", () => {
+				const url = this.urlInput.value;
+				if (url) {
+					const option = document.createElement("option");
+					option.value = url;
+					option.textContent = url;
+					this.musicSelect.appendChild(option);
+					
+					this.switchTrack(url); // 再次呼叫播放
+					
+					// 恢復 UI
+					this.urlInput.style.display = "none";
+					this.musicSelect.style.display = "block";
+					this.musicSelect.value = url;
 				}
 			});
 			
@@ -1565,7 +1584,24 @@ class AudioMap {
 			this.fileInput.style.display = "block";
 			this.fileInput.click(); // 使用者必須自己點擊才會觸發
 		}
+		else if (audioPath === "url") {
+			this.musicSelect.style.display = "none";
+			this.urlInput.style.display = "block";
+			this.urlInput.focus();
+		}
 		else {
+			// 清理舊的 Universe 聲部
+			if (this.genVoices && this.genVoices.length > 0) {
+					this.genVoices.forEach(v => {
+					try { v.stop(); } catch(e) {}
+				});
+				this.genVoices = [];
+			}
+			if (this.genInterval) {
+				clearInterval(this.genInterval);
+				this.genInterval = null;
+			}
+			
 			if (this.audio) {
 				this.audio.pause();
 				this.audio.src = "";
@@ -1573,13 +1609,105 @@ class AudioMap {
 				// 註：MediaElementSource 建立後通常無法中斷，
 				// 建議維持同一個 Context，只換 Audio 物件的 src。
 			}
-
-			// 重新呼叫 initAudio
-			this.isReady = false; 
-			await this.initAudio(audioPath);
+			
+			if (audioPath === "gen") {
+				await this.evolvingUniverseSymphony();
+			}
+			else {
+				await this.initAudio(audioPath);
+			}
 		}
 	}
 	
+	// 隨機 ADSR 包絡線
+	applyRandomADSR(gainNode, now, duration) {
+		const attack = Math.random() * 0.8 + 0.2;   // 0.2 ~ 1.0 秒
+		const decay = Math.random() * 0.5 + 0.2;    // 0.2 ~ 0.7 秒
+		const sustain = Math.random() * 0.05 + 0.02; // 0.02 ~ 0.07 音量
+		const release = Math.random() * 1.0 + 0.5;  // 0.5 ~ 1.5 秒
+	
+		gainNode.gain.setValueAtTime(0, now);
+		gainNode.gain.linearRampToValueAtTime(0.2, now + attack); // Attack
+		gainNode.gain.linearRampToValueAtTime(sustain, now + attack + decay); // Decay → Sustain
+		gainNode.gain.setValueAtTime(sustain, now + duration - release); // Sustain
+		gainNode.gain.linearRampToValueAtTime(0, now + duration); // Release
+	}
+
+	// 隨機波形選擇
+	randomWaveform() {
+		const waveforms = ["sine", "square", "sawtooth", "triangle"];
+		return waveforms[Math.floor(Math.random() * waveforms.length)];
+	}
+
+	// 建立一個聲部，帶隨機泛音
+	createVoice(audioCtx, masterGain, waveform, now) {
+		const osc = audioCtx.createOscillator();
+		osc.type = waveform;
+	
+		const gain = audioCtx.createGain();
+		osc.connect(gain);
+		gain.connect(masterGain);
+	
+		// 套用隨機 ADSR（這裡可以改成只做 Attack/Decay，持續保持 Sustain）
+		this.applyRandomADSR(gain, now, 9999); // 給一個很長的 duration，模擬持續播放
+	
+		// 隨機泛音層
+		const harmonicsCount = Math.floor(Math.random() * 3) + 2;
+		for (let i = 2; i <= harmonicsCount; i++) {
+			const harmonicOsc = audioCtx.createOscillator();
+			harmonicOsc.type = waveform;
+			harmonicOsc.frequency.value = osc.frequency.value * i;
+			const harmonicGain = audioCtx.createGain();
+			harmonicGain.gain.value = 0.02 / i;
+			harmonicOsc.connect(harmonicGain);
+			harmonicGain.connect(masterGain);
+			harmonicOsc.start(now);
+			// ⭐ 不設定 stop，持續播放，切換時再清理
+			this.genVoices.push(harmonicOsc);
+		}
+	
+		osc.start(now);
+		// ⭐ 不設定 stop，持續播放
+		return osc;
+	}
+
+	async evolvingUniverseSymphony() {
+		const now = this.audioContext.currentTime;
+	
+		// 初始參數
+		const G = 6.67430e-11;
+		const rho = 1e-26;
+		const k = 0;
+		const Lambda = 1e-52;
+	
+		// 建立三個聲部
+		this.genVoices = [];
+		const osc1 = this.createVoice(this.audioContext, this.mainGain, this.randomWaveform(), now);
+		const osc2 = this.createVoice(this.audioContext, this.mainGain, this.randomWaveform(), now);
+		const osc3 = this.createVoice(this.audioContext, this.mainGain, this.randomWaveform(), now);
+		this.genVoices.push(osc1, osc2, osc3);
+	
+		// 隨時間演化
+		let t = 1;
+		const friedmannEquation = (G, rho, k, a, Lambda) => {
+			const term1 = (8 * Math.PI * G / 3) * rho;
+			const term2 = -k / (a * a);
+			const term3 = Lambda / 3;
+			return term1 + term2 + term3;
+		};
+	
+		this.genInterval = setInterval(() => {
+			const a = Math.pow(t / 10, 2/3);
+			const H2 = friedmannEquation(G, rho, k, a, Lambda);
+	
+			osc1.frequency.setValueAtTime(Math.sqrt(H2) * 1e20, this.audioContext.currentTime);
+			osc2.frequency.setValueAtTime(rho * 1e28, this.audioContext.currentTime);
+			osc3.frequency.setValueAtTime(Lambda * 1e54, this.audioContext.currentTime);
+	
+			t++;
+		}, 500);
+	}
+
 	/**
 	 * 啟動陀螺儀
 	 * @param {Object} config - 設定參數 { range: 45 }
