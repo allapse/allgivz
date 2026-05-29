@@ -136,6 +136,7 @@ class AudioMap {
 		this.urlInput = null;
 		this.shaderSelect = null;
 		this.shaderQueue = [];
+		
 		this.currentShaderIndex = 0;
 		this.eqSelect = null;
 		this.eqQueue = [];
@@ -1695,19 +1696,53 @@ class AudioMap {
 			const term3 = Lambda / 3;
 			return term1 + term2 + term3;
 		};
-	
-		this.genInterval = setInterval(() => {
+		
+		function updateFrequencies() {
 			const a = Math.pow(t / 10, 2/3);
 			const H2 = friedmannEquation(G, rho, k, a, Lambda);
-	
-			osc1.frequency.setValueAtTime(Math.sqrt(H2) * 1e20, this.audioContext.currentTime);
-			osc2.frequency.setValueAtTime(rho * 1e28, this.audioContext.currentTime);
-			osc3.frequency.setValueAtTime(Lambda * 1e54, this.audioContext.currentTime);
-	
+		
+			// ⭐ 降低範圍 + 音階映射
+			let f1 = Math.sqrt(H2) * 1e-20; // 原本太大，先縮小
+			f1 = Math.min(Math.max(f1, 200), 2000);
+			osc1.frequency.setValueAtTime(this.mapToScale(f1), this.audioContext.currentTime);
+		
+			let f2 = rho * 1e5;
+			f2 = Math.min(Math.max(f2, 200), 2000);
+			osc2.frequency.setValueAtTime(this.mapToScale(f2), this.audioContext.currentTime);
+		
+			let f3 = Lambda * 1e25;
+			f3 = Math.min(Math.max(f3, 200), 2000);
+			osc3.frequency.setValueAtTime(this.mapToScale(f3), this.audioContext.currentTime);
+		
 			t++;
-		}, 500);
+		}
+	
+		this.genInterval = setInterval(updateFrequencies.bind(this), 2357);
 	}
-
+	
+	// 把任意頻率映射到最近的音階頻率
+	mapToScale(freq, baseFreq = 261.63, type = "major") {
+		// 十二平均律公式
+		const majorSteps = [0, 2, 4, 5, 7, 9, 11, 12]; // 大調
+		const minorSteps = [0, 2, 3, 5, 7, 8, 10, 12]; // 自然小調
+		const steps = type === "major" ? majorSteps : minorSteps;
+	
+		// 建立音階頻率表
+		const scaleFreqs = steps.map(step => baseFreq * Math.pow(2, step / 12));
+	
+		// 找出最接近的音階頻率
+		let closest = scaleFreqs[0];
+		let minDiff = Math.abs(freq - closest);
+		for (let i = 1; i < scaleFreqs.length; i++) {
+			const diff = Math.abs(freq - scaleFreqs[i]);
+			if (diff < minDiff) {
+			minDiff = diff;
+			closest = scaleFreqs[i];
+			}
+		}
+		return closest;
+	}
+	
 	/**
 	 * 啟動陀螺儀
 	 * @param {Object} config - 設定參數 { range: 45 }
