@@ -12,6 +12,7 @@
 	{ "name": "愛好(蛤啦)", "path": "./assets/audio/愛好(蛤啦).mp3" },
 	{ "name": "愛好(災啦)", "path": "./assets/audio/愛好(災啦).mp3" },
     { "name": "麥克風輸入", "path": "mic" },
-	{ "name": "選擇檔案", "path": "file" }
+	{ "name": "檔案", "path": "file" },
+	{ "name": "網址", "path": "url" },
+	{ "name": "生成", "path": "gen" }
 ]
-
