@@ -153,6 +153,8 @@ class AudioMap {
 			right:  [Math.sqrt(3), 0]
 		};
 		this.moveList=[];
+		
+		this.timeAnchor = 0;
 	}
 	
 	async buildMainUI(overlayText, linkText, url, audioPath) {
@@ -1677,62 +1679,13 @@ class AudioMap {
 
 	async evolvingUniverseSymphony() {
 		const now = this.audioContext.currentTime;
-	
-		// 初始參數
-		const G = 6.67430e-11;
-		const rho = 1e-26;
-		const k = 0;
-		const Lambda = 1e-52;
-	
+		
 		// 建立三個聲部
 		this.genVoices = [];
 		const osc1 = this.createVoice(this.audioContext, this.mainGain, this.randomWaveform(), now);
 		const osc2 = this.createVoice(this.audioContext, this.mainGain, this.randomWaveform(), now);
 		const osc3 = this.createVoice(this.audioContext, this.mainGain, this.randomWaveform(), now);
 		this.genVoices.push(osc1, osc2, osc3);
-	
-		// 隨時間演化
-		let t = 1;
-		const friedmannEquation = (G, rho, k, a, Lambda) => {
-			const term1 = (8 * Math.PI * G / 3) * rho;
-			const term2 = -k / (a * a);
-			const term3 = Lambda / 3;
-			return term1 + term2 + term3;
-		};
-		
-		function updateFrequencies() {
-			const now = this.audioContext.currentTime;
-			const a = Math.pow(t / 10, 2/3);
-			const H2 = friedmannEquation(G, rho, k, a, Lambda);
-	
-			// 🎶 主奏 (動態旋律)
-			let f1 = Math.sqrt(H2) * 1e-20;
-			f1 = Math.min(Math.max(f1, 200), 2000);
-			osc1.frequency.linearRampToValueAtTime(
-				this.mapToScale(f1), 
-				now + 0.5 // 平滑過渡，像旋律線條
-			);
-	
-			// 🎶 伴奏 (和聲背景)
-			let f2 = rho * 1e5;
-			f2 = Math.min(Math.max(f2, 200), 2000);
-			osc2.frequency.exponentialRampToValueAtTime(
-				this.mapToScale(f2), 
-				now + 1.0 // 更慢的過渡，像和聲鋪陳
-			);
-	
-			// 🎶 節奏 (drop / syncopation)
-			let f3 = Lambda * 1e25;
-			f3 = Math.min(Math.max(f3, 200), 2000);
-			osc3.frequency.setValueAtTime(
-				this.mapToScale(f3), 
-				now // 硬切，製造節奏衝擊
-			);
-	
-			t++;
-		}
-
-		this.genInterval = setInterval(updateFrequencies.bind(this), 2357);
 	}
 	
 	// 把任意頻率映射到最近的音階頻率
@@ -1756,6 +1709,48 @@ class AudioMap {
 			}
 		}
 		return closest;
+	}
+	
+	updateFrequencies(smoothed) {
+		if (!this.audioContext || !this.genVoices) return;
+		
+		// 初始參數
+		const G = 6.67430e-11;
+		const rho = 1e-26;
+		const k = 0;
+		const Lambda = 1e-52;
+		const now = this.audioContext.currentTime;
+		const a = Math.pow(this.timeAnchor / 10, 2/3);
+		const term1 = (8 * Math.PI * G / 3) * rho;
+		const term2 = -k / (a * a);
+		const term3 = Lambda / 3;
+		const H2 = (term1 + term2 + term3) * smoothed[0];
+
+		// 🎶 主奏 (動態旋律)
+		let f1 = Math.sqrt(H2) * 1e-20;
+		f1 = Math.min(Math.max(f1, 200), 2000);
+		this.genVoices[0].frequency.linearRampToValueAtTime(
+			this.mapToScale(f1), 
+			now + smoothed[1] // 平滑過渡，像旋律線條
+		);
+
+		// 🎶 伴奏 (和聲背景)
+		let f2 = rho * 1e5 * smoothed[2];
+		f2 = Math.min(Math.max(f2, 200), 2000);
+		this.genVoices[1].frequency.exponentialRampToValueAtTime(
+			this.mapToScale(f2), 
+			now + 1.0 // 更慢的過渡，像和聲鋪陳
+		);
+
+		// 🎶 節奏 (drop / syncopation)
+		let f3 = Lambda * 1e25;
+		f3 = Math.min(Math.max(f3, 200), 2000);
+		this.genVoices[3].frequency.setValueAtTime(
+			this.mapToScale(f3) * smoothed[3], 
+			now // 硬切，製造節奏衝擊
+		);
+
+		this.timeAnchor++;
 	}
 	
 	/**
@@ -2000,6 +1995,8 @@ class AudioMap {
 			// 預先設定好下一幀要用的 Uniform (如果 Shader 沒這變數，Three.js 會自動忽略)
 			this.material.uniforms.u_prevFrame.value = this.targetB.texture;
 		}
+		
+		this.updateFrequencies(this.feedback?.smoothed || [0,0,0,0]);
 	}
 	
 	async updateIdleMode(interval) {
