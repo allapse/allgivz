@@ -1596,9 +1596,11 @@ class AudioMap {
 			// 清理舊的 Universe 聲部
 			if (this.genVoices && this.genVoices.length > 0) {
 					this.genVoices.forEach(v => {
-					try { v.stop(); } catch(e) {}
+					try {
+						v.stop();
+					} catch(e) {}
 				});
-				this.genVoices = [];
+				this.genVoices = null;
 			}
 			if (this.genInterval) {
 				clearInterval(this.genInterval);
@@ -1682,9 +1684,9 @@ class AudioMap {
 		
 		// 建立三個聲部
 		this.genVoices = [];
-		const osc1 = this.createVoice(this.audioContext, this.mainGain, this.randomWaveform(), now);
-		const osc2 = this.createVoice(this.audioContext, this.mainGain, this.randomWaveform(), now);
-		const osc3 = this.createVoice(this.audioContext, this.mainGain, this.randomWaveform(), now);
+		const osc1 = this.createVoice(this.audioContext, this.panner, this.randomWaveform(), now);
+		const osc2 = this.createVoice(this.audioContext, this.panner, this.randomWaveform(), now);
+		const osc3 = this.createVoice(this.audioContext, this.panner, this.randomWaveform(), now);
 		this.genVoices.push(osc1, osc2, osc3);
 	}
 	
@@ -2154,8 +2156,12 @@ class FeedbackManager {
                     float prevR = texture2D(u_prevFrame, vec2(0.5)).r;
                     float B = abs(R - prevR) * 10.0;
 
-                    // A: 脈衝
-                    float A = smoothstep(0.6, 1.0, R);
+                    // A: 左右亮度差值 (panValue)
+					vec4 leftAvg = textureLod(u_currentFrame, vec2(0.25, 0.5), 10.0);
+					vec4 rightAvg = textureLod(u_currentFrame, vec2(0.75, 0.5), 10.0);
+					float leftBrightness = dot(leftAvg.rgb, vec3(0.299, 0.587, 0.114));
+					float rightBrightness = dot(rightAvg.rgb, vec3(0.299, 0.587, 0.114));
+					float A = rightBrightness - leftBrightness;
 
                     gl_FragColor = vec4(R, G, B, A);
                 }
@@ -2197,7 +2203,7 @@ class FeedbackManager {
     applyAudioFeedback() {
         const data = this.smoothed;
         const now = this.audioCtx.currentTime;
-        const rampTime = 0.5; // 更長的平滑時間
+        const rampTime = 0.7; // 更長的平滑時間
 		
 		// 讀取 EQ 狀態
 		const currentType = this.targets.filter.type;
@@ -2213,7 +2219,8 @@ class FeedbackManager {
 
         // R -> Gain (非線性放大)
 		const gainByEQ = (mode == "impact"? 1.1 : 1.0);
-        const gainVal = 0.5 + Math.pow(data[0] / 255, 1.2) * 1.1 * gainByEQ;
+        const brightness = data[0] / 255 * 1.15;
+		const gainVal = 0.5 + this.smoothstep(0.0, 1.0, brightness) * 1.1 * gainByEQ;
         this.targets.gain.gain.setTargetAtTime(gainVal, now, rampTime);
 
         // G -> Filter Q
@@ -2227,13 +2234,24 @@ class FeedbackManager {
             this.targets.reverb.gain.setTargetAtTime(reverbVal, now, rampTime);
         }
 
-        // A -> Distortion
+        // R -> Distortion
         if (this.targets.distortion) {
 			const distBySmooth = (mode != "smooth"? 1.1 : 1.0);
-            const distVal = data[3] > 128 ? 1.2 * distBySmooth : 1.0;
+            const distVal = this.smoothstep(0.6, 1.0, data[0] / 255.0) > 128 ? 1.2 * distBySmooth : 1.0;
             this.targets.distortion.gain.setTargetAtTime(distVal, now, 0.05);
         }
+		
+		// A -> panner
+		if (this.targets.panner) {
+			const panValue = (data[3] / 255) * 0.4 - 0.2; // A → 左右亮度差值，映射到 -1 ~ +1
+			this.targets.panner.pan.setTargetAtTime(panValue, now, rampTime);
+		}
     }
+	
+	smoothstep(edge0, edge1, x) {
+		const t = Math.min(Math.max((x - edge0) / (edge1 - edge0), 0.0), 1.0);
+		return t * t * (3.0 - 2.0 * t);
+	}
 }
 
 class UEA {
