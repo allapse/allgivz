@@ -2219,7 +2219,7 @@ class FeedbackManager {
 
         // R -> Gain (非線性放大)
 		const gainByEQ = (mode == "impact"? 1.1 : 1.0);
-        const brightness = data[0] / 255 * 1.15;
+        const brightness = data[0] / 255 * 1.1;
 		const gainVal = 0.5 + this.smoothstep(0.0, 1.0, brightness) * 1.1 * gainByEQ;
         this.targets.gain.gain.setTargetAtTime(gainVal, now, rampTime);
 
@@ -2243,7 +2243,7 @@ class FeedbackManager {
 		
 		// A -> panner
 		if (this.targets.panner) {
-			const panValue = (data[3] / 255) * 0.4 - 0.2; // A → 左右亮度差值，映射到 -1 ~ +1
+			const panValue = (data[3] / 255) * 0.8 - 0.4; // A → 左右亮度差值，映射到 -1 ~ +1
 			this.targets.panner.pan.setTargetAtTime(panValue, now, rampTime);
 		}
     }
