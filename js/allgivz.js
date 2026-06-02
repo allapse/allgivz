@@ -2241,11 +2241,11 @@ class FeedbackManager {
             this.targets.distortion.gain.setTargetAtTime(distVal, now, 0.05);
         }
 		
-		// A -> panner
 		if (this.targets.panner) {
-			const panValue = (data[3] / 255) * 0.8 - 0.4; // A → 左右亮度差值，映射到 -1 ~ +1
-			this.targets.panner.pan.setTargetAtTime(panValue, now, rampTime);
+			const panX = (data[3] / 255) * 40 - 20; // 映射到 -10 ~ +10
+			this.targets.panner.positionX.setTargetAtTime(panX, now, rampTime);
 		}
+
     }
 	
 	smoothstep(edge0, edge1, x) {
