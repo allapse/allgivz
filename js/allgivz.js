@@ -2242,13 +2242,13 @@ class FeedbackManager {
         }
 		
 		if (this.targets.panner) {
-			const panX = (data[3] / 255) * 50 - 25;
-			const panY = (data[0] / 255) * 80 - 40;
-			const panZ = (data[1] / 255) * 100 - 50;
-			const panT = (data[2] / 255) * 100 - 50;
-			this.targets.panner.positionX.setTargetAtTime(panX, now, panT);
-			this.targets.panner.positionY.setTargetAtTime(panY, now, panT);
-			this.targets.panner.positionZ.setTargetAtTime(panZ, now, panT);
+			const panX = (data[3] / 255) * 130 - 65;
+			const panY = (data[0] / 255) * 150 - 75;
+			const panZ = (data[1] / 255) * 170 - 85;
+			const panT = (data[2] / 255) * 200 - 100;
+			this.targets.panner.positionX.setTargetAtTime(panX, now, panT + panZ);
+			this.targets.panner.positionY.setTargetAtTime(panY, now, panT + panX);
+			this.targets.panner.positionZ.setTargetAtTime(panZ, now, panT + panY);
 		}
 
     }
