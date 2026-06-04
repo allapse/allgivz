@@ -2242,13 +2242,13 @@ class FeedbackManager {
         }
 		
 		if (this.targets.panner) {
-			const panX = smoothstep(0.1, 0.9, data[3] / 255) * 200 - 100;
-			const panY = smoothstep(0.2, 0.8, data[2] / 255) * 150 - 75;
-			const panZ = smoothstep(0.3, 0.7, data[0] / 255) * 170 - 85;
-			const panT = smoothstep(0.4, 0.6, data[1] / 255) * 200 - 100;
-			this.targets.panner.positionX.setTargetAtTime(panX, now, smoothstep(0.3, 0.7, panT + panZ)/100);
-			this.targets.panner.positionY.setTargetAtTime(panY, now, smoothstep(0.2, 0.8, panT + panX)/100);
-			this.targets.panner.positionZ.setTargetAtTime(panZ, now, smoothstep(0.1, 0.9, panT + panY)/100);
+			const panX = smoothstep(0.4, 0.6, 1 - data[3] / 255) * 100 - 50;
+			const panY = smoothstep(0.3, 0.7, 1 - data[2] / 255) * 60 - 30;
+			const panZ = smoothstep(0.2, 0.8, 1 - data[0] / 255) * 140 - 70;
+			const panT = smoothstep(0.1, 0.9, 1 - data[1] / 255) * 200 - 100;
+			this.targets.panner.positionX.setTargetAtTime(panX, now, smoothstep(0.2, 0.8, panT + panZ)/100);
+			this.targets.panner.positionY.setTargetAtTime(panY, now, smoothstep(0.3, 0.7, panT + panX)/100);
+			this.targets.panner.positionZ.setTargetAtTime(panZ, now, smoothstep(0.4, 0.6, panT + panY)/100);
 		}
     }
 	
