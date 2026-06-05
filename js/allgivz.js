@@ -2219,18 +2219,13 @@ class FeedbackManager {
 			mode = "bright"; // 偏重高頻 → 閃爍模式
 		}
 
-        // R -> Gain (非線性放大)
+        // R -> brightness -> Gain (非線性放大)
 		const gainByEQ = (mode == "impact"? 1.1 : 1.0);
         const brightness = this.smoothstep(0.0, 1.0, data[0] / 255);
 		const gainVal = 0.5 + brightness * 1.1 * gainByEQ;
         this.targets.gain.gain.setTargetAtTime(gainVal, now, rampTime);
 
-        // G -> Filter Q
-		const changerate = this.smoothstep(0.0, 1.0, data[2] / 255);
-        const qVal = 1.0 + Math.pow(changerate, 1.5) * 15.0 * gainByEQ;
-        this.targets.filter.Q.setTargetAtTime(qVal, now, rampTime);
-
-        // B -> Reverb Wet
+        // G -> colorful -> Reverb Wet
 		const colorful = this.smoothstep(0.0, 1.0, data[1] / 255);
 		const reverbByEQ = (mode == "bright"? 1.1 : 1.0)
         const reverbVal = Math.pow(colorful, 1.3) * 1.2 * reverbByEQ;
@@ -2238,17 +2233,23 @@ class FeedbackManager {
             this.targets.reverb.gain.setTargetAtTime(reverbVal, now, rampTime);
         }
 
+        // B -> changerate -> Filter Q
+		const changerate = this.smoothstep(0.0, 1.0, data[2] / 255);
+        const qVal = 1.0 + Math.pow(changerate, 1.5) * 15.0 * gainByEQ;
+        this.targets.filter.Q.setTargetAtTime(qVal, now, rampTime);
+		
         // R -> Distortion
+		const leftRight = data[3] / 255.0;
         if (this.targets.distortion) {
 			const distBySmooth = (mode != "smooth"? 1.1 : 1.0);
-            const distVal = this.smoothstep(0.6, 1.0, data[0] / 255.0) > 128 ? 1.2 * distBySmooth : 1.0;
+            const distVal = this.smoothstep(0.6, 1.0, leftRight) > 128 ? 1.2 * distBySmooth : 1.0;
             this.targets.distortion.gain.setTargetAtTime(distVal, now, 0.05);
         }
 		
 		if (this.targets.panner) {
-			const panX = this.smoothstep(0.0, 1.0, data[3] / 255) * 0.2 - 0.1;
+			const panX = leftRight * 0.02 - 0.01;
 			const panY = changerate * 0.2 - 0.1;
-			const panZ = brightness * 0.2 - 0.1;
+			const panZ = brightness * 2 - 1;
 			const panT = colorful;
 			this.targets.panner.positionX.setTargetAtTime(panX * panT, now, rampTime);
 			this.targets.panner.positionY.setTargetAtTime(panY * panT, now, rampTime);
