@@ -2248,9 +2248,9 @@ class FeedbackManager {
 		
 		if (this.targets.panner) {
 			const panX = leftRight * 0.01 - 0.005;
-			const panY = changerate - 0.5;
-			const panZ = brightness * 10 - 5;
-			const panT = colorful;
+			const panY = changerate * 0.03 - 0.015;
+			const panZ = brightness * 0.05 - 0.025;
+			const panT = colorful + 0.5;
 			this.targets.panner.positionX.setTargetAtTime(panX * panT, now, rampTime);
 			this.targets.panner.positionY.setTargetAtTime(panY * panT, now, rampTime);
 			this.targets.panner.positionZ.setTargetAtTime(panZ * panT, now, rampTime);
