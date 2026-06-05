@@ -2244,16 +2244,16 @@ class FeedbackManager {
         }
 		
 		if (this.targets.panner) {
-			const panX = this.smoothstep(0.4, 0.6, 1 - data[3] / 255) * 100 - 50;
-			const panY = this.smoothstep(0.3, 0.7, 1 - data[2] / 255) * 60 - 30;
-			const panZ = this.smoothstep(0.2, 0.8, 1 - data[0] / 255) * 140 - 70;
-			const panT = this.smoothstep(0.1, 0.9, 1 - data[1] / 255) * 200 - 100;
-			this.targets.panner.positionX.setTargetAtTime(panX, now, this.smoothstep(0.2, 0.8, panT + panZ)/100);
-			this.targets.panner.positionY.setTargetAtTime(panY, now, this.smoothstep(0.3, 0.7, panT + panX)/100);
-			this.targets.panner.positionZ.setTargetAtTime(panZ, now, this.smoothstep(0.4, 0.6, panT + panY)/100);
+			//const panX = this.smoothstep(0.1, 0.9, data[3] / 255) * 200 - 100;
+			//const panY = this.smoothstep(0.1, 0.9, data[2] / 255) * 200 - 100;
+			//const panZ = this.smoothstep(0.1, 0.9, data[0] / 255) * 200 - 100;
+			//const panT = this.smoothstep(0.1, 0.9, data[3]);
+			//this.targets.panner.positionX.setTargetAtTime(panT, now, rampTime);
+			//this.targets.panner.positionY.setTargetAtTime(panY, now, this.smoothstep(0.1, 0.9, panT));
+			//this.targets.panner.positionZ.setTargetAtTime(panZ, now, this.smoothstep(0.1, 0.9, panT));
 			
-			this.pannerPos.fromArray([panX/100, panY/100, panZ/100]);
-			console.log(this.pannerPos);
+			//this.pannerPos.fromArray([this.smoothstep(0.1, 0.9, data[0] / 255), this.smoothstep(0.1, 0.9, data[1] / 255), this.smoothstep(0.1, 0.9, data[2] / 255)]);
+			//console.log(data[3]);
 		}
     }
 	
