@@ -2165,7 +2165,7 @@ class FeedbackManager {
 					float rightBrightness = dot(rightAvg.rgb, vec3(0.299, 0.587, 0.114));
 					float A = rightBrightness - leftBrightness;
 
-                    gl_FragColor = vec4(R, G, B, A);
+                    gl_FragColor = vec4(R, G, B, A * 0.5 + 0.5);
                 }
             `
         });
@@ -2244,16 +2244,16 @@ class FeedbackManager {
         }
 		
 		if (this.targets.panner) {
-			//const panX = this.smoothstep(0.1, 0.9, data[3] / 255) * 200 - 100;
+			const panX = (data[3] / 255) * 200 - 100;
 			//const panY = this.smoothstep(0.1, 0.9, data[2] / 255) * 200 - 100;
 			//const panZ = this.smoothstep(0.1, 0.9, data[0] / 255) * 200 - 100;
-			//const panT = this.smoothstep(0.1, 0.9, data[3]);
-			//this.targets.panner.positionX.setTargetAtTime(panT, now, rampTime);
+			const panT = this.smoothstep(0.1, 0.9, data[2] / 255);
+			this.targets.panner.positionX.setTargetAtTime(panX, now, panT);
 			//this.targets.panner.positionY.setTargetAtTime(panY, now, this.smoothstep(0.1, 0.9, panT));
 			//this.targets.panner.positionZ.setTargetAtTime(panZ, now, this.smoothstep(0.1, 0.9, panT));
 			
 			//this.pannerPos.fromArray([this.smoothstep(0.1, 0.9, data[0] / 255), this.smoothstep(0.1, 0.9, data[1] / 255), this.smoothstep(0.1, 0.9, data[2] / 255)]);
-			//console.log(data[3]);
+			//console.log(panT);
 		}
     }
 	
