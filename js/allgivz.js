@@ -2238,7 +2238,7 @@ class FeedbackManager {
         const qVal = 1.0 + Math.pow(changerate, 1.5) * 15.0 * gainByEQ;
         this.targets.filter.Q.setTargetAtTime(qVal, now, rampTime);
 		
-        // R -> Distortion
+        // A -> Distortion
 		const leftRight = data[3] / 255.0;
         if (this.targets.distortion) {
 			const distBySmooth = (mode != "smooth"? 1.1 : 1.0);
@@ -2247,9 +2247,9 @@ class FeedbackManager {
         }
 		
 		if (this.targets.panner) {
-			const panX = leftRight * 0.02 - 0.01;
-			const panY = changerate * 0.2 - 0.1;
-			const panZ = brightness * 2 - 1;
+			const panX = leftRight * 0.01 - 0.005;
+			const panY = changerate - 0.5;
+			const panZ = brightness * 10 - 5;
 			const panT = colorful;
 			this.targets.panner.positionX.setTargetAtTime(panX * panT, now, rampTime);
 			this.targets.panner.positionY.setTargetAtTime(panY * panT, now, rampTime);
