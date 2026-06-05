@@ -1483,8 +1483,9 @@ class AudioMap {
 			this.feedback = new FeedbackManager(this.renderer, {
 				gain: this.mainGain,
 				filter: this.fxFilter,
-				reverb: this.wetReverbGain,     // 這裡傳入控制乾濕比的 GainNode
-				distortion: this.distDriveGain  // 這裡傳入控制破音強度的 GainNode
+				reverb: this.wetReverbGain,
+				distortion: this.distDriveGain,
+				panner: this.panner
 			});
 		}
 
@@ -1748,7 +1749,7 @@ class AudioMap {
 		let f3 = Lambda * 1e25;
 		f3 = Math.min(Math.max(f3, 200), 2000);
 		this.genVoices[3].frequency.setValueAtTime(
-			this.mapToScale(f3) * smoothed[3], 
+			Math.min(this.mapToScale(f3) * smoothed[3], 24000), 
 			now // 硬切，製造節奏衝擊
 		);
 
@@ -2122,6 +2123,7 @@ class FeedbackManager {
         this.rtCurrent = new THREE.WebGLRenderTarget(1, 1, rtParams);
         this.rtPrev = new THREE.WebGLRenderTarget(1, 1, rtParams);
         this.pixelBuffer = new Uint8Array(4);
+		this.pannerPos = new THREE.Vector3(0.0, 0.0, 0.0);
 
         this.material = new THREE.ShaderMaterial({
             uniforms: {
@@ -2157,8 +2159,8 @@ class FeedbackManager {
                     float B = abs(R - prevR) * 10.0;
 
                     // A: 左右亮度差值 (panValue)
-					vec4 leftAvg = textureLod(u_currentFrame, vec2(0.25, 0.5), 10.0);
-					vec4 rightAvg = textureLod(u_currentFrame, vec2(0.75, 0.5), 10.0);
+					vec4 leftAvg = textureLod(u_currentFrame, vec2(0.25, 0.5), 5.0);
+					vec4 rightAvg = textureLod(u_currentFrame, vec2(0.75, 0.5), 5.0);
 					float leftBrightness = dot(leftAvg.rgb, vec3(0.299, 0.587, 0.114));
 					float rightBrightness = dot(rightAvg.rgb, vec3(0.299, 0.587, 0.114));
 					float A = rightBrightness - leftBrightness;
@@ -2242,13 +2244,16 @@ class FeedbackManager {
         }
 		
 		if (this.targets.panner) {
-			const panX = smoothstep(0.4, 0.6, 1 - data[3] / 255) * 100 - 50;
-			const panY = smoothstep(0.3, 0.7, 1 - data[2] / 255) * 60 - 30;
-			const panZ = smoothstep(0.2, 0.8, 1 - data[0] / 255) * 140 - 70;
-			const panT = smoothstep(0.1, 0.9, 1 - data[1] / 255) * 200 - 100;
-			this.targets.panner.positionX.setTargetAtTime(panX, now, smoothstep(0.2, 0.8, panT + panZ)/100);
-			this.targets.panner.positionY.setTargetAtTime(panY, now, smoothstep(0.3, 0.7, panT + panX)/100);
-			this.targets.panner.positionZ.setTargetAtTime(panZ, now, smoothstep(0.4, 0.6, panT + panY)/100);
+			const panX = this.smoothstep(0.4, 0.6, 1 - data[3] / 255) * 100 - 50;
+			const panY = this.smoothstep(0.3, 0.7, 1 - data[2] / 255) * 60 - 30;
+			const panZ = this.smoothstep(0.2, 0.8, 1 - data[0] / 255) * 140 - 70;
+			const panT = this.smoothstep(0.1, 0.9, 1 - data[1] / 255) * 200 - 100;
+			this.targets.panner.positionX.setTargetAtTime(panX, now, this.smoothstep(0.2, 0.8, panT + panZ)/100);
+			this.targets.panner.positionY.setTargetAtTime(panY, now, this.smoothstep(0.3, 0.7, panT + panX)/100);
+			this.targets.panner.positionZ.setTargetAtTime(panZ, now, this.smoothstep(0.4, 0.6, panT + panY)/100);
+			
+			this.pannerPos.fromArray([panX/100, panY/100, panZ/100]);
+			console.log(this.pannerPos);
 		}
     }
 	
