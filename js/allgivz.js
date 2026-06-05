@@ -2165,7 +2165,7 @@ class FeedbackManager {
 					float rightBrightness = dot(rightAvg.rgb, vec3(0.299, 0.587, 0.114));
 					float A = abs(rightBrightness - leftBrightness);
 
-                    gl_FragColor = vec4(R, G, B, A * 0.5 + 0.5);
+                    gl_FragColor = vec4(R, G, B, A);
                 }
             `
         });
@@ -2240,11 +2240,11 @@ class FeedbackManager {
 		
         // A -> Distortion
 		const leftRight = this.smoothstep(0.3, 0.7, data[3] / 255.0);
-        if (this.targets.distortion) {
-			const distBySmooth = (mode != "smooth"? 1.1 : 1.0);
-            const distVal = leftRight * distBySmooth;
-            this.targets.distortion.gain.setTargetAtTime(distVal, now, 0.05);
-        }
+        const distBySmooth = (mode != "smooth"? 1.1 : 1.0);
+		const distVal = 1.0 + leftRight * 0.1 * distBySmooth;
+		this.targets.distortion.gain.setTargetAtTime(distVal, now, rampTime);
+		
+		//console.log([gainVal, reverbVal, qVal, distVal]);
     }
 	
 	smoothstep(edge0, edge1, x) {
