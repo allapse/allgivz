@@ -2244,9 +2244,9 @@ class FeedbackManager {
         }
 		
 		if (this.targets.panner) {
-			const panX = this.smoothstep(0.1, 0.9, data[3] / 255) * 200 - 100;
-			const panY = this.smoothstep(0.1, 0.9, data[1] / 255) * 200 - 100;
-			const panZ = this.smoothstep(0.1, 0.9, data[0] / 255) * 200 - 100;
+			const panX = this.smoothstep(0.1, 0.9, data[3] / 255) * 20 - 10;
+			const panY = this.smoothstep(0.1, 0.9, data[1] / 255) * 20 - 10;
+			const panZ = this.smoothstep(0.1, 0.9, data[0] / 255) * 20 - 10;
 			const panT = this.smoothstep(0.1, 0.9, data[2] / 255);
 			this.targets.panner.positionX.setTargetAtTime(panX * panT, now, rampTime);
 			this.targets.panner.positionY.setTargetAtTime(panY * panT, now, rampTime);
