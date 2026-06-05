@@ -2163,7 +2163,7 @@ class FeedbackManager {
 					vec4 rightAvg = textureLod(u_currentFrame, vec2(0.75, 0.5), 5.0);
 					float leftBrightness = dot(leftAvg.rgb, vec3(0.299, 0.587, 0.114));
 					float rightBrightness = dot(rightAvg.rgb, vec3(0.299, 0.587, 0.114));
-					float A = rightBrightness - leftBrightness;
+					float A = abs(rightBrightness - leftBrightness);
 
                     gl_FragColor = vec4(R, G, B, A * 0.5 + 0.5);
                 }
@@ -2226,7 +2226,7 @@ class FeedbackManager {
         this.targets.gain.gain.setTargetAtTime(gainVal, now, rampTime);
 
         // G -> colorful -> Reverb Wet
-		const colorful = this.smoothstep(0.0, 1.0, data[1] / 255);
+		const colorful = this.smoothstep(0.1, 0.9, data[1] / 255);
 		const reverbByEQ = (mode == "bright"? 1.1 : 1.0)
         const reverbVal = Math.pow(colorful, 1.3) * 1.2 * reverbByEQ;
         if (this.targets.reverb) {
@@ -2234,30 +2234,17 @@ class FeedbackManager {
         }
 
         // B -> changerate -> Filter Q
-		const changerate = this.smoothstep(0.0, 1.0, data[2] / 255);
+		const changerate = this.smoothstep(0.2, 0.8, data[2] / 255);
         const qVal = 1.0 + Math.pow(changerate, 1.5) * 15.0 * gainByEQ;
         this.targets.filter.Q.setTargetAtTime(qVal, now, rampTime);
 		
         // A -> Distortion
-		const leftRight = data[3] / 255.0;
+		const leftRight = this.smoothstep(0.3, 0.7, data[3] / 255.0);
         if (this.targets.distortion) {
 			const distBySmooth = (mode != "smooth"? 1.1 : 1.0);
-            const distVal = this.smoothstep(0.6, 1.0, leftRight) > 128 ? 1.2 * distBySmooth : 1.0;
+            const distVal = leftRight * distBySmooth;
             this.targets.distortion.gain.setTargetAtTime(distVal, now, 0.05);
         }
-		
-		if (this.targets.panner) {
-			const panX = leftRight * 0.01 - 0.005;
-			const panY = changerate * 0.03 - 0.015;
-			const panZ = brightness * 0.05 - 0.025;
-			const panT = colorful + 0.5;
-			this.targets.panner.positionX.setTargetAtTime(panX * panT, now, 5);
-			this.targets.panner.positionY.setTargetAtTime(panY * panT, now, 3);
-			this.targets.panner.positionZ.setTargetAtTime(panZ * panT, now, 2);
-			
-			//this.pannerPos.fromArray([data[3] / 255, data[1] / 255, data[0] / 255]);
-			//console.log(this.pannerPos);
-		}
     }
 	
 	smoothstep(edge0, edge1, x) {
