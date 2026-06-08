@@ -2148,7 +2148,7 @@ class FeedbackManager {
 					vec4 prevAvg = textureLod(u_prevFrame, vec2(0.5), 10.0);
 
                     // R: 亮度
-                    //float R = dot(currAvg.rgb, vec3(0.299, 0.587, 0.114));
+                    float R = dot(currAvg.rgb, vec3(0.299, 0.587, 0.114));
 
                     // G: 飽和度
                     //float maxC = max(currAvg.r, max(currAvg.g, currAvg.b));
@@ -2156,9 +2156,9 @@ class FeedbackManager {
                     //float G = (maxC - minC) / (maxC + 0.001);
 					
 					// R: 亮度
-                    float currR = dot(currAvg.rgb, vec3(0.299, 0.587, 0.114));
-					float prevR = dot(prevAvg.rgb, vec3(0.299, 0.587, 0.114));
-					float R = currR / prevR;
+                    //float currR = dot(currAvg.rgb, vec3(0.299, 0.587, 0.114));
+					//float prevR = dot(prevAvg.rgb, vec3(0.299, 0.587, 0.114));
+					//float R = currR / prevR;
 
                     // G: 飽和度
                     float maxC = max(currAvg.r, max(currAvg.g, currAvg.b));
@@ -2172,8 +2172,8 @@ class FeedbackManager {
                     // B: 變化率
 					//float prevR = texture2D(u_prevFrame, vec2(0.5)).r;
                     //float B = abs(R - prevR) * 10.0;
-                    //float prevR = dot(prevAvg.rgb, vec3(0.299, 0.587, 0.114));
-                    //float B = R / prevR;
+                    float prevR = dot(prevAvg.rgb, vec3(0.299, 0.587, 0.114));
+                    float B = R / prevR;
 
                     // A: 左右亮度差值 (panValue)
 					vec4 leftAvg = textureLod(u_currentFrame, vec2(0.25, 0.5), 5.0);
@@ -2191,7 +2191,7 @@ class FeedbackManager {
 					float prevA = abs(rightBrightness - leftBrightness);
 					float A = currA / prevA;
 
-                    gl_FragColor = vec4(R, G, R, A);
+                    gl_FragColor = vec4(R, G, B, A);
                 }
             `
         });
