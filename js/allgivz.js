@@ -2145,27 +2145,53 @@ class FeedbackManager {
                 void main() {
                     // 全局平均色
                     vec4 currAvg = textureLod(u_currentFrame, vec2(0.5), 10.0);
+					vec4 prevAvg = textureLod(u_prevFrame, vec2(0.5), 10.0);
 
                     // R: 亮度
-                    float R = dot(currAvg.rgb, vec3(0.299, 0.587, 0.114));
+                    //float R = dot(currAvg.rgb, vec3(0.299, 0.587, 0.114));
+
+                    // G: 飽和度
+                    //float maxC = max(currAvg.r, max(currAvg.g, currAvg.b));
+                    //float minC = min(currAvg.r, min(currAvg.g, currAvg.b));
+                    //float G = (maxC - minC) / (maxC + 0.001);
+					
+					// R: 亮度
+                    float currR = dot(currAvg.rgb, vec3(0.299, 0.587, 0.114));
+					float prevR = dot(prevAvg.rgb, vec3(0.299, 0.587, 0.114));
+					float R = currR / prevR;
 
                     // G: 飽和度
                     float maxC = max(currAvg.r, max(currAvg.g, currAvg.b));
                     float minC = min(currAvg.r, min(currAvg.g, currAvg.b));
-                    float G = (maxC - minC) / (maxC + 0.001);
+                    float currG = (maxC - minC) / (maxC + 0.001);
+					maxC = max(prevAvg.r, max(prevAvg.g, prevAvg.b));
+                    minC = min(prevAvg.r, min(prevAvg.g, prevAvg.b));
+                    float prevG = (maxC - minC) / (maxC + 0.001);
+					float G = currG / prevG;
 
                     // B: 變化率
-                    float prevR = texture2D(u_prevFrame, vec2(0.5)).r;
-                    float B = abs(R - prevR) * 10.0;
+					//float prevR = texture2D(u_prevFrame, vec2(0.5)).r;
+                    //float B = abs(R - prevR) * 10.0;
+                    //float prevR = dot(prevAvg.rgb, vec3(0.299, 0.587, 0.114));
+                    //float B = R / prevR;
 
                     // A: 左右亮度差值 (panValue)
 					vec4 leftAvg = textureLod(u_currentFrame, vec2(0.25, 0.5), 5.0);
 					vec4 rightAvg = textureLod(u_currentFrame, vec2(0.75, 0.5), 5.0);
 					float leftBrightness = dot(leftAvg.rgb, vec3(0.299, 0.587, 0.114));
 					float rightBrightness = dot(rightAvg.rgb, vec3(0.299, 0.587, 0.114));
-					float A = abs(rightBrightness - leftBrightness);
+					
+					float currA = abs(rightBrightness - leftBrightness);
+					
+					leftAvg = textureLod(u_prevFrame, vec2(0.25, 0.5), 5.0);
+					rightAvg = textureLod(u_prevFrame, vec2(0.75, 0.5), 5.0);
+					leftBrightness = dot(leftAvg.rgb, vec3(0.299, 0.587, 0.114));
+					rightBrightness = dot(rightAvg.rgb, vec3(0.299, 0.587, 0.114));
+					
+					float prevA = abs(rightBrightness - leftBrightness);
+					float A = currA / prevA;
 
-                    gl_FragColor = vec4(R, G, B, A);
+                    gl_FragColor = vec4(R, G, R, A);
                 }
             `
         });
