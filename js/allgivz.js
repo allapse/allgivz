@@ -2167,13 +2167,13 @@ class FeedbackManager {
 					maxC = max(prevAvg.r, max(prevAvg.g, prevAvg.b));
                     minC = min(prevAvg.r, min(prevAvg.g, prevAvg.b));
                     float prevG = (maxC - minC) / (maxC + 0.001);
-					float G = currG / prevG;
+					float G = currG / (prevG + 0.001);
 
                     // B: 變化率
 					//float prevR = texture2D(u_prevFrame, vec2(0.5)).r;
                     //float B = abs(R - prevR) * 10.0;
                     float prevR = dot(prevAvg.rgb, vec3(0.299, 0.587, 0.114));
-                    float B = R / prevR;
+                    float B = R / (prevR + 0.001);
 
                     // A: 左右亮度差值 (panValue)
 					vec4 leftAvg = textureLod(u_currentFrame, vec2(0.25, 0.5), 5.0);
@@ -2189,7 +2189,7 @@ class FeedbackManager {
 					rightBrightness = dot(rightAvg.rgb, vec3(0.299, 0.587, 0.114));
 					
 					float prevA = abs(rightBrightness - leftBrightness);
-					float A = currA / prevA;
+					float A = (currA / prevA + 0.01);
 
                     gl_FragColor = vec4(B, G, R, A);
                 }
