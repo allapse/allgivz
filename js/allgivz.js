@@ -2191,7 +2191,7 @@ class FeedbackManager {
 					float prevA = abs(rightBrightness - leftBrightness);
 					float A = currA / prevA;
 
-                    gl_FragColor = vec4(R, G, B, A);
+                    gl_FragColor = vec4(B, G, R, A);
                 }
             `
         });
