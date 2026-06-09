@@ -2147,18 +2147,8 @@ class FeedbackManager {
                     vec4 currAvg = textureLod(u_currentFrame, vec2(0.5), 10.0);
 					vec4 prevAvg = textureLod(u_prevFrame, vec2(0.5), 10.0);
 
-                    // R: 亮度
-                    float R = dot(currAvg.rgb, vec3(0.299, 0.587, 0.114));
-
-                    // G: 飽和度
-                    //float maxC = max(currAvg.r, max(currAvg.g, currAvg.b));
-                    //float minC = min(currAvg.r, min(currAvg.g, currAvg.b));
-                    //float G = (maxC - minC) / (maxC + 0.001);
-					
-					// R: 亮度
-                    //float currR = dot(currAvg.rgb, vec3(0.299, 0.587, 0.114));
-					//float prevR = dot(prevAvg.rgb, vec3(0.299, 0.587, 0.114));
-					//float R = currR / prevR;
+                    // B: 亮度
+                    float B = dot(currAvg.rgb, vec3(0.299, 0.587, 0.114));
 
                     // G: 飽和度
                     float maxC = max(currAvg.r, max(currAvg.g, currAvg.b));
@@ -2169,29 +2159,18 @@ class FeedbackManager {
                     float prevG = (maxC - minC) / (maxC + 0.001);
 					float G = currG / (prevG + 0.001);
 
-                    // B: 變化率
-					//float prevR = texture2D(u_prevFrame, vec2(0.5)).r;
-                    //float B = abs(R - prevR) * 10.0;
-                    float prevR = dot(prevAvg.rgb, vec3(0.299, 0.587, 0.114));
-                    float B = R / (prevR + 0.001);
+                    // R: 變化率
+                    float prevB = dot(prevAvg.rgb, vec3(0.299, 0.587, 0.114));
+                    float R = B / (prevB + 0.001);
 
                     // A: 左右亮度差值 (panValue)
 					vec4 leftAvg = textureLod(u_currentFrame, vec2(0.25, 0.5), 5.0);
-					vec4 rightAvg = textureLod(u_currentFrame, vec2(0.75, 0.5), 5.0);
+					vec4 rightAvg = textureLod(u_prevFrame, vec2(0.75, 0.5), 5.0);
 					float leftBrightness = dot(leftAvg.rgb, vec3(0.299, 0.587, 0.114));
 					float rightBrightness = dot(rightAvg.rgb, vec3(0.299, 0.587, 0.114));
-					
-					float currA = abs(rightBrightness - leftBrightness);
-					
-					leftAvg = textureLod(u_prevFrame, vec2(0.25, 0.5), 5.0);
-					rightAvg = textureLod(u_prevFrame, vec2(0.75, 0.5), 5.0);
-					leftBrightness = dot(leftAvg.rgb, vec3(0.299, 0.587, 0.114));
-					rightBrightness = dot(rightAvg.rgb, vec3(0.299, 0.587, 0.114));
-					
-					float prevA = abs(rightBrightness - leftBrightness);
-					float A = (currA / prevA + 0.01);
+					float A = abs(rightBrightness - leftBrightness);
 
-                    gl_FragColor = vec4(B, G, R, A);
+                    gl_FragColor = vec4(R, G, B, A);
                 }
             `
         });
@@ -2251,26 +2230,26 @@ class FeedbackManager {
 		const gainVal = 0.5 + brightness * 1.1 * gainByEQ;
         this.targets.gain.gain.setTargetAtTime(gainVal, now, rampTime);
 
-        // G -> colorful -> Reverb Wet
-		const colorful = this.smoothstep(0.1, 0.9, data[1] / 255);
+        // G -> colorful -> Reverb Wet 色彩擴散
+		const colorful = this.smoothstep(0.0, 1.0, data[1] / 255);
 		const reverbByEQ = (mode == "bright"? 1.1 : 1.0)
-        const reverbVal = Math.pow(colorful, 1.3) * 1.2 * reverbByEQ;
+        const reverbVal = 0.9 + colorful * reverbByEQ;
         if (this.targets.reverb) {
             this.targets.reverb.gain.setTargetAtTime(reverbVal, now, rampTime);
         }
 
-        // B -> changerate -> Filter Q
-		const changerate = this.smoothstep(0.2, 0.8, data[2] / 255);
-        const qVal = 1.0 + Math.pow(changerate, 1.5) * 15.0 * gainByEQ;
+        // B -> changerate -> Filter Q 圖案分裂
+		const changerate = this.smoothstep(0.0, 1.0, data[2] / 255);
+        const qVal = 0.9 + changerate * gainByEQ;
         this.targets.filter.Q.setTargetAtTime(qVal, now, rampTime);
 		
-        // A -> Distortion
-		const leftRight = this.smoothstep(0.3, 0.7, data[3] / 255.0);
+        // A -> Distortion 畫面變化快
+		const leftRight = this.smoothstep(0.0, 1.0, data[3] / 255.0);
         const distBySmooth = (mode != "smooth"? 1.1 : 1.0);
-		const distVal = 1.0 + leftRight * 0.1 * distBySmooth;
+		const distVal = 0.9 + leftRight * distBySmooth;
 		this.targets.distortion.gain.setTargetAtTime(distVal, now, rampTime);
 		
-		//console.log([gainVal, reverbVal, qVal, distVal]);
+		console.log([gainVal, reverbVal, qVal, distVal]);
     }
 	
 	smoothstep(edge0, edge1, x) {
