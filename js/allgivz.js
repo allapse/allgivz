@@ -2231,7 +2231,7 @@ class FeedbackManager {
         this.targets.gain.gain.setTargetAtTime(gainVal, now, rampTime);
 
         // G -> colorful -> Reverb Wet 色彩擴散
-		const colorful = this.smoothstep(0.0, 1.0, data[2] / 255);
+		const colorful = this.smoothstep(0.0, 8.0, data[2] / 255);
 		const reverbByEQ = (mode == "bright"? 1.1 : 1.0)
         const reverbVal = 1.0 + colorful * reverbByEQ;
         if (this.targets.reverb) {
@@ -2239,17 +2239,17 @@ class FeedbackManager {
         }
 
         // B -> changerate -> Filter Q 圖案分裂
-		const changerate = this.smoothstep(0.0, 1.0, data[1] / 255);
+		const changerate = this.smoothstep(0.0, 9.0, data[1] / 255);
         const qVal = 1.0 + changerate * gainByEQ;
         this.targets.filter.Q.setTargetAtTime(qVal, now, rampTime);
 		
         // A -> Distortion 畫面變化快慢
-		const leftRight = this.smoothstep(0.0, 1.0, data[3] / 255.0);
+		const leftRight = this.smoothstep(0.0, 7.0, data[3] / 255.0);
         const distBySmooth = (mode != "smooth"? 1.1 : 1.0);
 		const distVal = 1.0 + leftRight * distBySmooth;
 		this.targets.distortion.gain.setTargetAtTime(distVal, now, rampTime);
 		
-		//console.log([gainVal, reverbVal, qVal, distVal]);
+		console.log([gainVal, reverbVal, qVal, distVal]);
     }
 	
 	smoothstep(edge0, edge1, x) {
