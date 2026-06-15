@@ -202,6 +202,11 @@ void main() {
     warped.x += (0.3 + 0.5 * u_speed) * sin(u_time * 0.3 + uv.y * 5.0 + v_z * 0.7);
     warped.y += (0.5 + 0.3 * u_complexity) * cos(u_time * 0.7 + uv.x * 3.0 + v_z * 0.5);
 	
+	if(u_darkGlow > 0.5) {
+		warped.x /= (0.3 + 0.5 * u_speed) * sin(u_time * 0.3 + uv.y * 5.0 + v_z * 0.7);
+		warped.y /= (0.5 + 0.3 * u_complexity) * cos(u_time * 0.7 + uv.x * 3.0 + v_z * 0.5);
+	}
+	
     vec2 pos = warped * 17.0;
 	
 	float punch = pow(0.1 + 0.9 * u_intensity * u_complexity * u_speed * u_peak, 3.0);
