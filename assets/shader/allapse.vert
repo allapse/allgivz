@@ -17,16 +17,16 @@ void main() {
     vec2 ratio = vec2(max(u_res.x / u_res.y, 1.0), max(u_res.y / u_res.x, 1.0));
     v_centered_uv = (uv - 0.5) * ratio;
 	
-	float punch = 0.1 + 0.9 * u_intensity * u_complexity * u_speed * u_peak;
+	float punch = 0.5 + 0.5 * u_intensity * u_complexity * u_speed * u_peak;
 
     float t = u_time * 0.1;
     float z = 0.0;
 
-    vec2 p = uv * 4.0; 
+    vec2 p = 7.0 * uv * punch; 
     z += sin(p.x * (0.7 + 0.3 * u_intensity) + t) * 0.3;
     z += cos(p.y * (0.3 + 0.7 * u_complexity) + t * 0.7) * 0.5;
     z += sin(p.x * (0.7 + 0.3 * u_speed) + p.y * (0.3 + 0.7 * u_peak) + t * 0.3);
-
+	
     z *= 1.0 - punch;
 	
 	vec2 offset = vec2(
