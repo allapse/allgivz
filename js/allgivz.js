@@ -83,9 +83,14 @@ class AudioMap {
 		this.audio = null;
 		this.source = null;
 		this.analyser = null;
+		this.splitter = null;
+		this.analyserLeft = null;
+		this.analyserRight = null;
 		this.audioContext = null;
 		this.panner = null;
 		this.dataArray = null;
+		this.leftData = null;
+		this.rightData = null;
 		this.fxFilter = null;
 		// 在 constructor 裡先建好這三個閥門
 		this.distDriveGain = null; // 破音強度
@@ -106,7 +111,7 @@ class AudioMap {
 		// 1. 建立兩個緩衝區 (像兩面鏡子互相對照)
 		this.targetA = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, params);
 		this.targetB = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, params);
-		this.params = { intensity: 0, speed: 0, complexity: 0 };
+		this.params = { intensity: 0, speed: 0, complexity: 0 , left: 1, right: 1};
 		this.feedback = null;
 		this.feedbackMode = false;
 		
@@ -1155,6 +1160,8 @@ class AudioMap {
     updateAudioReaction() {
         if (!this.dataArray || !this.audioMappings.length) return;
 		this.analyser.getByteFrequencyData(this.dataArray);
+		this.analyserLeft.getByteFrequencyData(this.leftData);
+		this.analyserRight.getByteFrequencyData(this.rightData);
 		
 		this.handleVol();
 		
@@ -1229,10 +1236,13 @@ class AudioMap {
 				return; // 跳過下方的音訊計算，但 Uniform 已經更新了
 			}
 			
-			if(mapping.range)
+			if(mapping.range){
 				this.handleLegacy(mapping, min, max);
-			else
+			}
+			else {
 				this.handleGivz(mapping, min, max);
+				this.handleLR();
+			}
 			
 			el.value = this.params[mapping.key];
 
@@ -1442,6 +1452,34 @@ class AudioMap {
 		}
 	}
 	
+	handleLR() {
+		const left = this.uea.process(this.leftData);
+		const right = this.uea.process(this.rightData);
+		const N = left.length;
+		let resultLeft = 0, resultRight = 0;
+
+		let weightedSum = 0;
+		let totalAmplitude = 0;
+		for (let i = 0; i < N; i++) {
+			weightedSum += i * left[i];
+			totalAmplitude += left[i];
+		}
+		resultLeft = totalAmplitude > 0 ? (weightedSum / totalAmplitude) / N : 0;
+		
+		weightedSum = 0;
+		totalAmplitude = 0;
+		for (let i = 0; i < N; i++) {
+			weightedSum += i * right[i];
+			totalAmplitude += right[i];
+		}
+		resultRight = totalAmplitude > 0 ? (weightedSum / totalAmplitude) / N : 0;
+
+		this.params['left'] = resultLeft;
+		this.params['right'] = resultRight;
+		
+		//console.log([resultLeft, resultRight]);
+	}
+	
 	async initAudio(audioPath = null) {
 		// UI 與 陀螺儀 (保持不變) for legacy page
 		document.getElementById('overlay').style.display = 'none';
@@ -1455,8 +1493,16 @@ class AudioMap {
 		if (!this.audioContext) {
 			this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
 			this.analyser = this.audioContext.createAnalyser();
-			this.analyser.fftSize = 256;
+			this.analyser.fftSize = 2048;
 			this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+			
+			this.splitter = this.audioContext.createChannelSplitter(2);
+			this.analyserLeft = this.audioContext.createAnalyser();
+			this.analyserRight = this.audioContext.createAnalyser();
+			this.analyserLeft.fftSize = 2048;
+			this.analyserRight.fftSize = 2048;
+			this.leftData = new Uint8Array(this.analyserLeft.frequencyBinCount);
+			this.rightData = new Uint8Array(this.analyserRight.frequencyBinCount);
 			
 			// ⭐ 新增 Panner
 			this.panner = this.audioContext.createPanner();
@@ -1549,9 +1595,15 @@ class AudioMap {
 			// 最後匯合
 			this.mainGain.connect(this.analyser);
 			this.analyser.connect(this.audioContext.destination);
+			this.mainGain.connect(this.splitter);
+			this.splitter.connect(this.analyserLeft, 0);  // left channel
+			this.splitter.connect(this.analyserRight, 1); // right channel
+			this.splitter.connect(this.audioContext.destination);
 
 			// 換歌並播放
-			this.dataArray.fill(0)
+			this.dataArray.fill(0);
+			this.leftData.fill(0);
+			this.rightData.fill(0);
 			this.audio.src = audioPath;
 			this.audio.type = "audio/mp4";
 			await this.audio.play();
@@ -1926,6 +1978,8 @@ class AudioMap {
 				u_intensity: { value: this.params.intensity },
 				u_complexity: { value: this.params.complexity },
 				u_speed: { value: this.params.speed },
+				u_left: { value: this.params.left },
+				u_right: { value: this.params.right },
 				u_darkGlow: { value: 0.0 },
 				u_progress: { value: 0.0 },
 				u_camera: { value: new THREE.Texture() }, // 先給一個空紋理佔位
