@@ -10,6 +10,8 @@ uniform float u_peak;
 uniform float u_intensity;
 uniform float u_complexity;
 uniform float u_speed;
+uniform float u_left;
+uniform float u_right;
 uniform float u_darkGlow;
 uniform sampler2D u_camera;
 uniform float u_useCamera;
@@ -192,7 +194,7 @@ void main() {
 	uv = abs(uv) - sin(0.1 + 0.9 * u_complexity) - cos(0.1 + 0.9 * u_intensity);
 	uv *= rot2(0.1 + 0.9 * u_complexity + u_time * 0.1);
 	// freedom
-	uv = abs(uv) / (dot(uv, uv)) - (p1.xy / p2.xy);
+	uv = abs(uv) / (dot(uv, uv)) - ((p1.xy + u_left) / (p2.xy + u_right));
 	// choice
 	uv *= mat2(0.707, 0.707, -0.707, 0.707);
 	uv = abs(uv) - (u_volume_smooth * 0.5);
@@ -282,9 +284,9 @@ void main() {
 		
 		// thunder
 		float fade = pow(0.88, fi);
-        color.r += col.r * fade * 1.1;
+        color.r += col.r * fade * (1.1 + u_left);
         color.g += col.g * fade;
-        color.b += col.b * fade * 0.9;
+        color.b += col.b * fade * (0.9 + u_right);
 		
 		// prime
 		color += primeWave(col, color, u_time);
@@ -330,7 +332,7 @@ void main() {
 			// bubble
 			if (v_z > 0.7 * wave || 0.3 * stripes > bigZ) discard;
 		}
-		leftCol = 1.0 - exp(-finalColor * 3.0);
+		leftCol = 1.0 - exp(-finalColor * 3.0) * u_left;
 	}
 	else {
 		if(v_uv.x < 0.5) {
@@ -341,7 +343,7 @@ void main() {
 			// bubble
 			if (v_z > 0.3 * wave || 0.7 * stripes > bigZ) discard;
 		}
-		rightCol = 1.0 - exp(-finalColor * 3.0);
+		rightCol = 1.0 - exp(-finalColor * 3.0) * u_right;
 	}
 	
 	float t = smoothstep(0.33 - 0.33 * punch, 0.67 + 0.33 * punch, v_uv.x);
