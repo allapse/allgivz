@@ -583,7 +583,7 @@ class AudioMap {
 					<option value="" disabled selected>INPUT</option>
 					${optionsHtml}
 				</select>
-				<input type="file" id="fileInput" accept=".mp3,.m4a,.aac,.wav,.flac,.ogg" style="display:none; width: 100%;">
+				<input type="file" id="fileInput" accept="audio/mp3,audio/m4a,audio/wav,audio/*" style="display:none; width: 100%;">
 				<input type="text" id="urlInput" placeholder="Enter stream URL" style="display:none;">
 			</div>
 			<style>
