@@ -194,7 +194,7 @@ void main() {
 	uv = abs(uv) - sin(0.1 + 0.9 * u_complexity) - cos(0.1 + 0.9 * u_intensity);
 	uv *= rot2(0.1 + 0.9 * u_complexity + u_time * 0.1);
 	// freedom
-	uv = abs(uv) / (dot(uv, uv)) - ((p1.xy + u_left) / (p2.xy + u_right));
+	uv = abs(uv) / (dot(uv, uv)) - ((p1.xy) / (p2.xy));
 	// choice
 	uv *= mat2(0.707, 0.707, -0.707, 0.707);
 	uv = abs(uv) - (u_volume_smooth * 0.5);
@@ -252,7 +252,7 @@ void main() {
     color = mix(color, peakColor, (0.1 + u_peak));
 	
 	// regret
-	mat3 rrot = rotateY(u_orient.x + u_time*0.5) * rotateX(u_orient.y + u_time*0.3);
+	mat3 rrot = rotateY(u_orient.x + u_time * 0.5) * rotateX(u_orient.y + u_time * 0.3);
 	
     color *= sym * motion * pow(0.3 + 0.7 * u_intensity, 3.0) / (0.2 + 0.8 * pattern) * stripes / (0.2 + 0.8 * cf);
 	color *= rrot;
@@ -284,9 +284,9 @@ void main() {
 		
 		// thunder
 		float fade = pow(0.88, fi);
-        color.r += col.r * fade * (1.1 + u_left);
+        color.r += col.r * fade * (1.1) + u_left;
         color.g += col.g * fade;
-        color.b += col.b * fade * (0.9 + u_right);
+        color.b += col.b * fade * (0.9) + u_right;
 		
 		// prime
 		color += primeWave(col, color, u_time);
@@ -301,11 +301,11 @@ void main() {
 	finalColor /= 0.1 + (1.0 - smoothstep(0.0, 1.0, sym)) * 0.5;
 	
 	// water
-	float noise = pow(sin(uv.x * 5.0 + u_time) * cos(uv.y * 7.0 - u_time), 3.0);
+	float noise = pow(sin(uv.x * 5.0 + u_time + u_left) * cos(uv.y * 7.0 - u_time + u_right), 3.0);
     float turbulence = bigZ * 13.0 + noise * (0.3 + 0.7 * u_intensity);
 	
 	// torture
-	float c = pow(cos(turbulence), 3.0), s = pow(sin(turbulence), 3.0); 
+	float c = pow(cos(turbulence * u_left), 3.0), s = pow(sin(turbulence * u_right), 3.0); 
 	mat4 rotZW = mat4(
 		1, 0, 0, 0,
 		0, 1, 0, 0,
@@ -323,16 +323,18 @@ void main() {
 	finalColor = mix(currentFrame, past, 0.95 + 0.05 * freeze);
 	finalColor *= finalColor; 
 	
+	float v_z_st = 0.0;
+	
 	if(u_darkGlow > 0.5) {
 		if(v_uv.x < 0.5) {
 			// bubble
-			if (v_z > 0.3 * wave || 0.7 * stripes > bigZ) discard;
+			if (v_z > 0.3 * wave || 0.7 * stripes > bigZ * u_left) discard;
 		}
 		else{
 			// bubble
-			if (v_z > 0.7 * wave || 0.3 * stripes > bigZ) discard;
+			if (v_z > 0.7 * wave || 0.3 * stripes > bigZ * u_right) discard;
 		}
-		leftCol = 1.0 - exp(-finalColor * 3.0) * u_left;
+		leftCol = 1.0 - exp(-finalColor * 3.0);
 	}
 	else {
 		if(v_uv.x < 0.5) {
@@ -343,7 +345,7 @@ void main() {
 			// bubble
 			if (v_z > 0.3 * wave || 0.7 * stripes > bigZ) discard;
 		}
-		rightCol = 1.0 - exp(-finalColor * 3.0) * u_right;
+		rightCol = 1.0 - exp(-finalColor * 3.0);
 	}
 	
 	float t = smoothstep(0.33 - 0.33 * punch, 0.67 + 0.33 * punch, v_uv.x);
