@@ -583,7 +583,7 @@ class AudioMap {
 					<option value="" disabled selected>INPUT</option>
 					${optionsHtml}
 				</select>
-				<input type="file" id="fileInput" accept=".mp3" style="display:none; width: 100%;">
+				<input type="file" id="fileInput" accept="audio/*" style="display:none; width: 100%;">
 				<input type="text" id="urlInput" placeholder="Enter stream URL" style="display:none;">
 			</div>
 			<style>
@@ -1477,7 +1477,7 @@ class AudioMap {
 		this.params['left'] = resultLeft;
 		this.params['right'] = resultRight;
 		
-		//console.log([resultLeft, resultRight]);
+		//console.log(this.params);
 	}
 	
 	async initAudio(audioPath = null) {
