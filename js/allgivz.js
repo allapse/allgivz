@@ -266,7 +266,7 @@ class AudioMap {
 			<div id="overlay" style="white-space: pre;">${overlayText}</div>
 			<div id="ui-layer" style="display: none;"></div>
 			<div id="useCamera" style="position:fixed; top:20px; left:20px; z-index:1200; cursor:pointer; color:#999; font-size:10px; display: none;">CAMERA</div>
-			<div id="lockGyro" style="position:fixed; top:20px; right:20px; z-index:1200; cursor:pointer; color:#fff; font-size:10px; display: none;">LOCK GYRO</div>
+			<div id="lockGyro" style="position:fixed; top:20px; right:20px; z-index:1200; cursor:pointer; color:#fff; font-size:10px;">LOCK GYRO</div>
 			<div id="link" style="position:fixed; bottom:20px; left:20px; z-index:1200; cursor:pointer; color:#999; font-size:10px;">${linkText}</div>
 		`;
 
@@ -583,7 +583,7 @@ class AudioMap {
 					<option value="" disabled selected>INPUT</option>
 					${optionsHtml}
 				</select>
-				<input type="file" id="fileInput" accept="audio/mp3,audio/m4a,audio/wav,audio/*" style="display:none; width: 100%;">
+				<input type="file" id="fileInput" accept="audio/mp3,audio/m4a,audio/wav,audio/flac,audio/aiff,audio/*" style="display:none; width: 100%;">
 				<input type="text" id="urlInput" placeholder="Enter stream URL" style="display:none;">
 			</div>
 			<style>
