@@ -631,7 +631,7 @@ class AudioMap {
 					border: none; border-bottom: 1px solid #999;
 					font-size: 9px; outline: none; letter-spacing: 1px;
 					-webkit-appearance: none; padding: 0px; cursor: pointer;
-					 margin-left: 2px; 
+					 margin-left: 2px; display: none;
 				}
 				.fs-group::after { content: '▼'; font-size: 8px; color: #999; position: absolute; right: 0; bottom: 8px; pointer-events: none; }
 				.fs-select option { font-size: 9px; background: #000; color: #999;}
@@ -1089,6 +1089,7 @@ class AudioMap {
 		
 		this.analyser.fftSize = size;
 		this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+		this.prevDataArray = new Uint8Array(this.analyser.frequencyBinCount);
 		this.analyserLeft.fftSize = size;
 		this.analyserRight.fftSize = size;
 		this.leftData = new Uint8Array(this.analyserLeft.frequencyBinCount);
@@ -1546,14 +1547,11 @@ class AudioMap {
 		if (!this.audioContext) {
 			this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
 			this.analyser = this.audioContext.createAnalyser();
-			this.analyser.fftSize = 32768;
 			this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
 			
 			this.splitter = this.audioContext.createChannelSplitter(2);
 			this.analyserLeft = this.audioContext.createAnalyser();
 			this.analyserRight = this.audioContext.createAnalyser();
-			this.analyserLeft.fftSize = 32768;
-			this.analyserRight.fftSize = 32768;
 			this.leftData = new Uint8Array(this.analyserLeft.frequencyBinCount);
 			this.rightData = new Uint8Array(this.analyserRight.frequencyBinCount);
 			
@@ -2086,6 +2084,7 @@ class AudioMap {
 		// 這樣所有 Shader（不論有沒有殘影）都能支持音訊回饋
 		if (this.feedback && this.feedbackMode) {
 			this.feedback.update(this.targetA.texture);
+			this.changeFS(this.fsSelect.options[this.feedback.fftIndex].value);
 		}
 
 		// 2. 顯示到螢幕
@@ -2290,6 +2289,8 @@ class FeedbackManager {
         // 新增平滑狀態
         this.smoothed = [0, 0, 0, 0];
         this.alpha = 0.2; // 平滑係數
+		
+		this.fftIndex = 5;
     }
 
     update(mainSceneTexture) {
@@ -2355,6 +2356,8 @@ class FeedbackManager {
         const distBySmooth = (mode != "smooth"? 1.1 : 1.0);
 		const distVal = 1.0 + leftRight * distBySmooth;
 		this.targets.distortion.gain.setTargetAtTime(distVal, now, rampTime);
+		
+		this.fftIndex = Math.round(this.smoothstep(0.0, 1.0, gainVal * reverbVal * qVal * distVal) * 10);
 		
 		//console.log([gainVal, reverbVal, qVal, distVal]);
     }
