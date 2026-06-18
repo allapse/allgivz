@@ -1087,9 +1087,9 @@ class AudioMap {
 			return;
 		}
 		
-		this.analyser.fftSize = size;
-		this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
-		this.prevDataArray = new Uint8Array(this.analyser.frequencyBinCount);
+		//this.analyser.fftSize = size;
+		//this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+		//this.prevDataArray = new Uint8Array(this.analyser.frequencyBinCount);
 		this.analyserLeft.fftSize = size;
 		this.analyserRight.fftSize = size;
 		this.leftData = new Uint8Array(this.analyserLeft.frequencyBinCount);
@@ -1547,11 +1547,14 @@ class AudioMap {
 		if (!this.audioContext) {
 			this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
 			this.analyser = this.audioContext.createAnalyser();
+			this.analyser.fftSize = 2048;
 			this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
 			
 			this.splitter = this.audioContext.createChannelSplitter(2);
 			this.analyserLeft = this.audioContext.createAnalyser();
 			this.analyserRight = this.audioContext.createAnalyser();
+			this.analyserLeft.fftSize = 2048;
+			this.analyserRight.fftSize = 2048;
 			this.leftData = new Uint8Array(this.analyserLeft.frequencyBinCount);
 			this.rightData = new Uint8Array(this.analyserRight.frequencyBinCount);
 			
