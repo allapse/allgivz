@@ -141,11 +141,13 @@ class AudioMap {
 		this.urlInput = null;
 		this.shaderSelect = null;
 		this.shaderQueue = [];
-		
 		this.currentShaderIndex = 0;
+		
 		this.eqSelect = null;
 		this.eqQueue = [];
 		this.currentEQIndex = 0;
+		
+		this.fsSelect = null;
 		
 		this.cameraManager = null;
 		this.useCamera = null;
@@ -622,6 +624,34 @@ class AudioMap {
 					${eqHtml}
 				</select>
 			</div>
+			<style>
+				.fs-group { margin-top: 20px; width: 180px; position: relative; }
+				.fs-select {
+					width: 100%; background: transparent; color: #999;
+					border: none; border-bottom: 1px solid #999;
+					font-size: 9px; outline: none; letter-spacing: 1px;
+					-webkit-appearance: none; padding: 0px; cursor: pointer;
+					 margin-left: 2px; 
+				}
+				.fs-group::after { content: '▼'; font-size: 8px; color: #999; position: absolute; right: 0; bottom: 8px; pointer-events: none; }
+				.fs-select option { font-size: 9px; background: #000; color: #999;}
+			</style>
+			<div class="fs-group">
+				<select id="fs-select" class="fs-select">
+					<option value="" disabled selected>FFT SIZE</option>
+					<option value="32">32</option>
+					<option value="64">64</option>
+					<option value="128">128</option>
+					<option value="256">256</option>
+					<option value="512">512</option>
+					<option value="1024">1024</option>
+					<option value="2048">2048</option>
+					<option value="4096">4096</option>
+					<option value="8192">8192</option>
+					<option value="16384">16384</option>
+					<option value="32768">32768</option>
+				</select>
+			</div>
 		`;
 		
 		const gyroUI = document.createElement('div');
@@ -892,6 +922,14 @@ class AudioMap {
 					this.changeEQ(e.target.value);
 				};
 			}
+			
+			this.fsSelect = document.getElementById('fs-select');
+			if (this.fsSelect) {
+				// 使用箭頭函數確保 this 指向你的主程式物件
+				this.fsSelect.onchange = (e) => {
+					this.changeFS(e.target.value);
+				};
+			}
 
 			// 如果還有 config 沒綁定成功，隔 50ms 再試一次 (直到抓到為止)
 			if (this.audioMappings.length < configs.length) {
@@ -1040,6 +1078,21 @@ class AudioMap {
 		const selector = document.getElementById('eq-selector');
 		
 		//console.log(`維度切換成功: ${preset.name}`, preset);
+	}
+	
+	changeFS(size){
+		// 檢查基礎環境
+		if (!this.audioContext || !this.source || !this.analyser) {
+			console.error("音訊元件未就緒");
+			return;
+		}
+		
+		this.analyser.fftSize = size;
+		this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+		this.analyserLeft.fftSize = size;
+		this.analyserRight.fftSize = size;
+		this.leftData = new Uint8Array(this.analyserLeft.frequencyBinCount);
+		this.rightData = new Uint8Array(this.analyserRight.frequencyBinCount);
 	}
 	
 	async loadShader(path){
@@ -1493,14 +1546,14 @@ class AudioMap {
 		if (!this.audioContext) {
 			this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
 			this.analyser = this.audioContext.createAnalyser();
-			this.analyser.fftSize = 2048;
+			this.analyser.fftSize = 32768;
 			this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
 			
 			this.splitter = this.audioContext.createChannelSplitter(2);
 			this.analyserLeft = this.audioContext.createAnalyser();
 			this.analyserRight = this.audioContext.createAnalyser();
-			this.analyserLeft.fftSize = 2048;
-			this.analyserRight.fftSize = 2048;
+			this.analyserLeft.fftSize = 32768;
+			this.analyserRight.fftSize = 32768;
 			this.leftData = new Uint8Array(this.analyserLeft.frequencyBinCount);
 			this.rightData = new Uint8Array(this.analyserRight.frequencyBinCount);
 			
