@@ -1653,15 +1653,15 @@ class AudioMap {
 
 			// 路線 A：主幹線 (Dry)
 			this.fxFilter.connect(this.distDriveGain);
-			this.distDriveGain.connect(this.waveShaper);
+			this.distDriveGain.connect(this.mainGain);
 			this.waveShaper.connect(this.compressor);
 
 			// 路線 B：混響支線 (Wet) 
 			this.fxFilter.connect(this.reverbNode);      // 支線分流
 			this.reverbNode.connect(this.wetReverbGain); // 經過 Reverb 後接閥門
-			this.wetReverbGain.connect(this.compressor);   // 混回分析器 (這樣視覺也會看到殘響)
+			this.wetReverbGain.connect(this.mainGain);   // 混回分析器 (這樣視覺也會看到殘響)
 			
-			this.compressor.connect(this.mainGain);
+			//this.compressor.connect(this.mainGain);
 
 			// 最後匯合
 			this.mainGain.connect(this.analyser);
