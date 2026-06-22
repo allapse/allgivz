@@ -639,9 +639,6 @@ class AudioMap {
 			<div class="fs-group">
 				<select id="fs-select" class="fs-select">
 					<option value="" disabled selected>FFT SIZE</option>
-					<option value="32">32</option>
-					<option value="64">64</option>
-					<option value="128">128</option>
 					<option value="256">256</option>
 					<option value="512">512</option>
 					<option value="1024">1024</option>
@@ -1087,9 +1084,11 @@ class AudioMap {
 			return;
 		}
 		
-		//this.analyser.fftSize = size;
-		//this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
-		//this.prevDataArray = new Uint8Array(this.analyser.frequencyBinCount);
+		/*this.analyser.fftSize = size;
+		this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+		if(this.prevDataArray != this.analyser.frequencyBinCount) {
+			this.prevDataArray = null;
+		}*/
 		this.analyserLeft.fftSize = size;
 		this.analyserRight.fftSize = size;
 		this.leftData = new Uint8Array(this.analyserLeft.frequencyBinCount);
@@ -2087,7 +2086,7 @@ class AudioMap {
 		// 這樣所有 Shader（不論有沒有殘影）都能支持音訊回饋
 		if (this.feedback && this.feedbackMode) {
 			this.feedback.update(this.targetA.texture);
-			this.changeFS(this.fsSelect.options[this.feedback.fftIndex].value);
+			this.changeFS(this.fsSelect.options[1 + Math.round(this.feedback.fftIndex * (this.fsSelect.options.length - 2))].value);
 		}
 
 		// 2. 顯示到螢幕
@@ -2293,7 +2292,7 @@ class FeedbackManager {
         this.smoothed = [0, 0, 0, 0];
         this.alpha = 0.2; // 平滑係數
 		
-		this.fftIndex = 5;
+		this.fftIndex = 4;
     }
 
     update(mainSceneTexture) {
@@ -2360,9 +2359,10 @@ class FeedbackManager {
 		const distVal = 1.0 + leftRight * distBySmooth;
 		this.targets.distortion.gain.setTargetAtTime(distVal, now, rampTime);
 		
-		this.fftIndex = Math.round(this.smoothstep(0.0, 1.0, gainVal * reverbVal * qVal * distVal) * 10);
+		this.fftIndex = this.smoothstep(0.0, 1.0, gainVal * reverbVal * qVal * distVal);
 		
 		//console.log([gainVal, reverbVal, qVal, distVal]);
+		//console.log(this.fftIndex);
     }
 	
 	smoothstep(edge0, edge1, x) {
