@@ -1720,10 +1720,10 @@ class AudioMap {
 	}
 	
 	setCompressor(feedback) {
-		this.compressor.knee.value = 20 * feedback.R;         // dB
-		this.compressor.ratio.value = 12 * feedback.G;        // Compression ratio
-		this.compressor.attack.value = 0.01 * feedback.B;     // Seconds
-		this.compressor.release.value = 0.25 * feedback.A;    // Seconds
+		this.compressor.knee.value = 7 * feedback.R;         // dB
+		this.compressor.ratio.value = 3 * feedback.G;        // Compression ratio
+		this.compressor.attack.value = 0.007 * feedback.B;     // Seconds
+		this.compressor.release.value = 0.03 * feedback.A;    // Seconds
 	}
 	
 	// 在你的 AudioMap 類別內
