@@ -92,6 +92,7 @@ class AudioMap {
 		this.leftData = null;
 		this.rightData = null;
 		this.fxFilter = null;
+		this.compressor = null;
 		// 在 constructor 裡先建好這三個閥門
 		this.distDriveGain = null; // 破音強度
 		this.waveShaper = null;
@@ -1097,6 +1098,7 @@ class AudioMap {
 		
 		this.loadReverbImpulse(this.feedback);
 		this.makeDistortionCurve(this.feedback);
+		this.setCompressor(this.feedback);
 	}
 	
 	async loadShader(path){
@@ -1575,6 +1577,9 @@ class AudioMap {
 			this.fxFilter.type = 'lowpass'; 
 			this.fxFilter.frequency.value = 20000; // 20kHz 幾乎等於沒過濾
 			this.fxFilter.Q.value = 1;             // 標準品質，不產生尖峰
+			
+			this.compressor = this.audioContext.createDynamicsCompressor();
+
 			this.distDriveGain = this.audioContext.createGain(); // 破音強度
 			this.waveShaper = this.audioContext.createWaveShaper();
 			this.waveShaper.oversample = "4x";
@@ -1587,6 +1592,7 @@ class AudioMap {
 			this.feedback = new FeedbackManager(this.renderer, {
 				gain: this.mainGain,
 				filter: this.fxFilter,
+				compressor: this.compressor,
 				reverb: this.wetReverbGain,
 				distortion: this.distDriveGain,
 				panner: this.panner
@@ -1594,6 +1600,7 @@ class AudioMap {
 			
 			this.loadReverbImpulse(this.feedback);
 			this.makeDistortionCurve(this.feedback);
+			this.setCompressor(this.feedback);
 		}
 
 		// 模式切換邏輯
@@ -1647,12 +1654,14 @@ class AudioMap {
 			// 路線 A：主幹線 (Dry)
 			this.fxFilter.connect(this.distDriveGain);
 			this.distDriveGain.connect(this.waveShaper);
-			this.waveShaper.connect(this.mainGain);
+			this.waveShaper.connect(this.compressor);
 
 			// 路線 B：混響支線 (Wet) 
 			this.fxFilter.connect(this.reverbNode);      // 支線分流
 			this.reverbNode.connect(this.wetReverbGain); // 經過 Reverb 後接閥門
-			this.wetReverbGain.connect(this.mainGain);   // 混回分析器 (這樣視覺也會看到殘響)
+			this.wetReverbGain.connect(this.compressor);   // 混回分析器 (這樣視覺也會看到殘響)
+			
+			this.compressor.connect(this.mainGain);
 
 			// 最後匯合
 			this.mainGain.connect(this.analyser);
@@ -1708,6 +1717,13 @@ class AudioMap {
 			console.error("Failed to generate distortion curve:", err);
 			this.waveShaper.curve = new Float32Array([0]); // safe fallback
 		}
+	}
+	
+	setCompressor(feedback) {
+		this.compressor.knee.value = 20 * feedback.R;         // dB
+		this.compressor.ratio.value = 12 * feedback.G;        // Compression ratio
+		this.compressor.attack.value = 0.01 * feedback.B;     // Seconds
+		this.compressor.release.value = 0.25 * feedback.A;    // Seconds
 	}
 	
 	// 在你的 AudioMap 類別內
