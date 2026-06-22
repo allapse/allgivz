@@ -1653,8 +1653,8 @@ class AudioMap {
 
 			// 路線 A：主幹線 (Dry)
 			this.fxFilter.connect(this.distDriveGain);
-			this.distDriveGain.connect(this.mainGain);
-			this.waveShaper.connect(this.compressor);
+			this.distDriveGain.connect(this.waveShaper);
+			this.waveShaper.connect(this.mainGain);
 
 			// 路線 B：混響支線 (Wet) 
 			this.fxFilter.connect(this.reverbNode);      // 支線分流
