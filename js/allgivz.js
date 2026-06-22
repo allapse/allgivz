@@ -1093,6 +1093,8 @@ class AudioMap {
 		this.analyserRight.fftSize = size;
 		this.leftData = new Uint8Array(this.analyserLeft.frequencyBinCount);
 		this.rightData = new Uint8Array(this.analyserRight.frequencyBinCount);
+		
+		this.loadReverbImpulse(this.feedback);
 	}
 	
 	async loadShader(path){
@@ -1576,7 +1578,6 @@ class AudioMap {
 			this.reverbNode = this.audioContext.createConvolver();
 			this.wetReverbGain = this.audioContext.createGain(); // 混響強度
 			this.wetReverbGain.gain.value = 0.1; // 預設一點點就好，不然會很糊
-			this.loadReverbImpulse();
 			this.mainGain = this.audioContext.createGain();      // 總音量
 			
 			this.feedback = new FeedbackManager(this.renderer, {
@@ -1586,6 +1587,8 @@ class AudioMap {
 				distortion: this.distDriveGain,
 				panner: this.panner
 			});
+			
+			this.loadReverbImpulse(this.feedback);
 		}
 
 		// 模式切換邏輯
@@ -1671,14 +1674,14 @@ class AudioMap {
 		}
 	}
 	
-	loadReverbImpulse() {
-		const length = this.audioContext.sampleRate * 2; // 2秒的殘響
+	loadReverbImpulse(feedback) {
+		const length = this.audioContext.sampleRate * 2 * feedback.R; // 2秒的殘響
 		const impulse = this.audioContext.createBuffer(2, length, this.audioContext.sampleRate);
 		for (let i = 0; i < 2; i++) {
 			const channelData = impulse.getChannelData(i);
 			for (let j = 0; j < length; j++) {
 				// 生成指數衰減的白噪音
-				channelData[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / length, 2);
+				channelData[j] = (Math.random() * 2 * feedback.G - 1) * Math.pow(1 - j / length * feedback.B, 2) * feedback.A;
 			}
 		}
 		this.reverbNode.buffer = impulse;
@@ -2293,6 +2296,10 @@ class FeedbackManager {
         this.alpha = 0.2; // 平滑係數
 		
 		this.fftIndex = 4;
+		this.R = 1;
+		this.G = 1;
+		this.B = 1;
+		this.A = 1;
     }
 
     update(mainSceneTexture) {
@@ -2339,25 +2346,29 @@ class FeedbackManager {
         const brightness = this.smoothstep(0.0, 1.0, data[0] / 255);
 		const gainVal = 0.5 + brightness * 1.1 * gainByEQ;
         this.targets.gain.gain.setTargetAtTime(gainVal, now, rampTime);
+		this.R = gainVal;
+		
+		// G -> changerate -> Filter Q 圖案分裂
+		const changerate = this.smoothstep(0.0, 8.0, data[1] / 255);
+        const qVal = 1.0 + changerate * gainByEQ;
+        this.targets.filter.Q.setTargetAtTime(qVal, now, rampTime);
+		this.G = qVal;
 
-        // G -> colorful -> Reverb Wet 色彩擴散
+        // B -> colorful -> Reverb Wet 色彩擴散
 		const colorful = this.smoothstep(0.0, 7.0, data[2] / 255);
 		const reverbByEQ = (mode == "bright"? 1.1 : 1.0)
         const reverbVal = 1.0 + colorful * reverbByEQ;
         if (this.targets.reverb) {
             this.targets.reverb.gain.setTargetAtTime(reverbVal, now, rampTime);
         }
-
-        // B -> changerate -> Filter Q 圖案分裂
-		const changerate = this.smoothstep(0.0, 8.0, data[1] / 255);
-        const qVal = 1.0 + changerate * gainByEQ;
-        this.targets.filter.Q.setTargetAtTime(qVal, now, rampTime);
+		this.B = reverbVal;
 		
         // A -> Distortion 畫面變化快慢
 		const leftRight = this.smoothstep(0.0, 9.0, data[3] / 255.0);
         const distBySmooth = (mode != "smooth"? 1.1 : 1.0);
 		const distVal = 1.0 + leftRight * distBySmooth;
 		this.targets.distortion.gain.setTargetAtTime(distVal, now, rampTime);
+		this.A = distVal;
 		
 		this.fftIndex = this.smoothstep(0.0, 1.0, gainVal * reverbVal * qVal * distVal);
 		
