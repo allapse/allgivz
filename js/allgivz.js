@@ -1704,7 +1704,7 @@ class AudioMap {
 	
 	makeDistortionCurve(feedback) {
 		try {
-			const k = feedback.R;      // mapping amount → strong nonlinearity
+			const k = feedback.R * 0.1;      // mapping amount → strong nonlinearity
 			const nSamples = 44100;      // high-resolution curve
 			const curve = new Float32Array(nSamples);
 
