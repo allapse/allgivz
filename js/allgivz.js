@@ -1661,7 +1661,7 @@ class AudioMap {
 			this.reverbNode.connect(this.wetReverbGain); // 經過 Reverb 後接閥門
 			this.wetReverbGain.connect(this.mainGain);   // 混回分析器 (這樣視覺也會看到殘響)
 			
-			//this.compressor.connect(this.mainGain);
+			this.compressor.connect(this.mainGain);
 
 			// 最後匯合
 			this.mainGain.connect(this.analyser);
@@ -1720,7 +1720,6 @@ class AudioMap {
 	}
 	
 	setCompressor(feedback) {
-		return;
 		this.compressor.knee.value = 20 * feedback.R;         // dB
 		this.compressor.ratio.value = 12 * feedback.G;        // Compression ratio
 		this.compressor.attack.value = 0.01 * feedback.B;     // Seconds
