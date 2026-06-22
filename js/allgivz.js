@@ -94,6 +94,7 @@ class AudioMap {
 		this.fxFilter = null;
 		// 在 constructor 裡先建好這三個閥門
 		this.distDriveGain = null; // 破音強度
+		this.waveShaper = null;
 		this.reverbNode = null;
 		this.wetReverbGain = null; // 混響強度
 		this.mainGain = null;      // 總音量
@@ -1095,6 +1096,7 @@ class AudioMap {
 		this.rightData = new Uint8Array(this.analyserRight.frequencyBinCount);
 		
 		this.loadReverbImpulse(this.feedback);
+		this.makeDistortionCurve(this.feedback);
 	}
 	
 	async loadShader(path){
@@ -1574,6 +1576,8 @@ class AudioMap {
 			this.fxFilter.frequency.value = 20000; // 20kHz 幾乎等於沒過濾
 			this.fxFilter.Q.value = 1;             // 標準品質，不產生尖峰
 			this.distDriveGain = this.audioContext.createGain(); // 破音強度
+			this.waveShaper = this.audioContext.createWaveShaper();
+			this.waveShaper.oversample = "4x";
 			this.distDriveGain.gain.value = 1.0; // 確保訊號預設能通過
 			this.reverbNode = this.audioContext.createConvolver();
 			this.wetReverbGain = this.audioContext.createGain(); // 混響強度
@@ -1589,6 +1593,7 @@ class AudioMap {
 			});
 			
 			this.loadReverbImpulse(this.feedback);
+			this.makeDistortionCurve(this.feedback);
 		}
 
 		// 模式切換邏輯
@@ -1641,7 +1646,8 @@ class AudioMap {
 
 			// 路線 A：主幹線 (Dry)
 			this.fxFilter.connect(this.distDriveGain);
-			this.distDriveGain.connect(this.mainGain);
+			this.distDriveGain.connect(this.waveShaper);
+			this.waveShaper.connect(this.mainGain);
 
 			// 路線 B：混響支線 (Wet) 
 			this.fxFilter.connect(this.reverbNode);      // 支線分流
@@ -1685,6 +1691,23 @@ class AudioMap {
 			}
 		}
 		this.reverbNode.buffer = impulse;
+	}
+	
+	makeDistortionCurve(feedback) {
+		try {
+			const k = feedback.R * 100;      // mapping amount → strong nonlinearity
+			const nSamples = 44100;      // high-resolution curve
+			const curve = new Float32Array(nSamples);
+
+			for (let i = 0; i < nSamples; i++) {
+				const x = (i / nSamples) * 2 * feedback.G - 1; // -1 to +1
+				curve[i] = ((1 + k) * x) * feedback.B / (1 + k * Math.abs(x)) * feedback.A;
+			}
+			this.waveShaper.curve = curve;
+		} catch (err) {
+			console.error("Failed to generate distortion curve:", err);
+			this.waveShaper.curve = new Float32Array([0]); // safe fallback
+		}
 	}
 	
 	// 在你的 AudioMap 類別內
