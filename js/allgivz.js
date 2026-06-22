@@ -1695,13 +1695,13 @@ class AudioMap {
 	
 	makeDistortionCurve(feedback) {
 		try {
-			const k = feedback.R * 10;      // mapping amount → strong nonlinearity
+			const k = feedback.R;      // mapping amount → strong nonlinearity
 			const nSamples = 44100;      // high-resolution curve
 			const curve = new Float32Array(nSamples);
 
 			for (let i = 0; i < nSamples; i++) {
 				const x = (i / nSamples) * 2 * feedback.G - 1; // -1 to +1
-				curve[i] = ((1 + k) * x) * feedback.B / (1 + k * Math.abs(x)) * feedback.A;
+				curve[i] = ((1 + k) * x) / feedback.B / (1 + k * Math.abs(x)) / feedback.A;
 			}
 			this.waveShaper.curve = curve;
 		} catch (err) {
