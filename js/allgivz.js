@@ -1702,7 +1702,7 @@ class AudioMap {
 			const channelData = impulse.getChannelData(i);
 			for (let j = 0; j < length; j++) {
 				// 生成指數衰減的白噪音
-				channelData[j] = (Math.random() * 3 * feedback.G - 1) * Math.pow(1 - j / length * feedback.B, 2) * feedback.A;
+				channelData[j] = (Math.random() * 2 * feedback.G - 1) * Math.pow(1 - j / length * feedback.B, 2) * feedback.A;
 			}
 		}
 		this.reverbNode.buffer = impulse;
@@ -1729,8 +1729,8 @@ class AudioMap {
 		
 		this.synthDelay.delayTime.setTargetAtTime(0.0001 * feedback.fftIndex, now, rampTime);
 		
-		const feedForward = [0.0005 * feedback.R, 0.0003 * feedback.G, 0.0005 * feedback.B, 0.0003 * feedback.A];
-		const feedBackward = [0.0003 * feedback.A, 0.0005 * feedback.B, 0.0003 * feedback.G, 0.0005 * feedback.R];
+		const feedForward = [0.0001 * feedback.R, 0.0003 * feedback.G, 0.0001 * feedback.B, 0.0003 * feedback.A];
+		const feedBackward = [0.0003 * feedback.A, 0.0001 * feedback.B, 0.0003 * feedback.G, 0.0001 * feedback.R];
 		this.iirFilter.feedForward = feedForward;
 		this.iirFilter.feedBackward = feedBackward;
 	}
