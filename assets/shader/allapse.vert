@@ -49,5 +49,12 @@ void main() {
 		v_z + depth * punch
 	);
 
+    if(position.y > 0.5) {
+        pos = vec3(
+		    position.xy,
+		    -(v_z + depth * punch)
+	    );
+    }
+
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
 }
