@@ -2345,10 +2345,10 @@ class FeedbackManager {
         this.alpha = 0.2; // 平滑係數
 		
 		this.fftIndex = 4;
-		this.R = 1;
-		this.G = 1;
-		this.B = 1;
-		this.A = 1;
+		this.R = 1.0;
+		this.G = 1.0;
+		this.B = 1.0;
+		this.A = 1.0;
     }
 
     update(mainSceneTexture) {
@@ -2393,7 +2393,7 @@ class FeedbackManager {
         // R -> brightness -> Gain (非線性放大)
 		const gainByEQ = (mode == "impact"? 1.1 : 1.0);
         const brightness = this.smoothstep(0.0, 1.0, data[0] / 255);
-		const gainVal = 0.5 + brightness * 1.1 * gainByEQ;
+		const gainVal = 0.5 + brightness * gainByEQ;
         this.targets.gain.gain.setTargetAtTime(gainVal, now, rampTime);
 		this.R = gainVal;
 		
