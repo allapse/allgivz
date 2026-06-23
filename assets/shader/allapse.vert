@@ -43,7 +43,8 @@ void main() {
     //z *= mask;
 
     v_z = z; 
-    if(p.y > 0.5) v_z = -z;
+    if(abs(p.x) > 0.5) v_z = -1.2 * z;
+    if(abs(p.y) > 0.7) v_z = -1.3 * z;
 	
 	vec3 pos = vec3(
 		position.xy,
