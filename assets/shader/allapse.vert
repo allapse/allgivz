@@ -43,12 +43,10 @@ void main() {
     //z *= mask;
 
     v_z = z; 
-    if(abs(p.x) > 0.5) v_z = -1.2 * z * (0.6+abs(p.x));
-    if(abs(p.y) > 0.7) v_z = -1.3 * z * (0.4+abs(p.y));
-	
+
 	vec3 pos = vec3(
 		position.xy,
-		v_z + depth * punch
+		v_z + pow(depth, 3.0) * punch
 	);
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
