@@ -1579,8 +1579,8 @@ class AudioMap {
 			this.compressor = this.audioContext.createDynamicsCompressor();
 			this.synthDelay = this.audioContext.createDelay(0.001);
 			
-			const feedForward = [1.0, 1.0, 1.0];
-			const feedBack = [1.0, 1.0, 1.0];
+			const feedForward = [0.00020298, 0.0004059599, 0.00020298];
+			const feedBack = [1.0126964558, -1.9991880801, 0.9873035442];
 			this.iirFilter = this.audioContext.createIIRFilter(feedForward, feedBack);
 
 			this.distDriveGain = this.audioContext.createGain(); // 破音強度
@@ -1729,8 +1729,8 @@ class AudioMap {
 		
 		this.synthDelay.delayTime.setTargetAtTime(0.0001 * feedback.fftIndex, now, rampTime);
 		
-		const feedForward = [0.0001 * feedback.R, 0.0003 * feedback.G, 0.0001 * feedback.B, 0.0003 * feedback.A];
-		const feedBackward = [0.0003 * feedback.A, 0.0001 * feedback.B, 0.0003 * feedback.G, 0.0001 * feedback.R];
+		const feedForward = [feedback.R, feedback.G, feedback.R];
+		const feedBackward = [feedback.B, -feedback.A, 2-feedback.B];
 		this.iirFilter.feedForward = feedForward;
 		this.iirFilter.feedBackward = feedBackward;
 	}
