@@ -1729,8 +1729,8 @@ class AudioMap {
 		
 		this.synthDelay.delayTime.setTargetAtTime(0.0001 * feedback.fftIndex, now, rampTime);
 		
-		const feedForward = [0.0001 * feedback.R, 0.0001 * feedback.G, 0.0001 * feedback.B, 0.0001 * feedback.A];
-		const feedBackward = [0.0001 * feedback.A, 0.0001 * feedback.B, 0.0001 * feedback.G, 0.0001 * feedback.R];
+		const feedForward = [0.001 * feedback.R, 0.001 * feedback.G, 0.001 * feedback.B, 0.001 * feedback.A];
+		const feedBackward = [0.001 * feedback.A, 0.001 * feedback.B, 0.001 * feedback.G, 0.001 * feedback.R];
 		this.iirFilter.feedForward = feedForward;
 		this.iirFilter.feedBackward = feedBackward;
 	}
