@@ -94,6 +94,7 @@ class AudioMap {
 		this.fxFilter = null;
 		this.compressor = null;
 		this.synthDelay = null;
+		this.iirFilter = null;
 		// 在 constructor 裡先建好這三個閥門
 		this.distDriveGain = null; // 破音強度
 		this.waveShaper = null;
@@ -1577,6 +1578,10 @@ class AudioMap {
 			
 			this.compressor = this.audioContext.createDynamicsCompressor();
 			this.synthDelay = this.audioContext.createDelay(0.001);
+			
+			const feedForward = [1.0, 1.0, 1.0];
+			const feedBack = [1.0, 1.0, 1.0];
+			this.iirFilter = this.audioContext.createIIRFilter(feedForward, feedBack);
 
 			this.distDriveGain = this.audioContext.createGain(); // 破音強度
 			this.waveShaper = this.audioContext.createWaveShaper();
@@ -1659,6 +1664,7 @@ class AudioMap {
 			
 			this.compressor.connect(this.mainGain);
 			this.synthDelay.connect(this.mainGain);
+			this.iirFilter.connect(this.mainGain);
 
 			// 最後匯合
 			this.mainGain.connect(this.analyser);
@@ -1722,6 +1728,11 @@ class AudioMap {
 		this.compressor.release.setTargetAtTime(0.03 * feedback.A, now, rampTime);
 		
 		this.synthDelay.delayTime.setTargetAtTime(0.0001 * feedback.fftIndex, now, rampTime);
+		
+		const feedForward = [0.0001 * feedback.R, 0.0001 * feedback.G, 0.0001 * feedback.B, 0.0001 * feedback.A];
+		const feedBackward = [0.0001 * feedback.A, 0.0001 * feedback.B, 0.0001 * feedback.G, 0.0001 * feedback.R];
+		this.iirFilter.feedForward = feedForward;
+		this.iirFilter.feedBackward = feedBackward;
 	}
 	
 	// 在你的 AudioMap 類別內
