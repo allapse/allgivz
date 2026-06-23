@@ -1696,13 +1696,13 @@ class AudioMap {
 		const now = this.audioContext.currentTime;
 		const rampTime = 0.7;
 		
-		const length = this.audioContext.sampleRate * 2 * feedback.R; // 2秒的殘響
+		const length = this.audioContext.sampleRate * 3 * feedback.R; // 2秒的殘響
 		const impulse = this.audioContext.createBuffer(2, length, this.audioContext.sampleRate);
 		for (let i = 0; i < 2; i++) {
 			const channelData = impulse.getChannelData(i);
 			for (let j = 0; j < length; j++) {
 				// 生成指數衰減的白噪音
-				channelData[j] = (Math.random() * 2 * feedback.G - 1) * Math.pow(1 - j / length * feedback.B, 2) * feedback.A;
+				channelData[j] = (Math.random() * 3 * feedback.G - 1) * Math.pow(1 - j / length * feedback.B, 2) * feedback.A;
 			}
 		}
 		this.reverbNode.buffer = impulse;
@@ -1729,8 +1729,8 @@ class AudioMap {
 		
 		this.synthDelay.delayTime.setTargetAtTime(0.0001 * feedback.fftIndex, now, rampTime);
 		
-		const feedForward = [0.001 * feedback.R, 0.001 * feedback.G, 0.001 * feedback.B, 0.001 * feedback.A];
-		const feedBackward = [0.001 * feedback.A, 0.001 * feedback.B, 0.001 * feedback.G, 0.001 * feedback.R];
+		const feedForward = [0.0005 * feedback.R, 0.0003 * feedback.G, 0.0005 * feedback.B, 0.0003 * feedback.A];
+		const feedBackward = [0.0003 * feedback.A, 0.0005 * feedback.B, 0.0003 * feedback.G, 0.0005 * feedback.R];
 		this.iirFilter.feedForward = feedForward;
 		this.iirFilter.feedBackward = feedBackward;
 	}
@@ -2393,20 +2393,20 @@ class FeedbackManager {
         // R -> brightness -> Gain (非線性放大)
 		const gainByEQ = (mode == "impact"? 1.1 : 1.0);
         const brightness = this.smoothstep(0.0, 1.0, data[0] / 255);
-		const gainVal = 0.5 + brightness * gainByEQ;
+		const gainVal = 0.4 + brightness * gainByEQ;
         this.targets.gain.gain.setTargetAtTime(gainVal, now, rampTime);
 		this.R = gainVal;
 		
 		// G -> changerate -> Filter Q 圖案分裂
 		const changerate = this.smoothstep(0.0, 8.0, data[1] / 255);
-        const qVal = 1.0 + changerate * gainByEQ;
+        const qVal = 0.9 + changerate * gainByEQ;
         this.targets.filter.Q.setTargetAtTime(qVal, now, rampTime);
 		this.G = qVal;
 
         // B -> colorful -> Reverb Wet 色彩擴散
 		const colorful = this.smoothstep(0.0, 7.0, data[2] / 255);
 		const reverbByEQ = (mode == "bright"? 1.1 : 1.0)
-        const reverbVal = 1.0 + colorful * reverbByEQ;
+        const reverbVal = 0.9 + colorful * reverbByEQ;
         if (this.targets.reverb) {
             this.targets.reverb.gain.setTargetAtTime(reverbVal, now, rampTime);
         }
@@ -2415,7 +2415,7 @@ class FeedbackManager {
         // A -> Distortion 畫面變化快慢
 		const leftRight = this.smoothstep(0.0, 9.0, data[3] / 255.0);
         const distBySmooth = (mode != "smooth"? 1.1 : 1.0);
-		const distVal = 1.0 + leftRight * distBySmooth;
+		const distVal = 0.9 + leftRight * distBySmooth;
 		this.targets.distortion.gain.setTargetAtTime(distVal, now, rampTime);
 		this.A = distVal;
 		
