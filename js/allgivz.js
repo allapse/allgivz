@@ -93,6 +93,7 @@ class AudioMap {
 		this.rightData = null;
 		this.fxFilter = null;
 		this.compressor = null;
+		this.synthDelay = null;
 		// 在 constructor 裡先建好這三個閥門
 		this.distDriveGain = null; // 破音強度
 		this.waveShaper = null;
@@ -1095,10 +1096,6 @@ class AudioMap {
 		this.analyserRight.fftSize = size;
 		this.leftData = new Uint8Array(this.analyserLeft.frequencyBinCount);
 		this.rightData = new Uint8Array(this.analyserRight.frequencyBinCount);
-		
-		this.loadReverbImpulse(this.feedback);
-		this.makeDistortionCurve(this.feedback);
-		this.setCompressor(this.feedback);
 	}
 	
 	async loadShader(path){
@@ -1579,6 +1576,7 @@ class AudioMap {
 			this.fxFilter.Q.value = 1;             // 標準品質，不產生尖峰
 			
 			this.compressor = this.audioContext.createDynamicsCompressor();
+			this.synthDelay = this.audioContext.createDelay(0.001);
 
 			this.distDriveGain = this.audioContext.createGain(); // 破音強度
 			this.waveShaper = this.audioContext.createWaveShaper();
@@ -1598,9 +1596,7 @@ class AudioMap {
 				panner: this.panner
 			});
 			
-			this.loadReverbImpulse(this.feedback);
-			this.makeDistortionCurve(this.feedback);
-			this.setCompressor(this.feedback);
+			this.applyEffects(this.feedback);
 		}
 
 		// 模式切換邏輯
@@ -1652,16 +1648,17 @@ class AudioMap {
 			this.panner.connect(this.fxFilter);
 
 			// 路線 A：主幹線 (Dry)
-			this.fxFilter.connect(this.distDriveGain);
+			this.fxFilter.connect(this.mainGain);
 			this.distDriveGain.connect(this.waveShaper);
 			this.waveShaper.connect(this.mainGain);
 
 			// 路線 B：混響支線 (Wet) 
-			this.fxFilter.connect(this.reverbNode);      // 支線分流
+			//this.fxFilter.connect(this.reverbNode);      // 支線分流
 			this.reverbNode.connect(this.wetReverbGain); // 經過 Reverb 後接閥門
 			this.wetReverbGain.connect(this.mainGain);   // 混回分析器 (這樣視覺也會看到殘響)
 			
 			this.compressor.connect(this.mainGain);
+			this.synthDelay.connect(this.mainGain);
 
 			// 最後匯合
 			this.mainGain.connect(this.analyser);
@@ -1689,7 +1686,10 @@ class AudioMap {
 		}
 	}
 	
-	loadReverbImpulse(feedback) {
+	applyEffects(feedback) {
+		const now = this.audioContext.currentTime;
+		const rampTime = 0.7;
+		
 		const length = this.audioContext.sampleRate * 2 * feedback.R; // 2秒的殘響
 		const impulse = this.audioContext.createBuffer(2, length, this.audioContext.sampleRate);
 		for (let i = 0; i < 2; i++) {
@@ -1700,9 +1700,7 @@ class AudioMap {
 			}
 		}
 		this.reverbNode.buffer = impulse;
-	}
-	
-	makeDistortionCurve(feedback) {
+		
 		try {
 			const k = feedback.R * 0.1;      // mapping amount → strong nonlinearity
 			const nSamples = 44100;      // high-resolution curve
@@ -1717,13 +1715,13 @@ class AudioMap {
 			console.error("Failed to generate distortion curve:", err);
 			this.waveShaper.curve = new Float32Array([0]); // safe fallback
 		}
-	}
-	
-	setCompressor(feedback) {
-		this.compressor.knee.value = 7 * feedback.R;         // dB
-		this.compressor.ratio.value = 3 * feedback.G;        // Compression ratio
-		this.compressor.attack.value = 0.007 * feedback.B;     // Seconds
-		this.compressor.release.value = 0.03 * feedback.A;    // Seconds
+		
+		this.compressor.knee.setTargetAtTime(7 * feedback.R, now, rampTime);
+		this.compressor.ratio.setTargetAtTime(3 * feedback.G, now, rampTime);
+		this.compressor.attack.setTargetAtTime(0.007 * feedback.B, now, rampTime);
+		this.compressor.release.setTargetAtTime(0.03 * feedback.A, now, rampTime);
+		
+		this.synthDelay.delayTime.setTargetAtTime(0.0001 * feedback.fftIndex, now, rampTime);
 	}
 	
 	// 在你的 AudioMap 類別內
@@ -2128,6 +2126,7 @@ class AudioMap {
 		// 這樣所有 Shader（不論有沒有殘影）都能支持音訊回饋
 		if (this.feedback && this.feedbackMode) {
 			this.feedback.update(this.targetA.texture);
+			this.applyEffects(this.feedback);
 			this.changeFS(this.fsSelect.options[1 + Math.round(this.feedback.fftIndex * (this.fsSelect.options.length - 2))].value);
 		}
 
