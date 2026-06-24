@@ -326,7 +326,7 @@ void main() {
 	float v_z_st = 0.0;
 	
 	if(u_darkGlow > 0.5) {
-		if(v_uv.x < 0.5) {
+		if(v_uv.y / (0.01 + v_uv.x) < punch) {
 			// bubble
 			if (v_z > 0.3 * wave || 0.7 * stripes > bigZ * u_left) discard;
 		}
@@ -337,7 +337,7 @@ void main() {
 		leftCol = 1.0 - exp(-finalColor * 3.0);
 	}
 	else {
-		if(v_uv.x < 0.5) {
+		if(v_uv.x / (0.01 + v_uv.y) < freeze) {
 			// bubble
 			if (v_z > 0.7 * wave || 0.3 * stripes > bigZ) discard;
 		}
