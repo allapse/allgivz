@@ -25,9 +25,9 @@ void main() {
     float z = 0.0;
 
     vec2 p = 7.0 * uv * punch; 
-    z += sin(p.x * u_left * (0.7 + 0.3 * u_intensity) + t) * 0.3;
+    z -= sin(p.x * u_left * (0.7 + 0.3 * u_intensity) + t) * 0.3;
     z -= cos(p.y * (0.3 + 0.7 * u_complexity) + t * 0.7) * 0.5;
-    z += sin(p.x * u_right * (0.7 + 0.3 * u_speed) - p.y * (0.3 + 0.7 * u_peak) + t * 0.3);
+    z -= sin(p.x * u_right * (0.7 + 0.3 * u_speed) - p.y * (0.3 + 0.7 * u_peak) + t * 0.3);
 	
     z *= 1.0 - punch;
 	
