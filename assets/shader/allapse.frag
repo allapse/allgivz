@@ -170,8 +170,8 @@ float ridgeFBM(vec2 p) {
 vec2 refract_logic(vec2 uv, float t, float tension) {
     vec2 p = uv;
     for(float i = 1.0; i < 7.0 + 7.0 * u_complexity; i++) {
-        p.x += 0.3 / i * sin(i * 3.0 * p.y + t + (0.2 + 0.8 * u_volume_smooth) * 0.5 * tension);
-        p.y += 0.5 / i * cos(i * 5.0 * p.x + t + (0.2 + 0.8 * u_volume) * 0.3 * tension);
+        p.x += 0.3 / i * sin(i * 3.0 * p.y + t + (u_left + 0.8 * u_volume_smooth) * 0.5 * tension);
+        p.y += 0.5 / i * cos(i * 5.0 * p.x + t + (u_right + 0.8 * u_volume) * 0.3 * tension);
     }
     return p;
 }
@@ -191,7 +191,7 @@ void main() {
     vec2 uv = v_uv - 0.5;
 	
 	// singularity
-	uv = abs(uv) - sin(0.1 + 0.9 * u_complexity) - cos(0.1 + 0.9 * u_intensity);
+	uv = abs(uv) - sin(u_left + 0.9 * u_complexity) - cos(u_right + 0.9 * u_intensity);
 	uv *= rot2(0.1 + 0.9 * u_complexity + u_time * 0.1);
 	// freedom
 	uv = abs(uv) / (dot(uv, uv)) - ((p1.xy) / (p2.xy));
@@ -201,8 +201,8 @@ void main() {
 	
 	// possibility
 	vec2 warped = uv;
-    warped.x += (0.3 + 0.5 * u_speed) * sin(u_time * 0.3 + uv.y * 5.0 + v_z * 0.7);
-    warped.y += (0.5 + 0.3 * u_complexity) * cos(u_time * 0.7 + uv.x * 3.0 + v_z * 0.5);
+    warped.x += (0.3 + 0.5 * u_speed) * sin(u_time * u_left + uv.y * 5.0 + v_z * 0.7);
+    warped.y += (0.5 + 0.3 * u_complexity) * cos(u_time * 0.7 + uv.x * u_right + v_z * 0.5);
 	
 	if(u_darkGlow > 0.5) {
 		warped.x /= (0.3 + 0.5 * u_speed) * sin(u_time * 0.3 + uv.y * 5.0 + v_z * 0.7);
@@ -284,9 +284,9 @@ void main() {
 		
 		// thunder
 		float fade = pow(0.88, fi);
-        color.r += col.r * fade * (1.1) + u_left;
+        color.r += col.r * fade * (1.0 + u_left);
         color.g += col.g * fade;
-        color.b += col.b * fade * (0.9) + u_right;
+        color.b += col.b * fade * (1.0 - u_right);
 		
 		// prime
 		color += primeWave(col, color, u_time);
@@ -301,11 +301,11 @@ void main() {
 	finalColor /= 0.1 + (1.0 - smoothstep(0.0, 1.0, sym)) * 0.5;
 	
 	// water
-	float noise = pow(sin(uv.x * 5.0 + u_time + u_left) * cos(uv.y * 7.0 - u_time + u_right), 3.0);
+	float noise = pow(sin(uv.x * 5.0 + u_time) * cos(uv.y * 7.0 - u_time), 3.0);
     float turbulence = bigZ * 13.0 + noise * (0.3 + 0.7 * u_intensity);
 	
 	// torture
-	float c = pow(cos(turbulence * u_left), 3.0), s = pow(sin(turbulence * u_right), 3.0); 
+	float c = pow(cos(turbulence * (1.0 + u_left)), 3.0), s = pow(sin(turbulence * (1.0 + u_right)), 3.0); 
 	mat4 rotZW = mat4(
 		1, 0, 0, 0,
 		0, 1, 0, 0,
@@ -326,18 +326,18 @@ void main() {
 	float v_z_st = 0.0;
 	
 	if(u_darkGlow > 0.5) {
-		if(v_uv.y / (0.01 + v_uv.x) < punch) {
+		if(v_uv.x < 0.5 + (u_left - u_right) * 7.0 * punch) {
 			// bubble
-			if (v_z > 0.3 * wave || 0.7 * stripes > bigZ * u_left) discard;
+			if (v_z > (0.3 + u_left) * wave || 0.7 * stripes > bigZ) discard;
 		}
 		else{
 			// bubble
-			if (v_z > 0.7 * wave || 0.3 * stripes > bigZ * u_right) discard;
+			if (v_z > 0.7 * wave || (0.3 + u_right) * stripes > bigZ) discard;
 		}
 		leftCol = 1.0 - exp(-finalColor * 3.0);
 	}
 	else {
-		if(v_uv.x / (0.01 + v_uv.y) < freeze) {
+		if(v_uv.x < 0.5) {
 			// bubble
 			if (v_z > 0.7 * wave || 0.3 * stripes > bigZ) discard;
 		}
