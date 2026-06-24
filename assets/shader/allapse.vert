@@ -26,27 +26,27 @@ void main() {
 
     vec2 p = 7.0 * uv * punch; 
     z += sin(p.x * u_left * (0.7 + 0.3 * u_intensity) + t) * 0.3;
-    z += cos(p.y * (0.3 + 0.7 * u_complexity) + t * 0.7) * 0.5;
-    z += sin(p.x * u_right * (0.7 + 0.3 * u_speed) + p.y * (0.3 + 0.7 * u_peak) + t * 0.3);
+    z -= cos(p.y * (0.3 + 0.7 * u_complexity) + t * 0.7) * 0.5;
+    z += sin(p.x * u_right * (0.7 + 0.3 * u_speed) - p.y * (0.3 + 0.7 * u_peak) + t * 0.3);
 	
     z *= 1.0 - punch;
 	
 	vec2 offset = vec2(
-		sin(u_time * u_intensity) + cos(u_time * u_complexity),
-		cos(u_time * u_speed) + sin(u_time * u_peak)
+		sin(u_time * u_intensity) - cos(u_time * u_complexity),
+		cos(u_time * u_speed) - sin(u_time * u_peak)
 	);
 	
-	vec2 centered = uv - 0.5 + offset * 20.0;
+	vec2 centered = uv - 0.5 + offset;
 	float r = length(centered);
 	float depth = 1.0 / (sqrt(r * r + 0.01)); 
 	float mask = pow(1.0 - smoothstep(0.0, 0.5, r), 3.0);
-    //z *= mask;
+    z -= mask;
 
     v_z = z; 
 
 	vec3 pos = vec3(
 		position.xy,
-		v_z + pow(depth, 3.0) * punch
+		v_z - depth * punch
 	);
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
