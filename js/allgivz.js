@@ -115,7 +115,7 @@ class AudioMap {
 		// 1. 建立兩個緩衝區 (像兩面鏡子互相對照)
 		this.targetA = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, params);
 		this.targetB = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, params);
-		this.params = { intensity: 0, speed: 0, complexity: 0 , left: 1, right: 1};
+		this.params = { intensity: 0.0, speed: 0.0, complexity: 0.0, left: 0.0, right: 0.0};
 		this.feedback = null;
 		this.feedbackMode = false;
 		
@@ -1531,10 +1531,8 @@ class AudioMap {
 		}
 		resultRight = totalAmplitude > 0 ? (weightedSum / totalAmplitude) / N : 0;
 
-		this.params['left'] = resultLeft;
-		this.params['right'] = resultRight;
-		
-		//console.log(this.params);
+		this.material.uniforms.u_left.value = resultLeft;
+		this.material.uniforms.u_right.value = resultRight;
 	}
 	
 	async initAudio(audioPath = null) {
