@@ -26,18 +26,17 @@ void main() {
 
     vec2 p = 7.0 * uv * punch; 
     z += sin(p.x * u_left * (0.7 + 0.3 * u_intensity) + t) * 0.3;
-    z += cos(p.y * (0.3 + 0.7 * u_complexity) + t * 0.7) * 0.5;
+    z += cos(p.y * (0.3 + 0.7 * u_complexity) + u_time * 0.7) * 0.5;
     z += sin(p.x * u_right * (0.7 + 0.3 * u_speed) + p.y * (0.3 + 0.7 * u_peak) + t * 0.3);
 	
-    
-	p.x *= 0.5 + 0.5 * u_speed + p.y;
-	p.y *= 0.7 + 0.3 * u_complexity + p.x;
+	p.x *= pow(0.5 + 0.5 * u_speed + 3.0 * p.y, 2.0);
+	p.y *= pow(0.7 + 0.3 * u_complexity + 5.0 * p.x, 3.0);
 	z *= 1.0 - punch;
-	p.xy *= 0.9 + 0.1 * (1.0 - u_intensity) + z;
+	p.xy *= pow(0.9 + 0.1 * (1.0 - u_intensity) + z, 2.0);
 	
 	vec2 offset = vec2(
-		sin(u_time * u_intensity) + cos(u_time * u_complexity),
-		cos(u_time * u_speed) + sin(u_time * u_peak)
+		sin(t * u_intensity) + cos(u_time * u_complexity),
+		cos(u_time * u_speed) + sin(t * u_peak)
 	);
 	
 	vec2 centered = uv - 0.5 + offset * 20.0;
