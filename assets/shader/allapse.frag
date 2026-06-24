@@ -201,8 +201,8 @@ void main() {
 	
 	// possibility
 	vec2 warped = uv;
-    warped.x += (0.3 + 0.5 * u_speed) * sin(u_time * u_left + uv.y * 5.0 + v_z * 0.7);
-    warped.y += (0.5 + 0.3 * u_complexity) * cos(u_time * 0.7 + uv.x * u_right + v_z * 0.5);
+    warped.x += (0.3 + 0.5 * u_speed) * sin(u_time * 0.3 + uv.y * 5.0 + v_z * 0.7);
+    warped.y += (0.5 + 0.3 * u_complexity) * cos(u_time * 0.7 + uv.x * 0.3 + v_z * 0.5);
 	
 	if(u_darkGlow > 0.5) {
 		warped.x /= (0.3 + 0.5 * u_speed) * sin(u_time * 0.3 + uv.y * 5.0 + v_z * 0.7);
