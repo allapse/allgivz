@@ -152,7 +152,7 @@ class AudioMap {
 		this.rBar = null;
 		this.peakBar = null;
 		this.fpsLabel = null;
-		this.bpmLabel = null;
+		this.fftlvLabel = null;
 		
 		this.eqSelect = null;
 		this.eqQueue = [];
@@ -598,8 +598,8 @@ class AudioMap {
 							<Label class="fps-label">FPS:</Label>
 							<Label id="fps-value-label">00</Label>
 							<Label id="fps-value-label">/</Label>
-							<Label class="bpm-label">FPM:</Label>
-							<Label id="bpm-value-label">000</Label>
+							<Label class="fftlv-label">FFTLv:</Label>
+							<Label id="fftlv-value-label">4</Label>
 						</div>
 					</div>
 				</div>
@@ -992,7 +992,7 @@ class AudioMap {
 		this.rBar = document.getElementById('main-r-bar');
 		this.peakBar = document.getElementById('main-peak-bar');
 		this.fpsLabel = document.getElementById('fps-value-label');
-		this.bpmLabel = document.getElementById('bpm-value-label');
+		this.fftlvLabel = document.getElementById('fftlv-value-label');
 
 		// 開始嘗試綁定
 		bindLogic();
@@ -1287,13 +1287,6 @@ class AudioMap {
 				&& this.material.uniforms.u_volume.value > 0.2 
 				&& this.material.uniforms.u_peak.value > 0.9 
 				&& interval >= 300) {
-					
-					if(this.bpmLabel.textContent=="000") {
-						this.bpmLabel.textContent = "XXX";
-					} else {
-						this.bpmLabel.textContent = "000";
-					}
-					
 				if (this.lastFlashTime !== 0 && interval <= 1000) {
 					// 3. 計算 BPM 並做平滑處理
 					const rawBPM = 60000 / interval;
@@ -1304,9 +1297,6 @@ class AudioMap {
 					this.isBPMLocked = true;
 					this.material.uniforms.u_bpm.value=roundedBPM;
 					//console.log(`BPM Locked: ${roundedBPM}, Interval: ${this.lockedInterval}ms`);
-					if (this.bpmLabel) {
-						this.bpmLabel.textContent = String(Math.floor(roundedBPM)).padStart(3, "0");
-					}
 				}
 				this.lastFlashTime = now;
 				this.beatValue = 1.0;
@@ -1747,9 +1737,6 @@ class AudioMap {
 			this.audio.type = "audio/mp4";
 			await this.audio.play();
 			this.isBPMLocked = false;
-			if (this.bpmLabel) {
-				this.bpmLabel.textContent = "000";
-			}
 			this.lastFlashTime = 0;  // 關鍵：歸零
 			this.lockedInterval = 0;
 			//console.log("Mode: MP3 File - " + audioPath);
@@ -1795,7 +1782,7 @@ class AudioMap {
 		this.compressor.attack.setTargetAtTime(0.007 * feedback.B, now, rampTime);
 		this.compressor.release.setTargetAtTime(0.03 * feedback.A, now, rampTime);
 		
-		this.synthDelay.delayTime.setTargetAtTime(0.0001 * feedback.fftIndex, now, rampTime);
+		this.synthDelay.delayTime.setTargetAtTime(0.0001 * feedback.fftLv, now, rampTime);
 		
 		const feedForward = [feedback.R, feedback.G, feedback.R];
 		const feedBackward = [feedback.B, -feedback.A, 2-feedback.B];
@@ -2223,7 +2210,17 @@ class AudioMap {
 		if (this.feedback && this.feedbackMode) {
 			this.feedback.update(this.targetA.texture);
 			this.applyEffects(this.feedback);
-			this.changeFS(this.fsSelect.options[1 + Math.round(this.feedback.fftIndex * (this.fsSelect.options.length - 2))].value);
+			
+			let fftlv = 4;
+			if(this.fpsLabel.textContent > 30) {
+				fftlv = 1 + Math.round(this.feedback.fftLv * (this.fsSelect.options.length - 2));
+			} else {
+				fftlv = Math.max(this.fftlvLabel.textContent - 1, 1);
+			}
+			this.changeFS(this.fsSelect.options[fftlv].value);
+			if (this.fftlvLabel) {
+				this.fftlvLabel.textContent = fftlv;
+			}
 		}
 
 		// 2. 顯示到螢幕
@@ -2429,7 +2426,7 @@ class FeedbackManager {
         this.smoothed = [0, 0, 0, 0];
         this.alpha = 0.2; // 平滑係數
 		
-		this.fftIndex = 4;
+		this.fftLv = 0.5;
 		this.R = 1.0;
 		this.G = 1.0;
 		this.B = 1.0;
@@ -2504,7 +2501,7 @@ class FeedbackManager {
 		this.targets.distortion.gain.setTargetAtTime(distVal, now, rampTime);
 		this.A = distVal;
 		
-		this.fftIndex = this.smoothstep(0.0, 1.0, gainVal * reverbVal * qVal * distVal);
+		this.fftLv = this.smoothstep(0.0, 1.0, gainVal * reverbVal * qVal * distVal);
 		
 		//console.log([gainVal, reverbVal, qVal, distVal]);
 		//console.log(this.fftIndex);
