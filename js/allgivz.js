@@ -153,12 +153,14 @@ class AudioMap {
 		this.peakBar = null;
 		this.fpsLabel = null;
 		this.fftlvLabel = null;
+		this.effectsLv = 5;
 		
 		this.eqSelect = null;
 		this.eqQueue = [];
 		this.currentEQIndex = 0;
 		
 		this.fsSelect = null;
+		this.elvSelect = null;
 		
 		this.cameraManager = null;
 		this.useCamera = null;
@@ -700,6 +702,28 @@ class AudioMap {
 					<option value="32768">32768</option>
 				</select>
 			</div>
+			<style>
+				.elv-group { margin-top: 20px; width: 220px; position: relative; }
+				.elv-select {
+					width: 100%; background: transparent; color: #999;
+					border: none; border-bottom: 1px solid #999;
+					font-size: 9px; outline: none; letter-spacing: 1px;
+					-webkit-appearance: none; padding: 0px; cursor: pointer;
+					 margin-left: 2px;
+				}
+				.elv-group::after { content: '▼'; font-size: 8px; color: #999; position: absolute; right: 0; bottom: 8px; pointer-events: none; }
+				.elv-select option { font-size: 9px; background: #000; color: #999;}
+			</style>
+			<div class="elv-group">
+				<select id="elv-select" class="elv-select">
+					<option value="" disabled selected>EFFECTS LV</option>
+					<option value="5">5</option>
+					<option value="4">4</option>
+					<option value="3">3</option>
+					<option value="2">2</option>
+					<option value="1">1</option>
+				</select>
+			</div>
 		`;
 		
 		const gyroUI = document.createElement('div');
@@ -976,6 +1000,14 @@ class AudioMap {
 				// 使用箭頭函數確保 this 指向你的主程式物件
 				this.fsSelect.onchange = (e) => {
 					this.changeFS(e.target.value);
+				};
+			}
+			
+			this.elvSelect = document.getElementById('elv-select');
+			if (this.elvSelect) {
+				// 使用箭頭函數確保 this 指向你的主程式物件
+				this.elvSelect.onchange = (e) => {
+					this.effectsLv = e.target.value;
 				};
 			}
 
@@ -1762,6 +1794,10 @@ class AudioMap {
 		}
 		this.reverbNode.buffer = impulse;
 		
+		if(this.effectsLv==1) {
+			return;
+		}
+		
 		try {
 			const k = feedback.R * 0.1;      // mapping amount → strong nonlinearity
 			const nSamples = 44100;      // high-resolution curve
@@ -1777,17 +1813,33 @@ class AudioMap {
 			this.waveShaper.curve = new Float32Array([0]); // safe fallback
 		}
 		
+		if(this.effectsLv==2) {
+			return;
+		}
+		
 		this.compressor.knee.setTargetAtTime(7 * feedback.R, now, rampTime);
 		this.compressor.ratio.setTargetAtTime(3 * feedback.G, now, rampTime);
 		this.compressor.attack.setTargetAtTime(0.007 * feedback.B, now, rampTime);
 		this.compressor.release.setTargetAtTime(0.03 * feedback.A, now, rampTime);
 		
+		if(this.effectsLv==3) {
+			return;
+		}
+		
 		this.synthDelay.delayTime.setTargetAtTime(0.0001 * feedback.fftLv, now, rampTime);
+		
+		if(this.effectsLv==4) {
+			return;
+		}
 		
 		const feedForward = [feedback.R, feedback.G, feedback.R];
 		const feedBackward = [feedback.B, -feedback.A, 2-feedback.B];
 		this.iirFilter.feedForward = feedForward;
 		this.iirFilter.feedBackward = feedBackward;
+		
+		if(this.effectsLv==5) {
+			return;
+		}
 	}
 	
 	// 在你的 AudioMap 類別內
