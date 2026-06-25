@@ -724,6 +724,9 @@ class AudioMap {
 					<option value="1">1</option>
 				</select>
 			</div>
+			<div class="info-labels">
+				<Label id="adv-label" style="display: none;">ADV</Label>
+			</div>
 		`;
 		
 		const gyroUI = document.createElement('div');
@@ -1010,6 +1013,21 @@ class AudioMap {
 					this.effectsLv = e.target.value;
 				};
 			}
+			
+			this.volBar = document.getElementById('main-vol-bar');
+			this.lBar = document.getElementById('main-l-bar');
+			this.rBar = document.getElementById('main-r-bar');
+			this.peakBar = document.getElementById('main-peak-bar');
+			this.fpsLabel = document.getElementById('fps-value-label');
+			this.fftlvLabel = document.getElementById('fftlv-value-label');
+			
+			/*const advLabel = document.getElementById('adv-label');
+			if (this.advLabel) {
+				// 使用箭頭函數確保 this 指向你的主程式物件
+				advLabel.onchange = (e) => {
+					const advLabel = document.getElementById('adv-label');
+				};
+			}*/
 
 			// 如果還有 config 沒綁定成功，隔 50ms 再試一次 (直到抓到為止)
 			if (this.audioMappings.length < configs.length) {
@@ -1018,13 +1036,6 @@ class AudioMap {
 				//console.log("Universe UI 綁定成功");
 			}
 		};
-		
-		this.volBar = document.getElementById('main-vol-bar');
-		this.lBar = document.getElementById('main-l-bar');
-		this.rBar = document.getElementById('main-r-bar');
-		this.peakBar = document.getElementById('main-peak-bar');
-		this.fpsLabel = document.getElementById('fps-value-label');
-		this.fftlvLabel = document.getElementById('fftlv-value-label');
 
 		// 開始嘗試綁定
 		bindLogic();
@@ -1470,11 +1481,11 @@ class AudioMap {
 			this.peakBar.style.height = `${uiPeak * 100}%`;
 		}
 		if (this.lBar) {
-			const uiLeft = Math.min(Math.pow(resultLeft * 3, 2), 1.0);
+			const uiLeft = Math.min(0.5 * Math.sqrt(resultLeft) + resultLeft, 1.0);
 			this.lBar.style.height = `${uiLeft * 100}%`;
 		}
 		if (this.rBar) {
-			const uiRight = Math.min(Math.pow(resultRight * 3, 2), 1.0);
+			const uiRight = Math.min(0.5 * Math.sqrt(resultRight) + resultRight, 1.0);
 			this.rBar.style.height = `${uiRight * 100}%`;
 		}
 
