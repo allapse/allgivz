@@ -152,6 +152,7 @@ class AudioMap {
 		this.rBar = null;
 		this.peakBar = null;
 		this.fpsLabel = null;
+		this.bpmLabel = null;
 		
 		this.eqSelect = null;
 		this.eqQueue = [];
@@ -590,6 +591,9 @@ class AudioMap {
 						<div class="fps-group">
 							<Label class="fps-label">FPS:</Label>
 							<Label id="fps-value-label">00</Label>
+							<Label id="fps-value-label">/</Label>
+							<Label class="bpm-label">FPM:</Label>
+							<Label id="bpm-value-label">000</Label>
 						</div>
 					</div>
 				</div>
@@ -709,8 +713,8 @@ class AudioMap {
 				}
 				#gyro-up    { top: 13px; left: 50%; transform: translateX(-50%); }
 				#gyro-down  { bottom: 13px; left: 50%; transform: translateX(-50%); }
-				#gyro-left  { left: 13px; top: 50%; transform: translateY(-50%); }
-				#gyro-right { right: 13px; top: 50%; transform: translateY(-50%); }
+				#gyro-left  { left: 13px; top: 60%; transform: translateY(-50%); }
+				#gyro-right { right: 13px; top: 60%; transform: translateY(-50%); }
 				
 				#mode-hint, #feedback-hint {
 					position: absolute; transform: translateX(-50%); font-size: 9px; color: #999;
@@ -776,8 +780,8 @@ class AudioMap {
 
 			<div id="feedback-hint" style="top: 10%; left: 50%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre;">ACTIVE FEEDBACK</div>
 			<div id="mode-hint" style="bottom: 10%; left: 50%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre;"> TAP TO GLOW</div>
-			<div id="uea-hint" style="top: 50%; left: 15%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre; translateX(-50%);">UEA</div>
-			<div id="die-hint" style="top: 50%; right: 15%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre; translateX(-50%);">DIE</div>
+			<div id="uea-hint" style="top: 45%; left: 12%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre; translateX(-50%);">UEA</div>
+			<div id="die-hint" style="top: 45%; right: 12%; display: none; cursor: pointer; transition: all 0.3s; white-space: pre; translateX(-50%);">DIE</div>
 			<div id="hideUI" style="position: absolute; bottom: 20px; right: 20px; z-index:1200; pointer-events: auto; cursor:pointer; color:#999; font-size:10px; display: none;">HIDE UI</div>
 		`;
 		
@@ -982,6 +986,7 @@ class AudioMap {
 		this.rBar = document.getElementById('main-r-bar');
 		this.peakBar = document.getElementById('main-peak-bar');
 		this.fpsLabel = document.getElementById('fps-value-label');
+		this.bpmLabel = document.getElementById('bpm-value-label');
 
 		// 開始嘗試綁定
 		bindLogic();
@@ -1268,25 +1273,34 @@ class AudioMap {
 		const now = Date.now();
 
 		if (!this.isBPMLocked) {
-			let bassAvg = (this.dataArray[0] + this.dataArray[1] + this.dataArray[2]) / 3;
+			const bassAvg = (this.dataArray[0] + this.dataArray[1] + this.dataArray[2]) / 3;
+			const interval = now - this.lastFlashTime;
 			
-			// 1. 偵測門檻：0.3~1秒對應 300ms ~ 1000ms
-			if (bassAvg > 200 && (now - this.lastFlashTime) > 300) {
-				if (this.lastFlashTime !== 0) {
-					let interval = now - this.lastFlashTime;
-
-					// 2. 強制約束在 0.3s ~ 1s 之間
-					interval = Math.max(300, Math.min(1000, interval));
-
-					// 3. 計算 BPM 並做平滑處理 (取5的倍數，讓節奏更穩)
+			// 1. 偵測門檻
+			if (bassAvg > 200
+				&& this.material.uniforms.u_volume.value > 0.2 
+				&& this.material.uniforms.u_peak.value > 0.9 
+				&& interval >= 300) {
+					
+					if(this.bpmLabel.textContent=="000") {
+						this.bpmLabel.textContent = "XXX";
+					} else {
+						this.bpmLabel.textContent = "000";
+					}
+					
+				if (this.lastFlashTime !== 0 && interval <= 1000) {
+					// 3. 計算 BPM 並做平滑處理
 					const rawBPM = 60000 / interval;
-					const roundedBPM = Math.round(rawBPM / 5) * 5; 
+					const roundedBPM = Math.round(rawBPM); 
 					
 					// 4. 反推回精確的間隔時間
 					this.lockedInterval = 60000 / roundedBPM;
 					this.isBPMLocked = true;
 					this.material.uniforms.u_bpm.value=roundedBPM;
 					//console.log(`BPM Locked: ${roundedBPM}, Interval: ${this.lockedInterval}ms`);
+					if (this.bpmLabel) {
+						this.bpmLabel.textContent = String(Math.floor(roundedBPM)).padStart(3, "0");
+					}
 				}
 				this.lastFlashTime = now;
 				this.beatValue = 1.0;
@@ -1727,6 +1741,9 @@ class AudioMap {
 			this.audio.type = "audio/mp4";
 			await this.audio.play();
 			this.isBPMLocked = false;
+			if (this.bpmLabel) {
+				this.bpmLabel.textContent = "000";
+			}
 			this.lastFlashTime = 0;  // 關鍵：歸零
 			this.lockedInterval = 0;
 			//console.log("Mode: MP3 File - " + audioPath);
