@@ -147,6 +147,12 @@ class AudioMap {
 		this.shaderQueue = [];
 		this.currentShaderIndex = 0;
 		
+		this.volBar = null;
+		this.lBar = null;
+		this.rBar = null;
+		this.peakBar = null;
+		this.fpsLabel = null;
+		
 		this.eqSelect = null;
 		this.eqQueue = [];
 		this.currentEQIndex = 0;
@@ -525,7 +531,7 @@ class AudioMap {
 				/* 這裡記得把 MapSlider 內部的 vu-meter 樣式刪掉或設為 display:none */
 				
 				/* 放在你的 <style> 標籤內 */
-				#main-vol-bar, #main-peak-bar {
+				#main-vol-bar, #main-peak-bar, #main-l-bar, #main-r-bar {
 					width: 100%;
 					background: linear-gradient(to top, 
 						rgba(255, 255, 255, 0.0) 0%,
@@ -551,6 +557,17 @@ class AudioMap {
 					/* 讓文字水平顯示 */
 					white-space: nowrap; 
 				}
+				
+				.info-labels { 
+					font-size: 9px; display: block; margin-bottom: 8px; 
+					text-transform: uppercase; color: #999; 
+					letter-spacing: 1px;
+					text-align: center;
+					display: flex;
+					justify-content: center;
+					align-items: stretch;
+					background: transparent;
+				}
 			</style>
 			<div class="pro-audio-rack">
 				<div class="main-vu-side">
@@ -559,9 +576,29 @@ class AudioMap {
 					</div>
 					<div class="side-label-bottom">VOL</div>
 				</div>
+			
+				<div class="main-vu-side">
+					<div class="vu-meter vertical-large">
+						<div class="vu-bar" id="main-l-bar" style="transition: height 0.3s ease-out;"></div>
+					</div>
+					<div class="side-label-bottom">L</div>
+				</div>
 
 				<div class="sliders-stack">
 					${slidersHtml}
+					<div class="info-labels">
+						<div class="fps-group">
+							<Label class="fps-label">FPS:</Label>
+							<Label id="fps-value-label">00</Label>
+						</div>
+					</div>
+				</div>
+				
+				<div class="main-vu-side">
+					<div class="vu-meter vertical-large">
+						<div class="vu-bar" id="main-r-bar" style="transition: height 0.3s ease-out;"></div>
+					</div>
+					<div class="side-label-bottom">R</div>
 				</div>
 
 				<div class="main-vu-side">
@@ -573,7 +610,7 @@ class AudioMap {
 			</div>
 			
 			<style>
-				.music-group { margin-top: 20px; width: 180px; position: relative; }
+				.music-group { margin-top: 20px; width: 220px; position: relative; }
 				.music-select {
 					width: 100%; background: transparent; color: #999;
 					border: none; border-bottom: 1px solid #999;
@@ -593,7 +630,7 @@ class AudioMap {
 				<input type="text" id="urlInput" placeholder="Enter stream URL" style="display:none;">
 			</div>
 			<style>
-				.shader-group { margin-top: 20px; width: 180px; position: relative; display: ${canSelectView ? 'block' : 'none'};}
+				.shader-group { margin-top: 20px; width: 220px; position: relative; display: ${canSelectView ? 'block' : 'none'};}
 				.shader-select {
 					width: 100%; background: transparent; color: #999;
 					border: none; border-bottom: 1px solid #999;
@@ -611,7 +648,7 @@ class AudioMap {
 				</select>
 			</div>
 			<style>
-				.eq-group { margin-top: 20px; width: 180px; position: relative; }
+				.eq-group { margin-top: 20px; width: 220px; position: relative; }
 				.eq-select {
 					width: 100%; background: transparent; color: #999;
 					border: none; border-bottom: 1px solid #999;
@@ -629,7 +666,7 @@ class AudioMap {
 				</select>
 			</div>
 			<style>
-				.fs-group { margin-top: 20px; width: 180px; position: relative; }
+				.fs-group { margin-top: 20px; width: 220px; position: relative; }
 				.fs-select {
 					width: 100%; background: transparent; color: #999;
 					border: none; border-bottom: 1px solid #999;
@@ -637,7 +674,7 @@ class AudioMap {
 					-webkit-appearance: none; padding: 0px; cursor: pointer;
 					 margin-left: 2px; display: none;
 				}
-				.fs-group::after { content: '▼'; font-size: 8px; color: #999; position: absolute; right: 0; bottom: 8px; pointer-events: none; }
+				.fs-group::after { content: '▼'; font-size: 8px; color: #999; position: absolute; right: 0; bottom: 8px; pointer-events: none; display: none; }
 				.fs-select option { font-size: 9px; background: #000; color: #999;}
 			</style>
 			<div class="fs-group">
@@ -939,6 +976,12 @@ class AudioMap {
 				//console.log("Universe UI 綁定成功");
 			}
 		};
+		
+		this.volBar = document.getElementById('main-vol-bar');
+		this.lBar = document.getElementById('main-l-bar');
+		this.rBar = document.getElementById('main-r-bar');
+		this.peakBar = document.getElementById('main-peak-bar');
+		this.fpsLabel = document.getElementById('fps-value-label');
 
 		// 開始嘗試綁定
 		bindLogic();
@@ -1355,19 +1398,23 @@ class AudioMap {
 				this.material.uniforms.u_peak.value = currentPeak;
 			}
 		}
-		
-		// 取得 DOM 並更新
-		const volBar = document.getElementById('main-vol-bar');
-		const peakBar = document.getElementById('main-peak-bar');
 
-		if (volBar) {
-			const uiVol = Math.sqrt(currentTarget * 1.3);
+		if (this.volBar) {
+			const uiVol = Math.min(Math.sqrt(currentTarget * 1.5), 1.0);
 			// 將 0~1 轉換為 0%~100%
-			volBar.style.height = `${uiVol * 100}%`;
+			this.volBar.style.height = `${uiVol * 100}%`;
 		}
-		if (peakBar) {
-			const uiPeak = Math.pow(currentPeak, 3);
-			peakBar.style.height = `${uiPeak * 100}%`;
+		if (this.peakBar) {
+			const uiPeak = Math.min(Math.pow(currentPeak, 3), 1.0);
+			this.peakBar.style.height = `${uiPeak * 100}%`;
+		}
+		if (this.lBar) {
+			const uiLeft = Math.min(Math.pow(this.material.uniforms.u_left.value * 3, 3), 1.0);
+			this.lBar.style.height = `${uiLeft * 100}%`;
+		}
+		if (this.rBar) {
+			const uiRight = Math.min(Math.pow(this.material.uniforms.u_right.value * 3, 3), 1.0);
+			this.rBar.style.height = `${uiRight * 100}%`;
 		}
 
 		// 儲存本次狀態供下次循環使用
@@ -2097,13 +2144,30 @@ class AudioMap {
 		//const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.material);
 		//this.scene.add(mesh);
 		
+		let lastTime = performance.now();
+		let frameCount = 0;
+		let fps = 0;
+		
 		// 啟動渲染迴圈
-		const animate = () => {
+		const animate = (now) => {
 			requestAnimationFrame(animate);
 			
 			if (document.hidden) return;
 			
 			this.internalUpdate(); // 處理音訊、時間、Uniforms 同步
+			
+			frameCount++;
+
+            const delta = now - lastTime;
+			if (delta >= 1000) {
+                fps = Math.round((frameCount * 1000) / delta);
+				frameCount = 0;
+                lastTime = now;
+				
+				if (this.fpsLabel) {
+					this.fpsLabel.textContent = fps;
+				}
+			}
 		};
 		animate();
 		
