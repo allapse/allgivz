@@ -159,6 +159,7 @@ class AudioMap {
 		this.eqQueue = [];
 		this.currentEQIndex = 0;
 		
+		this.advMode = false;
 		this.fsSelect = null;
 		this.elvSelect = null;
 		
@@ -678,19 +679,19 @@ class AudioMap {
 				</select>
 			</div>
 			<style>
-				.fs-group { margin-top: 20px; width: 220px; position: relative; }
-				.fs-select {
+				#fs-group { margin-top: 20px; width: 220px; position: relative; display: none; }
+				#fs-select {
 					width: 100%; background: transparent; color: #999;
 					border: none; border-bottom: 1px solid #999;
 					font-size: 9px; outline: none; letter-spacing: 1px;
 					-webkit-appearance: none; padding: 0px; cursor: pointer;
-					 margin-left: 2px; display: none;
+					 margin-left: 2px;
 				}
-				.fs-group::after { content: '▼'; font-size: 8px; color: #999; position: absolute; right: 0; bottom: 8px; pointer-events: none; display: none; }
-				.fs-select option { font-size: 9px; background: #000; color: #999;}
+				#fs-group::after { content: '▼'; font-size: 8px; color: #999; position: absolute; right: 0; bottom: 8px; pointer-events: none; }
+				#fs-select option { font-size: 9px; background: #000; color: #999;}
 			</style>
-			<div class="fs-group">
-				<select id="fs-select" class="fs-select">
+			<div id="fs-group">
+				<select id="fs-select">
 					<option value="" disabled selected>FFT SIZE</option>
 					<option value="256">256</option>
 					<option value="512">512</option>
@@ -703,19 +704,19 @@ class AudioMap {
 				</select>
 			</div>
 			<style>
-				.elv-group { margin-top: 20px; width: 220px; position: relative; }
-				.elv-select {
+				#elv-group { margin-top: 20px; width: 220px; position: relative; display: none; }
+				#elv-select {
 					width: 100%; background: transparent; color: #999;
 					border: none; border-bottom: 1px solid #999;
 					font-size: 9px; outline: none; letter-spacing: 1px;
 					-webkit-appearance: none; padding: 0px; cursor: pointer;
-					 margin-left: 2px; display: none; 
+					 margin-left: 2px;
 				}
-				.elv-group::after { content: '▼'; font-size: 8px; color: #999; position: absolute; right: 0; bottom: 8px; pointer-events: none; display: none; }
-				.elv-select option { font-size: 9px; background: #000; color: #999;}
+				#elv-group::after { content: '▼'; font-size: 8px; color: #999; position: absolute; right: 0; bottom: 8px; pointer-events: none;}
+				#elv-select option { font-size: 9px; background: #000; color: #999;}
 			</style>
-			<div class="elv-group">
-				<select id="elv-select" class="elv-select">
+			<div id="elv-group">
+				<select id="elv-select">
 					<option value="" disabled selected>EFFECTS LV</option>
 					<option value="5">5</option>
 					<option value="4">4</option>
@@ -725,7 +726,7 @@ class AudioMap {
 				</select>
 			</div>
 			<div class="info-labels">
-				<Label id="adv-label" style="display: none;">ADV</Label>
+				<Label id="adv-label">ADV</Label>
 			</div>
 		`;
 		
@@ -1021,13 +1022,24 @@ class AudioMap {
 			this.fpsLabel = document.getElementById('fps-value-label');
 			this.fftlvLabel = document.getElementById('fftlv-value-label');
 			
-			/*const advLabel = document.getElementById('adv-label');
-			if (this.advLabel) {
+			const advLabel = document.getElementById('adv-label');
+			if (advLabel) {
 				// 使用箭頭函數確保 this 指向你的主程式物件
-				advLabel.onchange = (e) => {
-					const advLabel = document.getElementById('adv-label');
+				advLabel.onclick = (e) => {
+					const uiElements = ['fs-group', 'elv-group'];
+					let display = 'none';
+					
+					if(!this.advMode){
+						display = 'block';
+					}
+					uiElements.forEach(id => {
+						const el = document.getElementById(id);
+						if (el) el.style.display = display;
+					});
+					
+					this.advMode = !this.advMode;
 				};
-			}*/
+			}
 
 			// 如果還有 config 沒綁定成功，隔 50ms 再試一次 (直到抓到為止)
 			if (this.audioMappings.length < configs.length) {
