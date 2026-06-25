@@ -279,7 +279,7 @@ class AudioMap {
 			<div id="overlay" style="white-space: pre;">${overlayText}</div>
 			<div id="ui-layer" style="display: none;"></div>
 			<div id="useCamera" style="position:fixed; top:20px; left:20px; z-index:1200; cursor:pointer; color:#999; font-size:10px; display: none;">CAMERA</div>
-			<div id="lockGyro" style="position:fixed; top:20px; right:20px; z-index:1200; cursor:pointer; color:#fff; font-size:10px;">LOCK GYRO</div>
+			<div id="lockGyro" style="position:fixed; top:20px; right:20px; z-index:1200; cursor:pointer; color:#fff; font-size:10px; display: none;">LOCK GYRO</div>
 			<div id="link" style="position:fixed; bottom:20px; left:20px; z-index:1200; cursor:pointer; color:#999; font-size:10px;">${linkText}</div>
 		`;
 
@@ -524,6 +524,12 @@ class AudioMap {
 					background: #555;
 					position: relative;
 				}
+				.vertical-small {
+					height: 90%;
+					width: 3px;
+					background: #555;
+					position: relative;
+				}
 				.sliders-center {
 					display: flex;
 					flex-direction: column;
@@ -579,10 +585,10 @@ class AudioMap {
 				</div>
 			
 				<div class="main-vu-side">
-					<div class="vu-meter vertical-large">
+					<div class="vu-meter vertical-small">
 						<div class="vu-bar" id="main-l-bar" style="transition: height 0.3s ease-out;"></div>
 					</div>
-					<div class="side-label-bottom">L</div>
+					<div class="side-label-bottom"> L</div>
 				</div>
 
 				<div class="sliders-stack">
@@ -599,10 +605,10 @@ class AudioMap {
 				</div>
 				
 				<div class="main-vu-side">
-					<div class="vu-meter vertical-large">
+					<div class="vu-meter vertical-small">
 						<div class="vu-bar" id="main-r-bar" style="transition: height 0.3s ease-out;"></div>
 					</div>
-					<div class="side-label-bottom">R</div>
+					<div class="side-label-bottom">R </div>
 				</div>
 
 				<div class="main-vu-side">
