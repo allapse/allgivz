@@ -709,9 +709,9 @@ class AudioMap {
 					border: none; border-bottom: 1px solid #999;
 					font-size: 9px; outline: none; letter-spacing: 1px;
 					-webkit-appearance: none; padding: 0px; cursor: pointer;
-					 margin-left: 2px;
+					 margin-left: 2px; display: none; 
 				}
-				.elv-group::after { content: '▼'; font-size: 8px; color: #999; position: absolute; right: 0; bottom: 8px; pointer-events: none; }
+				.elv-group::after { content: '▼'; font-size: 8px; color: #999; position: absolute; right: 0; bottom: 8px; pointer-events: none; display: none; }
 				.elv-select option { font-size: 9px; background: #000; color: #999;}
 			</style>
 			<div class="elv-group">
@@ -1316,8 +1316,9 @@ class AudioMap {
 			
 			// 1. 偵測門檻
 			if (bassAvg > 200
-				&& this.material.uniforms.u_volume.value > 0.2 
-				&& this.material.uniforms.u_peak.value > 0.9 
+				&& (!this.material
+				|| (this.material.uniforms.u_volume.value > 0.2 
+				&& this.material.uniforms.u_peak.value > 0.9 ))
 				&& interval >= 300) {
 				if (this.lastFlashTime !== 0 && interval <= 1000) {
 					// 3. 計算 BPM 並做平滑處理
@@ -1327,7 +1328,10 @@ class AudioMap {
 					// 4. 反推回精確的間隔時間
 					this.lockedInterval = 60000 / roundedBPM;
 					this.isBPMLocked = true;
-					this.material.uniforms.u_bpm.value=roundedBPM;
+					if(this.material) {
+						this.material.uniforms.u_bpm.value=roundedBPM;
+					}
+					
 					//console.log(`BPM Locked: ${roundedBPM}, Interval: ${this.lockedInterval}ms`);
 				}
 				this.lastFlashTime = now;
@@ -1383,7 +1387,6 @@ class AudioMap {
 			}
 			else {
 				this.handleGivz(mapping, min, max);
-				this.handleLR();
 			}
 			
 			el.value = this.params[mapping.key];
@@ -1414,7 +1417,21 @@ class AudioMap {
 		const currentTarget = sum / len / 255.0;
 		let currentPeak = peak / 255;
 		
+		const left = this.uea.process(this.leftData);
+		const right = this.uea.process(this.rightData);
+		const lenLR = left.length;
+		let resultLeft = 0, resultRight = 0;
 
+		for (let i = 0; i < lenLR; i++) {
+			const valLeft = left[i];
+			resultLeft += valLeft;
+			
+			const valRight = right[i];
+			resultRight += valRight;
+		}
+		resultLeft = resultLeft / lenLR / 255.0;
+		resultRight = resultRight / lenLR / 255.0;
+		
 		// 平滑化處理
 		this.smoothedVolume += (currentTarget - this.smoothedVolume) * 0.15;
 
@@ -1434,6 +1451,8 @@ class AudioMap {
 			this.material.uniforms.u_volume.value = currentTarget;
 			this.material.uniforms.u_volume_smooth.value = Math.pow(this.smoothedVolume, 1.5) * 1.5;
 			this.material.uniforms.u_last_volume.value = this.lastVolume;
+			this.material.uniforms.u_left.value = resultLeft;
+			this.material.uniforms.u_right.value = resultRight;
 			
 			// 如果你有預留峰值的 Uniform
 			if(this.material.uniforms.u_peak) {
@@ -1451,11 +1470,11 @@ class AudioMap {
 			this.peakBar.style.height = `${uiPeak * 100}%`;
 		}
 		if (this.lBar) {
-			const uiLeft = Math.min(Math.pow(this.material.uniforms.u_left.value * 3, 3), 1.0);
+			const uiLeft = Math.min(Math.pow(resultLeft * 3, 2), 1.0);
 			this.lBar.style.height = `${uiLeft * 100}%`;
 		}
 		if (this.rBar) {
-			const uiRight = Math.min(Math.pow(this.material.uniforms.u_right.value * 3, 3), 1.0);
+			const uiRight = Math.min(Math.pow(resultRight * 3, 2), 1.0);
 			this.rBar.style.height = `${uiRight * 100}%`;
 		}
 
@@ -1596,32 +1615,6 @@ class AudioMap {
 			mapping.el.value = this.params[mapping.key];
 			mapping.el.style.setProperty('--peak', mapping.peak);
 		}
-	}
-	
-	handleLR() {
-		const left = this.uea.process(this.leftData);
-		const right = this.uea.process(this.rightData);
-		const N = left.length;
-		let resultLeft = 0, resultRight = 0;
-
-		let weightedSum = 0;
-		let totalAmplitude = 0;
-		for (let i = 0; i < N; i++) {
-			weightedSum += i * left[i];
-			totalAmplitude += left[i];
-		}
-		resultLeft = totalAmplitude > 0 ? (weightedSum / totalAmplitude) / N : 0;
-		
-		weightedSum = 0;
-		totalAmplitude = 0;
-		for (let i = 0; i < N; i++) {
-			weightedSum += i * right[i];
-			totalAmplitude += right[i];
-		}
-		resultRight = totalAmplitude > 0 ? (weightedSum / totalAmplitude) / N : 0;
-
-		this.material.uniforms.u_left.value = resultLeft;
-		this.material.uniforms.u_right.value = resultRight;
 	}
 	
 	async initAudio(audioPath = null) {
