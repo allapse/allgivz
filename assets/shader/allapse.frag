@@ -213,10 +213,16 @@ void main() {
 	
 	float punch = pow(0.1 + 0.9 * u_intensity * u_complexity * u_speed * u_peak, 3.0);
 	float freeze =  pow(1.0 - (u_intensity + u_complexity + u_speed + u_peak) / 4.0, 3.0);
-	float bigZ =  pow(v_z * 77.0 * freeze, 3.0);
+	float bigZ =  pow(v_z * 57.0 * freeze, 3.0);
 	
 	if(u_darkGlow > 0.5) {
 		bigZ /= (1.0 + u_volume_smooth);
+	}
+	
+	if(v_uv.x < 0.5 + (u_left - u_right) * 7.0 * punch) {
+		pos *= 1.0 + u_left * 7.0;
+	} else {
+		pos *= 1.0 + u_right * 7.0;
 	}
 	
 	// gliding
@@ -355,4 +361,3 @@ void main() {
     
     gl_FragColor = rotZW * vec4(finalColor, 1.0);
 }
-

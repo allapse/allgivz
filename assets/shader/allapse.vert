@@ -1,5 +1,4 @@
 varying vec2 v_uv;
-varying vec2 v_centered_uv;
 varying float v_z;
 
 uniform vec2 u_res;
@@ -15,22 +14,21 @@ uniform float u_right;
 uniform vec2 u_orient;
 
 void main() {
+	vec2 ratio = vec2(max(u_res.x / u_res.y, 1.0), max(u_res.y / u_res.x, 1.0));
     v_uv = uv;
-    vec2 ratio = vec2(max(u_res.x / u_res.y, 1.0), max(u_res.y / u_res.x, 1.0));
-    v_centered_uv = (uv - 0.5) * ratio;
 	
 	float punch = 0.7 + 0.3 * u_intensity * u_complexity * u_speed * u_peak;
 
     float t = u_time * 0.1;
     float z = 0.0;
 
-    vec2 p = 7.0 * uv * punch; 
+    vec2 p = 7.0 * v_uv * punch; 
     z += sin(p.x * (0.7 + 0.3 * u_intensity) + t) * 0.3;
     z += cos(p.y * (0.3 + 0.7 * u_complexity) + u_time * 0.7) * 0.5;
     z += sin(p.x * (0.7 + 0.3 * u_speed) + p.y * (0.3 + 0.7 * u_peak) + t * 0.3);
 	
-	p.x *= pow(0.5 + u_left * u_speed + 3.0 * p.y, 2.0);
-	p.y *= pow(0.7 + u_right * u_complexity + 5.0 * p.x, 3.0);
+	p.x *= pow((0.5 + u_left) * u_speed + 3.0 * p.y, 2.0);
+	p.y *= pow((0.7 + u_right) * u_complexity + 5.0 * p.x, 3.0);
 	z *= 1.0 - punch;
 	p.xy *= pow(0.9 + 0.1 * (1.0 - u_intensity) + z, 2.0);
 	
@@ -39,7 +37,7 @@ void main() {
 		cos(u_time * u_speed) + sin(t * u_peak)
 	);
 	
-	vec2 centered = uv - 0.5 + offset * 20.0;
+	vec2 centered = v_uv - 0.5 + offset * 20.0;
 	float r = length(centered);
 	float depth = 1.0 / (sqrt(r * r + 0.01)); 
 	float mask = pow(1.0 - smoothstep(0.0, 0.5, r), 3.0);
