@@ -738,7 +738,7 @@ class AudioMap {
 				</style>
 				<div id="elv-group">
 					<select id="elv-select">
-						<option value="" disabled selected>EFFECTS LV</option>
+						<option value="" disabled selected>FX LV</option>
 						<option value="5">5</option>
 						<option value="4">4</option>
 						<option value="3">3</option>
