@@ -200,6 +200,7 @@ class AudioMap {
 					-webkit-touch-callout: none;
 					-webkit-user-select: none;
 					user-select: none;
+					-webkit-overflow-scrolling: touch;
 				}
 
 				#${rootId} #container {
