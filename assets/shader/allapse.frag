@@ -220,9 +220,9 @@ void main() {
 	}
 	
 	if(v_uv.x < 0.5 + (u_left - u_right) * 7.0 * punch) {
-		pos *= 1.0 + u_left * 7.0;
+		pos *= 1.0 + u_left * 3.0;
 	} else {
-		pos *= 1.0 + u_right * 7.0;
+		pos *= 1.0 + u_right * 3.0;
 	}
 	
 	// gliding

@@ -27,10 +27,18 @@ void main() {
     z += cos(p.y * (0.3 + 0.7 * u_complexity) + u_time * 0.7) * 0.5;
     z += sin(p.x * (0.7 + 0.3 * u_speed) + p.y * (0.3 + 0.7 * u_peak) + t * 0.3);
 	
-	p.x *= pow((0.5 + u_left) * u_speed + 3.0 * p.y, 2.0);
-	p.y *= pow((0.7 + u_right) * u_complexity + 5.0 * p.x, 3.0);
+	float lrc = u_left-u_right;
+	
 	z *= 1.0 - punch;
-	p.xy *= pow(0.9 + 0.1 * (1.0 - u_intensity) + z, 2.0);
+	if(p.x < 0.5){
+		p.x *= pow((1.0 + lrc) * u_speed + 3.0 * p.y * z, 3.0);
+	} else {
+		p.x *= pow((1.0 - lrc) * u_speed + 3.0 * p.y * z, 3.0);
+	}
+	
+	p.y *= pow((1.0 - abs(lrc)) * u_complexity + 7.0 * p.x * z, 2.0);
+	
+	//p.xy *= pow(0.9 + 0.1 * (1.0 - u_intensity) + z, 2.0);
 	
 	vec2 offset = vec2(
 		sin(t * u_intensity) + cos(u_time * u_complexity),
