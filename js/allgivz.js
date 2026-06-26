@@ -276,6 +276,29 @@ class AudioMap {
 					transition: all 0.3s;
 					mix-blend-mode: difference;
 				}
+				
+				/* width */
+				::-webkit-scrollbar {
+					width: 3px;
+				}
+
+				/* Track */
+				::-webkit-scrollbar-track {
+					background: #555;
+					border: 1px solid transparent;
+					background-clip: content-box;
+				}
+
+				/* Handle */
+				::-webkit-scrollbar-thumb {
+					border: 1px solid #999;
+					background: #aaa;
+				}
+
+				/* Handle on hover */
+				::-webkit-scrollbar-thumb:hover {
+					background: transparent;
+				}
 			</style>
 			
 			<div id="container"></div>
@@ -391,8 +414,6 @@ class AudioMap {
 				}
 			}
 		});
-		
-		
 	}
 	
 	highlight(id){
@@ -621,112 +642,113 @@ class AudioMap {
 					<div class="side-label-bottom">PEAK</div>
 				</div>
 			</div>
-			
-			<style>
-				.music-group { margin-top: 20px; width: 220px; position: relative; }
-				.music-select {
-					width: 100%; background: transparent; color: #999;
-					border: none; border-bottom: 1px solid #999;
-					font-size: 9px; outline: none; letter-spacing: 1px;
-					-webkit-appearance: none; padding: 0px; cursor: pointer;
-					 margin-left: 2px; 
-				}
-				.music-group::after { content: '▼'; font-size: 8px; color: #999; position: absolute; right: 0; bottom: 8px; pointer-events: none; }
-				.music-select option { font-size: 9px; background: #000; color: #999;}
-			</style>
-			<div class="music-group">
-				<select id="music-select" class="music-select">
-					<option value="" disabled selected>INPUT</option>
-					${optionsHtml}
-				</select>
-				<input type="file" id="fileInput" accept="audio/mp3,audio/m4a,audio/wav,audio/flac,audio/aiff,audio/*" style="display:none; width: 100%;">
-				<input type="text" id="urlInput" placeholder="Enter stream URL" style="display:none;">
+			<div style="overflow-y: auto; overflow-x:hidden; height:120px; width: 220px; padding-right:6px; margin-top: 10px;">
+				<style>
+					.music-group { margin-top: 10px; position: relative; }
+					.music-select {
+						width: 100%; background: transparent; color: #999;
+						border: none; border-bottom: 1px solid #999;
+						font-size: 9px; outline: none; letter-spacing: 1px;
+						-webkit-appearance: none; padding: 0px; cursor: pointer;
+						 margin-left: 2px; 
+					}
+					.music-group::after { content: '▼'; font-size: 8px; color: #999; position: absolute; right: 0; bottom: 8px; pointer-events: none; }
+					.music-select option { font-size: 9px; background: #000; color: #999;}
+				</style>
+				<div class="music-group">
+					<select id="music-select" class="music-select">
+						<option value="" disabled selected>INPUT</option>
+						${optionsHtml}
+					</select>
+					<input type="file" id="fileInput" accept="audio/mp3,audio/m4a,audio/wav,audio/flac,audio/aiff,audio/*" style="display:none; width: 100%;">
+					<input type="text" id="urlInput" placeholder="Enter stream URL" style="display:none;">
+				</div>
+				<style>
+					.shader-group { margin-top: 20px; position: relative; display: ${canSelectView ? 'block' : 'none'};}
+					.shader-select {
+						width: 100%; background: transparent; color: #999;
+						border: none; border-bottom: 1px solid #999;
+						font-size: 9px; outline: none; letter-spacing: 1px;
+						-webkit-appearance: none; padding: 0px; cursor: pointer;
+						 margin-left: 2px; 
+					}
+					.shader-group::after { content: '▼'; font-size: 8px; color: #999; position: absolute; right: 0; bottom: 8px; pointer-events: none; }
+					.shader-select option { font-size: 9px; background: #000; color: #999;}
+				</style>
+				<div class="shader-group">
+					<select id="shader-select" class="shader-select">
+						<option value="" disabled selected>VISUALIZER</option>
+						${shadersHtml}
+					</select>
+				</div>
+				<style>
+					.eq-group { margin-top: 20px; position: relative; }
+					.eq-select {
+						width: 100%; background: transparent; color: #999;
+						border: none; border-bottom: 1px solid #999;
+						font-size: 9px; outline: none; letter-spacing: 1px;
+						-webkit-appearance: none; padding: 0px; cursor: pointer;
+						 margin-left: 2px; 
+					}
+					.eq-group::after { content: '▼'; font-size: 8px; color: #999; position: absolute; right: 0; bottom: 8px; pointer-events: none; }
+					.eq-select option { font-size: 9px; background: #000; color: #999;}
+				</style>
+				<div class="eq-group">
+					<select id="eq-select" class="eq-select">
+						<option value="" disabled selected>EQUALIZER</option>
+						${eqHtml}
+					</select>
+				</div>
+				<style>
+					#fs-group { margin-top: 20px; position: relative; display: none; }
+					#fs-select {
+						width: 100%; background: transparent; color: #999;
+						border: none; border-bottom: 1px solid #999;
+						font-size: 9px; outline: none; letter-spacing: 1px;
+						-webkit-appearance: none; padding: 0px; cursor: pointer;
+						 margin-left: 2px;
+					}
+					#fs-group::after { content: '▼'; font-size: 8px; color: #999; position: absolute; right: 0; bottom: 8px; pointer-events: none; }
+					#fs-select option { font-size: 9px; background: #000; color: #999;}
+				</style>
+				<div id="fs-group">
+					<select id="fs-select">
+						<option value="" disabled selected>FFT SIZE</option>
+						<option value="256">256</option>
+						<option value="512">512</option>
+						<option value="1024">1024</option>
+						<option value="2048">2048</option>
+						<option value="4096">4096</option>
+						<option value="8192">8192</option>
+						<option value="16384">16384</option>
+						<option value="32768">32768</option>
+					</select>
+				</div>
+				<style>
+					#elv-group { margin-top: 20px; position: relative; display: none; }
+					#elv-select {
+						width: 100%; background: transparent; color: #999;
+						border: none; border-bottom: 1px solid #999;
+						font-size: 9px; outline: none; letter-spacing: 1px;
+						-webkit-appearance: none; padding: 0px; cursor: pointer;
+						 margin-left: 2px;
+					}
+					#elv-group::after { content: '▼'; font-size: 8px; color: #999; position: absolute; right: 0; bottom: 8px; pointer-events: none;}
+					#elv-select option { font-size: 9px; background: #000; color: #999;}
+				</style>
+				<div id="elv-group">
+					<select id="elv-select">
+						<option value="" disabled selected>EFFECTS LV</option>
+						<option value="5">5</option>
+						<option value="4">4</option>
+						<option value="3">3</option>
+						<option value="2">2</option>
+						<option value="1">1</option>
+					</select>
+				</div>
 			</div>
-			<style>
-				.shader-group { margin-top: 20px; width: 220px; position: relative; display: ${canSelectView ? 'block' : 'none'};}
-				.shader-select {
-					width: 100%; background: transparent; color: #999;
-					border: none; border-bottom: 1px solid #999;
-					font-size: 9px; outline: none; letter-spacing: 1px;
-					-webkit-appearance: none; padding: 0px; cursor: pointer;
-					 margin-left: 2px; 
-				}
-				.shader-group::after { content: '▼'; font-size: 8px; color: #999; position: absolute; right: 0; bottom: 8px; pointer-events: none; }
-				.shader-select option { font-size: 9px; background: #000; color: #999;}
-			</style>
-			<div class="shader-group">
-				<select id="shader-select" class="shader-select">
-					<option value="" disabled selected>VISUALIZER</option>
-					${shadersHtml}
-				</select>
-			</div>
-			<style>
-				.eq-group { margin-top: 20px; width: 220px; position: relative; }
-				.eq-select {
-					width: 100%; background: transparent; color: #999;
-					border: none; border-bottom: 1px solid #999;
-					font-size: 9px; outline: none; letter-spacing: 1px;
-					-webkit-appearance: none; padding: 0px; cursor: pointer;
-					 margin-left: 2px; 
-				}
-				.eq-group::after { content: '▼'; font-size: 8px; color: #999; position: absolute; right: 0; bottom: 8px; pointer-events: none; }
-				.eq-select option { font-size: 9px; background: #000; color: #999;}
-			</style>
-			<div class="eq-group">
-				<select id="eq-select" class="eq-select">
-					<option value="" disabled selected>EQUALIZER</option>
-					${eqHtml}
-				</select>
-			</div>
-			<style>
-				#fs-group { margin-top: 20px; width: 220px; position: relative; display: none; }
-				#fs-select {
-					width: 100%; background: transparent; color: #999;
-					border: none; border-bottom: 1px solid #999;
-					font-size: 9px; outline: none; letter-spacing: 1px;
-					-webkit-appearance: none; padding: 0px; cursor: pointer;
-					 margin-left: 2px;
-				}
-				#fs-group::after { content: '▼'; font-size: 8px; color: #999; position: absolute; right: 0; bottom: 8px; pointer-events: none; }
-				#fs-select option { font-size: 9px; background: #000; color: #999;}
-			</style>
-			<div id="fs-group">
-				<select id="fs-select">
-					<option value="" disabled selected>FFT SIZE</option>
-					<option value="256">256</option>
-					<option value="512">512</option>
-					<option value="1024">1024</option>
-					<option value="2048">2048</option>
-					<option value="4096">4096</option>
-					<option value="8192">8192</option>
-					<option value="16384">16384</option>
-					<option value="32768">32768</option>
-				</select>
-			</div>
-			<style>
-				#elv-group { margin-top: 20px; width: 220px; position: relative; display: none; }
-				#elv-select {
-					width: 100%; background: transparent; color: #999;
-					border: none; border-bottom: 1px solid #999;
-					font-size: 9px; outline: none; letter-spacing: 1px;
-					-webkit-appearance: none; padding: 0px; cursor: pointer;
-					 margin-left: 2px;
-				}
-				#elv-group::after { content: '▼'; font-size: 8px; color: #999; position: absolute; right: 0; bottom: 8px; pointer-events: none;}
-				#elv-select option { font-size: 9px; background: #000; color: #999;}
-			</style>
-			<div id="elv-group">
-				<select id="elv-select">
-					<option value="" disabled selected>EFFECTS LV</option>
-					<option value="5">5</option>
-					<option value="4">4</option>
-					<option value="3">3</option>
-					<option value="2">2</option>
-					<option value="1">1</option>
-				</select>
-			</div>
-			<div class="info-labels">
-				<Label id="adv-label">ADV</Label>
+			<div class="info-labels" style="margin-top: 10px;">
+				<Label id="adv-label">▼</Label>
 			</div>
 		`;
 		
@@ -1028,9 +1050,11 @@ class AudioMap {
 				advLabel.onclick = (e) => {
 					const uiElements = ['fs-group', 'elv-group'];
 					let display = 'none';
+					let text = '▼';
 					
 					if(!this.advMode){
 						display = 'block';
+						text = '▲';
 					}
 					uiElements.forEach(id => {
 						const el = document.getElementById(id);
@@ -1038,6 +1062,7 @@ class AudioMap {
 					});
 					
 					this.advMode = !this.advMode;
+					advLabel.textContent = text;
 				};
 			}
 
