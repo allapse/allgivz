@@ -343,7 +343,7 @@ void main() {
 		leftCol = 1.0 - exp(-finalColor * 3.0);
 	}
 	else {
-		if(v_uv.x < 0.5) {
+		if(v_uv.x < v_uv.y) {
 			// bubble
 			if (v_z > 0.7 * wave || 0.3 * stripes > bigZ) discard;
 		}
