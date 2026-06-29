@@ -23,17 +23,18 @@ void main() {
 
     vec2 p = (uv * 25.0 - 12.5) * punch; 
 
-    float lrc = (1.0 + (u_left - u_right) * (1.0 + abs(p.x)));
+    float lrx = (1.0 + (u_left - u_right) * (1.0 + abs(p.x)));
+    float lry = (1.0 + (u_left - u_right) * (1.0 + abs(p.y)));
 
     if(p.y < 0.2 || p.y > 0.8){
-		p.x *= lrc;
+		p.x *= lry;
 	}
 
 	if(p.x < 0.3){
-		p.y *= lrc;
+		p.y *= lrx;
 		
 	} else if(p.x > 0.7){
-		p.y /= lrc;
+		p.y /= lrx;
 	}
 
     z += sin(p.x * (0.7 + 0.3 * u_intensity) + t) * 0.3;
