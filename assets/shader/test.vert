@@ -23,9 +23,9 @@ void main() {
 
     vec2 p = (uv * 12.5 - 6.25) * punch; 
 
-    float lrc = (1.0 + (u_left - u_right) * (1.0 + abs(p.x) * 2.0));
+    float lrc = (1.0 + (u_left - u_right) * (1.0 + abs(p.x)));
 
-    if(p.y < 0.3 || p.y > 0.7){
+    if(p.y < 0.2 || p.y > 0.8){
 		p.x *= lrc;
 	}
 
