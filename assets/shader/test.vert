@@ -22,6 +22,20 @@ void main() {
     float z = 0.0;
 
     vec2 p = (uv * 12.5 - 6.25) * punch; 
+
+    float lrc = (1.0 + (u_left - u_right) * (1.0 + abs(p.x) * 3.0));
+	
+	if(p.x < 0.3){
+		p.y *= lrc;
+		
+	} else if(p.x > 0.7){
+		p.y /= lrc;
+	}
+	
+	if(p.y < 0.3 || p.y > 0.7){
+		p.x *= lrc;
+	}
+
     z += sin(p.x * (0.7 + 0.3 * u_intensity) + t) * 0.3;
     z += cos(p.y * (0.3 + 0.7 * u_complexity) + u_time * 0.7) * 0.5;
     z += sin(p.x * (0.7 + 0.3 * u_speed) + p.y * (0.3 + 0.7 * u_peak) + t * 0.3);
@@ -39,19 +53,6 @@ void main() {
 	//p.xy *= mask;
 	
 	z *= 1.0 - punch;
-	
-	float lrc = (1.0 + (u_left - u_right) * (1.0 + abs(p.x) * 3.0));
-	
-	if(p.x < 0.3){
-		p.y *= lrc;
-		
-	} else if(p.x > 0.7){
-		p.y /= lrc;
-	}
-	
-	if(p.y < 0.3 || p.y > 0.7){
-		p.x *= lrc;
-	}
 	
 	v_uv = p;
     v_z = z; 
