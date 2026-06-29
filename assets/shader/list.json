@@ -25,5 +25,6 @@
 	{ "name": "SYNEPISTEMIC", "path": "./assets/shader/synepistemic.frag", "canCam": false},
 	{ "name": "⠾⠧⠧", "path": "./assets/shader/all.frag", "canCam": false},
 	{ "name": "⠧⠾⠟⠳⠺", "path": "./assets/shader/lapse.frag", "canCam": false},
-	{ "name": "⠾⠧⠧⠾⠟⠳⠺", "path": "./assets/shader/allapse.frag", "canCam": false}
+	{ "name": "⠾⠧⠧⠾⠟⠳⠺", "path": "./assets/shader/allapse.frag", "canCam": false},
+	{ "name": " ", "path": "./assets/shader/test.frag", "canCam": false}
 ]		
