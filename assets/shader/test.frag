@@ -219,7 +219,7 @@ void main() {
 		bigZ /= (1.0 + u_volume_smooth);
 	}
 	
-	if(v_uv.x < 0.5 + (u_left - u_right) * 7.0 * punch) {
+	if(v_uv.x < v_uv.y + (u_left - u_right) * 7.0 * punch) {
 		pos *= 1.0 + u_left * 3.0;
 	} else {
 		pos *= 1.0 + u_right * 3.0;
