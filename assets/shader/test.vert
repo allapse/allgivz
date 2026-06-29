@@ -23,7 +23,7 @@ void main() {
 
     vec2 p = (uv * 15.0 - 7.5) * punch; 
 
-    if(p.x=p.y || p.x=-p.y){
+    if(p.x==p.y || p.x==-p.y){
         p.xy *= punch;
     }
 
