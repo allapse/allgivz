@@ -21,11 +21,11 @@ void main() {
     float t = u_time * 0.1;
     float z = 0.0;
 
-    vec2 p = (uv * 5.0 - 2.5) * punch; 
+    vec2 p = (uv * 15.0 - 7.5) * punch; 
 
-    z += sin(p.x * (0.7 + 0.3 * u_intensity) + t) * 0.03;
-    z += cos(p.y * (0.3 + 0.7 * u_complexity) + u_time * 0.7) * 0.05;
-    z += sin(p.x * (0.7 + 0.3 * u_speed) + p.y * (0.3 + 0.7 * u_peak) + t * 0.3)*0.1;
+    z += sin(p.x * (0.7 + 0.3 * u_intensity) + t) * 0.15;
+    z += cos(p.y * (0.3 + 0.7 * u_complexity) + u_time * 0.7) * 0.25;
+    z += sin(p.x * (0.7 + 0.3 * u_speed) + p.y * (0.3 + 0.7 * u_peak) + t * 0.3)*0.5;
 	
     float lrx = (1.0 + (u_left - u_right) * (1.0 + abs(p.x)));
     float lry = (1.0 + abs(u_left - u_right) * (1.0 + abs(p.y)));
