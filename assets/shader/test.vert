@@ -23,6 +23,10 @@ void main() {
 
     vec2 p = (uv * 25.0 - 12.5) * punch; 
 
+    z += sin(p.x * (0.7 + 0.3 * u_intensity) + t) * 0.3;
+    z += cos(p.y * (0.3 + 0.7 * u_complexity) + u_time * 0.7) * 0.5;
+    z += sin(p.x * (0.7 + 0.3 * u_speed) + p.y * (0.3 + 0.7 * u_peak) + t * 0.3);
+	
     float lrx = (1.0 + (u_left - u_right) * (1.0 + abs(p.x)));
     float lry = (1.0 + abs(u_left - u_right) * (1.0 + abs(p.y)));
 
@@ -37,10 +41,6 @@ void main() {
 		p.y /= lrx;
 	}
 
-    z += sin(p.x * (0.7 + 0.3 * u_intensity) + t) * 0.3;
-    z += cos(p.y * (0.3 + 0.7 * u_complexity) + u_time * 0.7) * 0.5;
-    z += sin(p.x * (0.7 + 0.3 * u_speed) + p.y * (0.3 + 0.7 * u_peak) + t * 0.3);
-	
 	vec2 offset = vec2(
 		sin(t * u_intensity) + cos(u_time * u_complexity),
 		cos(u_time * u_speed) + sin(t * u_peak)
