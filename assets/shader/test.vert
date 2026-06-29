@@ -16,16 +16,16 @@ uniform vec2 u_orient;
 void main() {
 	vec2 ratio = vec2(max(u_res.x / u_res.y, 1.0), max(u_res.y / u_res.x, 1.0));
 	
-	float punch = sin(pow(0.1 + 0.9 * u_intensity * u_complexity * u_speed * u_peak, 3.0));
+	float punch = sin(pow(0.4 + 0.6 * u_intensity * u_complexity * u_speed * u_peak, 3.0));
 
     float t = u_time * 0.1;
     float z = 0.0;
 
-    vec2 p = (uv * 25.0 - 12.5) * punch; 
+    vec2 p = (uv * 5.0 - 2.5) * punch; 
 
-    z += sin(p.x * (0.07 + 0.03 * u_intensity) + t) * 0.3;
-    z += cos(p.y * (0.03 + 0.07 * u_complexity) + u_time * 0.7) * 0.5;
-    z += sin(p.x * (0.07 + 0.03 * u_speed) + p.y * (0.03 + 0.07 * u_peak) + t * 0.3);
+    z += sin(p.x * (0.7 + 0.3 * u_intensity) + t) * 0.03;
+    z += cos(p.y * (0.3 + 0.7 * u_complexity) + u_time * 0.7) * 0.05;
+    z += sin(p.x * (0.7 + 0.3 * u_speed) + p.y * (0.3 + 0.7 * u_peak) + t * 0.3)*0.1;
 	
     float lrx = (1.0 + (u_left - u_right) * (1.0 + abs(p.x)));
     float lry = (1.0 + abs(u_left - u_right) * (1.0 + abs(p.y)));
