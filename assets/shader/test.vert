@@ -16,14 +16,12 @@ uniform vec2 u_orient;
 void main() {
 	vec2 ratio = vec2(max(u_res.x / u_res.y, 1.0), max(u_res.y / u_res.x, 1.0));
 	
-	float punch = pow(0.1 + 0.9 * u_intensity * u_complexity * u_speed * u_peak, 3.0);
+	float punch = sin(pow(0.1 + 0.9 * u_intensity * u_complexity * u_speed * u_peak, 3.0));
 
     float t = u_time * 0.1;
     float z = 0.0;
 
     vec2 p = (uv * 15.0 - 7.5) * ratio; 
-
-    
 
     z += sin(p.x * (0.7 + 0.3 * u_intensity) + t) * 0.15;
     z += cos(p.y * (0.3 + 0.7 * u_complexity) + u_time * 0.7) * 0.25;
@@ -32,11 +30,7 @@ void main() {
     float lrx = pow(1.0 + min(max((u_left - u_right), -0.1), 0.1) , 1.0 + 0.2 * abs(7.5 - p.x));
     float lry = (1.0 + abs(u_left - u_right) * (1.0 + abs(p.y)));
 
-	if(p.x==p.y || p.x==-p.y){
-		//p.xy *= sin(punch) / punch;
-	}
-
-    if(p.y < 0.4 || p.y > 0.6){
+    if(p.y < 5.0 || p.y > 10.0){
 		p.xy *= lry;
 	}
 
@@ -51,7 +45,7 @@ void main() {
 		cos(u_time * u_speed) + sin(t * u_peak)
 	);
 	
-	vec2 centered = v_uv - 0.5 + offset * 11.0;
+	vec2 centered = v_uv + offset * 20.0;
 	float r = length(centered);
 	float depth = 1.0 / (sqrt(r * r + 0.01)); 
 	float mask = pow(1.0 - smoothstep(0.0, 0.5, r), 3.0);
@@ -65,7 +59,7 @@ void main() {
 
 	vec3 pos = vec3(
 		position.xy,
-		v_z + pow(depth, 3.0)
+		v_z + pow(depth, 3.0) * punch
 	);
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
