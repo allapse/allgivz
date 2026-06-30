@@ -16,7 +16,7 @@ uniform vec2 u_orient;
 void main() {
 	vec2 ratio = vec2(max(u_res.x / u_res.y, 1.0), max(u_res.y / u_res.x, 1.0));
 	
-	float punch = smoothstep(0.0, 1.0, 0.1 + 0.9 * u_intensity * u_complexity * u_speed * u_peak);
+	float punch = sin(pow(0.1 + 0.9 * u_intensity * u_complexity * u_speed * u_peak, 3.0));
 
     float t = u_time * 0.1;
     float z = 0.0;
@@ -27,7 +27,7 @@ void main() {
     z += cos(p.y * (0.3 + 0.7 * u_complexity) + u_time * 0.7) * 0.25;
     z += sin(p.x * (0.7 + 0.3 * u_speed) + p.y * (0.3 + 0.7 * u_peak) + t * 0.3)*0.5;
 	
-    float lrx = 0.5 + smoothstep(0.5, 1.5, min(max(pow(1.0 + min(max((u_left - u_right), -0.1), 0.1) , 1.0 + abs(7.5 - p.y)), 0.5), 1.5));
+    float lrx = min(max(pow(1.0 + min(max((u_left - u_right), -0.1), 0.1) , 1.0 + abs(7.5 - p.y)), 0.9), 1.1);
 
 	if(p.y < 7.0){
 		p.x /= lrx;
@@ -35,7 +35,7 @@ void main() {
 		p.x *= lrx;
 	}
 	
-	float lry = 0.9 + 0.2 * smoothstep(0.9, 1.1, min(max(pow(1.0 + min(abs(u_left - u_right), 0.1), (1.0 + abs(7.5 - p.x))), 0.9), 1.1));
+	float lry = min(max(pow(1.0 + min(abs(u_left - u_right), 0.1), (1.0 + abs(7.5 - p.x))), 0.9), 1.1);
 	
 	if(p.x < 5.0 || p.x > 10.0){
 		p.y *= lry;
