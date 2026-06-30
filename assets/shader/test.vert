@@ -30,14 +30,14 @@ void main() {
     float lrx = pow(1.0 + min(max((u_left - u_right), -0.1), 0.1) , 1.0 + 0.2 * abs(7.5 - p.x));
     float lry = (1.0 + abs(u_left - u_right) * (1.0 + abs(p.y)));
 
-    if(p.y < 5.0 || p.y > 10.0){
+    if(p.x < 5.0 || p.x > 10.0){
 		p.xy *= lry;
 	}
 
-	if(p.x < 7.0){
-		p.y *= lrx;
-	} else if(p.x > 8.0){
-		p.y /= lrx;
+	if(p.y < 7.0){
+		p.x *= lrx;
+	} else if(p.y > 8.0){
+		p.x /= lrx;
 	}
 
 	vec2 offset = vec2(
@@ -59,7 +59,7 @@ void main() {
 
 	vec3 pos = vec3(
 		position.xy,
-		v_z + pow(depth, 3.0) * punch
+		v_z + pow(depth, 3.0)
 	);
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
