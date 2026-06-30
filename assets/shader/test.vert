@@ -16,32 +16,33 @@ uniform vec2 u_orient;
 void main() {
 	vec2 ratio = vec2(max(u_res.x / u_res.y, 1.0), max(u_res.y / u_res.x, 1.0));
 	
-	float punch = 0.1+ 0.9*sin(pow(0.1 + 0.9 * u_intensity * u_complexity * u_speed * u_peak, 3.0));
+	float punch = pow(0.1 + 0.9 * u_intensity * u_complexity * u_speed * u_peak, 3.0);
 
     float t = u_time * 0.1;
     float z = 0.0;
 
-    vec2 p = (uv * 15.0 - 7.5) * punch; 
+    vec2 p = (uv * 15.0 - 7.5) * ratio; 
 
-    if(p.x==p.y || p.x==-p.y){
-        p.xy /= punch;
-    }
+    
 
     z += sin(p.x * (0.7 + 0.3 * u_intensity) + t) * 0.15;
     z += cos(p.y * (0.3 + 0.7 * u_complexity) + u_time * 0.7) * 0.25;
     z += sin(p.x * (0.7 + 0.3 * u_speed) + p.y * (0.3 + 0.7 * u_peak) + t * 0.3)*0.5;
 	
-    float lrx = (1.0 + (u_left - u_right) * (1.0 + abs(p.x)));
+    float lrx = pow(1.0 + min(max((u_left - u_right), -0.1), 0.1) , 1.0 + 0.2 * abs(7.5 - p.x));
     float lry = (1.0 + abs(u_left - u_right) * (1.0 + abs(p.y)));
 
-    if(p.y < 0.2 || p.y > 0.8){
+	if(p.x==p.y || p.x==-p.y){
+		//p.xy *= sin(punch) / punch;
+	}
+
+    if(p.y < 0.4 || p.y > 0.6){
 		p.xy *= lry;
 	}
 
-	if(p.x < 0.3){
+	if(p.x < 7.0){
 		p.y *= lrx;
-		
-	} else if(p.x > 0.7){
+	} else if(p.x > 8.0){
 		p.y /= lrx;
 	}
 
@@ -64,7 +65,7 @@ void main() {
 
 	vec3 pos = vec3(
 		position.xy,
-		v_z + pow(depth, 3.0) * punch
+		v_z + pow(depth, 3.0)
 	);
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
