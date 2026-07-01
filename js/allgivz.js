@@ -1294,7 +1294,7 @@ class AudioMap {
 			this.material.blending = THREE.NormalBlending;
 			this.material.depthWrite = true;
 			this.material.depthTest = true;
-			this.material.side = THREE.FrontSide;
+			this.material.side = THREE.DoubleSide;
 			this.material.transparent = false;
 
 			if (config && config.mesh?.type === "Points") {
@@ -1311,11 +1311,10 @@ class AudioMap {
 				
 				// Sphere 專屬
 				this.material.transparent = true;
-				this.material.side = THREE.DoubleSide; 
 				this.material.depthWrite = false; 
 			} else {
 				// 預設 2D 畫布
-				geo = new THREE.PlaneGeometry(2, 2, 3, 3);
+				geo = new THREE.PlaneGeometry(2, 2);
 				this.currentMesh = new THREE.Mesh(geo, this.material);
 				// 這裡會套用最上方的重置值
 			}
@@ -2241,8 +2240,7 @@ class AudioMap {
 				u_bpm: { value: 0.0 },
 			},
 			vertexShader: `void main() { gl_Position = vec4(position, 1.0); }`,
-			fragmentShader: `void main() { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); }`,
-			side: THREE.DoubleSide
+			fragmentShader: `void main() { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); }`
 		});
 
 		await this.loadShader(shaderPath);
