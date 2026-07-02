@@ -21,14 +21,14 @@ void main() {
     float t = u_time * 0.1;
     float z = 0.0;
 
-    vec2 p = (uv * 15.0 - 7.5) * ratio * (0.9 + 0.1 * punch); 
+    vec2 p = (uv * 15.0 - 7.5) * ratio * (1.2 - 0.4 * punch); 
 
     z += sin(p.x * (0.7 + 0.3 * u_intensity) + t) * 0.15;
     z += cos(p.y * (0.3 + 0.7 * u_complexity) + u_time * 0.7) * 0.25;
     z += sin(p.x * (0.7 + 0.3 * u_speed) + p.y * (0.3 + 0.7 * u_peak) + t * 0.3)*0.5;
 	
     float lrx = min(max(pow(1.0 + min(max((u_left - u_right), -0.1), 0.1) , 1.0 + abs(7.5 - p.y)), 0.85), 1.15);
-	lrx = 0.85 + 0.3 * smoothstep(0.8, 1.2, lrx + (0.05 - 0.1 * sin(t)));
+	lrx = 0.85 + 0.3 * smoothstep(0.8, 1.2, lrx + (0.05 - 0.1 * sin(u_time)));
 
 	if(p.y < 7.0){
 		p.x /= lrx;
