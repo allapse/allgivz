@@ -28,7 +28,7 @@ void main() {
     z += sin(p.x * (0.7 + 0.3 * u_speed) + p.y * (0.3 + 0.7 * u_peak) + t * 0.3)*0.5;
 	
     float lrx = min(max(pow(1.0 + min(max((u_left - u_right), -0.1), 0.1) , 1.0 + abs(7.5 - p.y)), 0.85), 1.15);
-	lrx = 0.85 + 0.3 * smoothstep(0.7, 1.3, lrx + 0.4 * sin(u_time * u_peak * 6.0));
+	lrx = 0.85 + 0.3 * smoothstep(0.7, 1.3, lrx + 0.4 * sin(u_time * u_peak * 30.0));
 
 	if(p.y < 7.0){
 		p.x /= lrx;
@@ -45,7 +45,7 @@ void main() {
 
 	vec2 offset = vec2(
 		sin(t * u_intensity) + cos(u_time * u_complexity),
-		cos(u_time * u_speed) + sin(t * u_volume)
+		cos(u_time * u_speed) + sin(t * u_peak)
 	);
 	
 	vec2 centered = v_uv + offset * 20.0;
