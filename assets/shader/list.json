@@ -26,5 +26,5 @@
 	{ "name": "⠾⠧⠧", "path": "./assets/shader/all.frag", "canCam": false},
 	{ "name": "⠧⠾⠟⠳⠺", "path": "./assets/shader/lapse.frag", "canCam": false},
 	{ "name": "⠾⠧⠧⠾⠟⠳⠺", "path": "./assets/shader/allapse.frag", "canCam": false},
-	{ "name": " ", "path": "./assets/shader/test.frag", "canCam": false}
+	{ "name": " ", "path": "./assets/shader/nome.frag", "canCam": false}
 ]		
