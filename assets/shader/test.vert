@@ -37,7 +37,7 @@ void main() {
 	}
 	
 	float lry = max(min(pow(0.5 + abs(u_left - u_right) * 2.0, (1.0 + abs(7.5 - p.x))), 0.5), 1.5);
-	lry = 0.5 + smoothstep(0.5, 1.5, lry);
+	lry = smoothstep(0.5, 1.5, lry);
 	
 	if(p.x < 5.0 || p.x > 10.0){
 		p.y *= lry;
