@@ -2238,6 +2238,7 @@ class AudioMap {
 				u_useCamera: { value: 0.0 },
 				u_prevFrame: { value: new THREE.Texture() },
 				u_bpm: { value: 0.0 },
+				u_fps: { value: 60.0}
 			},
 			vertexShader: `void main() { gl_Position = vec4(position, 1.0); }`,
 			fragmentShader: `void main() { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); }`
@@ -2269,6 +2270,7 @@ class AudioMap {
 				
 				if (this.fpsLabel) {
 					this.fpsLabel.textContent = fps;
+					this.material.uniforms.u_fps.value = fps;
 				}
 			}
 		};
