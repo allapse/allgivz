@@ -27,7 +27,8 @@ void main() {
     z += cos(p.y * (0.3 + 0.7 * u_complexity) + u_time * 0.7) * 0.25;
     z += sin(p.x * (0.7 + 0.3 * u_speed) + p.y * (0.3 + 0.7 * u_peak) + t * 0.3)*0.5;
 	
-    float lrx = min(max(pow(1.0 + min(max((u_left - u_right), -0.1), 0.1) , 1.0 + abs(7.5 - p.y)), 0.8), 1.2);
+    float lrx = min(max(pow(1.0 + min(max((u_left - u_right), -0.1), 0.1) , 1.0 + abs(7.5 - p.y)), 0.7), 1.3);
+	lrx = 0.7 + 0.6 * smoothstep(0.7, 1.3, lrx);
 
 	if(p.y < 7.0){
 		p.x /= lrx;
@@ -35,7 +36,8 @@ void main() {
 		p.x *= lrx;
 	}
 	
-	float lry = min(max(pow(1.0 + min(abs(u_left - u_right), 0.1), (1.0 + abs(7.5 - p.x))), 0.8), 1.2);
+	float lry = max(min(pow(0.5 + abs(u_left - u_right) * 2.0, (1.0 + abs(7.5 - p.x))), 0.5), 1.5);
+	lry = 0.5 + smoothstep(0.5, 1.5, lry);
 	
 	if(p.x < 5.0 || p.x > 10.0){
 		p.y *= lry;
