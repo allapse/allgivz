@@ -45,7 +45,7 @@ void main() {
 
 	vec2 offset = vec2(
 		sin(t * u_intensity) + cos(u_time * u_complexity),
-		cos(u_time * u_speed) + sin(t * u_peak)
+		cos(u_time * u_speed) + sin(t * u_volume)
 	);
 	
 	vec2 centered = v_uv + offset * 20.0;
