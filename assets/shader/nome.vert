@@ -42,7 +42,7 @@ void main() {
 	}
 	
 	float lry = smoothstep(pow(0.95 + smoothstep(0.0, 0.1, abs(u_left - u_right)), (1.0 + abs(7.5 - p.x))), 0.9, 1.1);
-	lry = 0.85 + 0.2 * smoothstep(0.8, 1.2, lry + 0.05 * swing);
+	lry = 0.85 + 0.2 * smoothstep(0.8, 1.2, lry + 0.05 * swing); 
 	
 	if(p.x < 5.0){
 		p.y *= lry;
