@@ -32,7 +32,7 @@ void main() {
     z += sin(p.x * (0.7 + 0.3 * u_speed) + p.y * (0.3 + 0.7 * u_peak) + t * 0.3)*0.5;
 	
     float lrx = min(max(pow(1.0 + min(max((u_left - u_right), -0.1), 0.1) , 1.0 + abs(7.5 - p.y)), 0.85), 1.15);
-	lrx = 0.85 + 0.3 * smoothstep(0.7, 1.3, lrx + 0.3 * sin(u_time * 2.0 * PI * u_fps * (1.0 + u_bpm)));
+	lrx = 0.85 + 0.3 * smoothstep(0.7, 1.3, lrx + 0.3 * sin(u_time * 2.0 * PI * u_fps * (1.0 + u_bpm) * length(p)));
 
 	if(p.y < 7.0){
 		p.x /= lrx;
