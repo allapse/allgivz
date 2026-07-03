@@ -31,10 +31,9 @@ void main() {
     z += cos(p.y * (0.3 + 0.7 * u_complexity) + u_time * 0.7) * 0.25;
     z += sin(p.x * (0.7 + 0.3 * u_speed) + p.y * (0.3 + 0.7 * u_peak) + t * 0.3)*0.5;
 	
-	float swing = 0.3 * sin(u_time * 2.0 * PI * u_fps * (1.0 + u_bpm) * length(p));
-	
-    float lrx = min(max(pow(1.0 + min(max((u_left - u_right), -0.1), 0.1) , 1.0 + abs(7.5 - p.y)), 0.85), 1.15);
-	lrx = 0.85 + 0.3 * smoothstep(0.7, 1.3, lrx + swing);
+	float swing = sin(u_time * 2.0 * PI * u_fps * u_bpm * length(p));
+    float lrx = clamp(pow(1.0 + clamp((u_left - u_right), -0.1, 0.1) , 1.0 + abs(7.5 - p.y)), 0.85, 1.15);
+	lrx = 0.85 + 0.3 * smoothstep(0.7, 1.3, lrx + 0.3 * swing);
 
 	if(p.y < 7.0){
 		p.x /= lrx;
@@ -42,8 +41,8 @@ void main() {
 		p.x *= lrx;
 	}
 	
-	float lry = max(min(pow(0.5 + abs(u_left - u_right) * 2.0, (1.0 + abs(7.5 - p.x))), 0.5), 1.5);
-	lry = pow(smoothstep(0.5, 1.5, lry + swing),2.0);
+	float lry = smoothstep(pow(0.95 + smoothstep(0.0, 0.1, abs(u_left - u_right)), (1.0 + abs(7.5 - p.x))), 0.9, 1.1);
+	lry = 0.85 + 0.2 * smoothstep(0.8, 1.2, lry + 0.05 * swing);
 	
 	if(p.x < 5.0){
 		p.y *= lry;
