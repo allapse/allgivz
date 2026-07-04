@@ -63,10 +63,7 @@ void main() {
 	//p.xy *= mask;
 	
 	z *= 1.0 - punch;
-	
-	v_uv = p;
-    v_z = (z + pow(depth, 3.0));
-
+    
 	vec3 pos = vec3(
 		p.xy,
 		punch
@@ -74,11 +71,14 @@ void main() {
 
     swing = 1.0 + 0.1 * sin(u_time * 2.0 * PI * u_fps * u_bpm * length(pos));
 
-    if(v_z < 0.5) {
-        pos /= swing;
-    } else {
+    if(punch < 0.5) {
         pos *= swing;
+    } else {
+        pos /= swing;
     }
+
+    v_uv = pos.xy;
+    v_z = (z + pow(depth, 3.0));
 
     pos = vec3(
 		position.xy,
