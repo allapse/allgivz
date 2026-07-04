@@ -61,8 +61,6 @@ void main() {
 	float mask = pow(1.0 - smoothstep(0.0, 0.5, r), 3.0);
 	
 	//p.xy *= mask;
-	
-	z *= 1.0 - punch;
     
 	vec3 pos = vec3(
 		p.xy,
@@ -76,6 +74,8 @@ void main() {
     } else {
         pos /= swing;
     }
+
+    z *= 1.0 - pos.z;
 
     v_uv = pos.xy;
     v_z = (z + pow(depth, 3.0));
