@@ -65,12 +65,20 @@ void main() {
 	z *= 1.0 - punch;
 	
 	v_uv = p;
-    v_z = (z + pow(depth, 3.0)) * (1.0 + 0.1 * swing);
+    v_z = (z + pow(depth, 3.0));
 
 	vec3 pos = vec3(
 		position.xy,
 		v_z
 	);
+
+    swing = 1.0 + 0.1 * sin(u_time * 2.0 * PI * u_fps * u_bpm * length(pos));
+
+    if(v_z < 0.5) {
+        pos.xy /= swing;
+    } else {
+        pos.xy *= swing;
+    }
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
 }
