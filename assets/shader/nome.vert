@@ -65,11 +65,11 @@ void main() {
 	z *= 1.0 - punch;
 	
 	v_uv = p;
-    v_z = z; 
+    v_z = (z + pow(depth, 3.0)) * (1.0 + 0.1 * swing);
 
 	vec3 pos = vec3(
 		position.xy,
-		v_z + pow(depth, 3.0)
+		v_z
 	);
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
