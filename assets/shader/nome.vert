@@ -68,8 +68,8 @@ void main() {
     v_z = (z + pow(depth, 3.0));
 
 	vec3 pos = vec3(
-		position.xy,
-		v_z
+		p.xy,
+		punch
 	);
 
     swing = 1.0 + 0.1 * sin(u_time * 2.0 * PI * u_fps * u_bpm * length(pos));
@@ -79,6 +79,11 @@ void main() {
     } else {
         pos *= swing;
     }
+
+    pos = vec3(
+		position.xy,
+		v_z
+	);
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
 }
