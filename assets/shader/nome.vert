@@ -35,18 +35,18 @@ void main() {
     float lrx = clamp(pow(1.0 + clamp((u_left - u_right), -0.1, 0.1) , 1.0 + abs(7.5 - p.y)), 0.85, 1.15);
 	lrx = 0.85 + 0.3 * smoothstep(0.7, 1.3, lrx + 0.3 * swing);
 
-	if(p.y < 7.0){
+	if(p.y < 15.0 * ratio.y * 0.382){
 		p.x /= lrx;
-	} else if(p.y > 8.0){
+	} else if(p.y > 15.0 * ratio.y * 0.618){
 		p.x *= lrx;
 	}
 	
 	float lry = smoothstep(pow(0.95 + smoothstep(0.0, 0.1, abs(u_left - u_right)), (1.0 + abs(7.5 - p.x))), 0.9, 1.1);
 	lry = 0.85 + 0.2 * smoothstep(0.8, 1.2, lry + 0.05 * swing);
 	
-	if(p.x < 5.0){
+	if(p.x < 15.0 * ratio.x * 0.382){
 		p.y *= lry;
-	} else if (p.x > 10.0){
+	} else if (p.x > 15.0 * ratio.x * 0.618){
 		p.y /= lry;
 	}
 
@@ -69,9 +69,9 @@ void main() {
 
     swing = 1.0 + 0.1 * sin(u_time * 2.0 * PI * u_fps * u_bpm * length(pos));
 
-    if(punch < 0.5) {
+    if(punch < 0.382) {
         pos *= swing;
-    } else {
+    } else if(punch > 0.618) {
         pos /= swing;
     }
 
