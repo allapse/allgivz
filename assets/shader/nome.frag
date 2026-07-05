@@ -1,4 +1,4 @@
-precision highp float; 
+precision highp float;
 
 uniform vec2 u_resolution;
 
