@@ -345,15 +345,25 @@ void main() {
 	finalColor *= finalColor;
 	
 	float v_z_st = 0.0;
+	float lrpunch = 0.618 + (u_left - u_right) * 6.18 * punch;
 	
 	if(u_darkGlow > 0.5) {
-		if(v_uv.x < 0.618 + (u_left - u_right) * 618.0 * punch) {
+		if(v_uv.x < lrpunch) {
 			// bubble
 			if (v_z > (0.382 + u_left) * wave || 0.618 * stripes > bigZ) discard;
 		}
 		else{
 			// bubble
 			if (v_z > 0.618 * wave || (0.382 + u_right) * stripes > bigZ) discard;
+		}
+		
+		if(v_uv.y > lrpunch) {
+			// bubble
+			if (v_z > lrpunch * wave || 0.382 * stripes > bigZ) discard;
+		}
+		else{
+			// bubble
+			if (v_z > 0.382 * wave || lrpunch * stripes > bigZ) discard;
 		}
 		leftCol = 1.0 - exp(-finalColor * 3.0);
 	}
