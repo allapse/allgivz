@@ -96,16 +96,31 @@ float noise(vec2 p) {
 
 float fbm(vec2 p) {
     float v = 0.0;
-    float amp = 0.618;
-    int iter = int(2.28 + u_complexity * 16.18);
+    float amp = 0.5;
+    int iter = int(3.0 + u_complexity * 13.0);
     for (int i = 0; i < 6; i++) {
         if (i >= iter) break;
         v += noise(p) * amp;
-        p *= 2.28;
-        amp *= 0.618;
+        p *= 2.1;
+        amp *= 0.5;
     }
     return v;
 }
+
+/*
+float fbm(vec2 p) {
+    float v = 0.0;
+    float amp = 0.618;
+    int iter = int(3.82 + u_complexity * 16.18);
+    for (int i = 0; i < 6; i++) {
+        if (i >= iter) break;
+        v += noise(p) * amp;
+        p *= 1.618;
+        amp *= 0.382;
+    }
+    return v;
+}
+*/
 
 mat2 rot2(float a) {
     float s=sin(a), c=cos(a);
@@ -157,12 +172,12 @@ vec3 quantizeVec3(vec3 v, float levels){
 
 float ridgeFBM(vec2 p) {
     float v = 0.0;
-    float amp = 0.618;
+    float amp = 0.5;
     for (int i = 0; i < 5; i++) {
         float n = noise(p);
         v += amp * (1.0 - abs(n * 2.0 - 1.0));
-        p *= 2.28;
-        amp *= 0.618;
+        p *= 2.2;
+        amp *= 0.5;
     }
     return v;
 }
@@ -327,12 +342,12 @@ void main() {
 	vec3 emission = color * abs(sym) * (u_volume_smooth * 0.382 + 0.618) * 3.82;
 	vec3 currentFrame = mix(emission, past, 0.3); 
 	finalColor = mix(currentFrame, past, 0.9382 + 0.0618 * freeze);
-	finalColor *= finalColor; 
+	finalColor *= finalColor;
 	
 	float v_z_st = 0.0;
 	
 	if(u_darkGlow > 0.5) {
-		if(v_uv.x < 0.618 + (u_left - u_right) * 6.18 * punch) {
+		if(v_uv.x < 0.618 + (u_left - u_right) * 618.0 * punch) {
 			// bubble
 			if (v_z > (0.382 + u_left) * wave || 0.618 * stripes > bigZ) discard;
 		}
@@ -349,7 +364,7 @@ void main() {
 		}
 		else{
 			// bubble
-			if (v_z > 0.382 * wave || 0.618 * stripes > bigZ) discard;
+			if (v_z > 0.618 * wave || 0.618 * stripes > bigZ) discard;
 		}
 		rightCol = 1.0 - exp(-finalColor * 3.0);
 	}
