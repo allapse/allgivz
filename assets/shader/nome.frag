@@ -42,20 +42,20 @@ int brailleCodes[7] = int[7](
 
 float drawBraille(vec2 pos, vec2 base, float r, int code) {
     vec2 dots[6];
-    dots[0] = base + vec2(-0.1, 0.3);
-    dots[1] = base + vec2(-0.1, 0.0);
-    dots[2] = base + vec2(-0.1,-0.3);
-    dots[3] = base + vec2( 0.1, 0.3);
-    dots[4] = base + vec2( 0.1, 0.0);
-    dots[5] = base + vec2( 0.1,-0.3);
+    dots[0] = base + vec2(-0.118, 0.382);
+    dots[1] = base + vec2(-0.118, 0.0);
+    dots[2] = base + vec2(-0.118,-0.382);
+    dots[3] = base + vec2( 0.118, 0.382);
+    dots[4] = base + vec2( 0.118, 0.0);
+    dots[5] = base + vec2( 0.118,-0.382);
 
     float result = 0.0;
     for(int i=0; i<6; i++){
         if(((code >> i) & 1) == 1){
-			float pulse = 0.5 + 0.5 * sin(u_time * 3.0 + float(i));
-			float dynamicR = r * (1.0 + 0.5 * u_volume);
-			vec2 jitter = vec2(sin(u_time * 3.0+float(i)), cos(u_time * 2.0+float(i))) * 0.02;
-            result += float(((code >> i) & 1)) * smoothstep(dynamicR, dynamicR-0.01 *  u_volume, length(pos + jitter - dots[i])) * pulse ;
+			float pulse = 0.382 + 0.618 * sin(u_time * 2.28 + float(i));
+			float dynamicR = r * (1.18 + 0.382 * u_volume);
+			vec2 jitter = vec2(sin(u_time * 2.28 + float(i)), cos(u_time * 1.18 + float(i))) * 0.0228;
+            result += float(((code >> i) & 1)) * smoothstep(dynamicR, dynamicR - 0.0118 *  u_volume, length(pos + jitter - dots[i])) * pulse ;
         }
     }
     return result;
@@ -63,22 +63,22 @@ float drawBraille(vec2 pos, vec2 base, float r, int code) {
 
 float map_wave(vec3 p) {
     float baseZ = p.z + u_time; 
-    float pulse = u_speed * 2.0;
+    float pulse = u_speed * 1.18;
 
     float zLoop = mod(baseZ + pulse, 6.28318);
     
     float angle = atan(p.y, p.x + 0.00001);
-    float mirrorAngle = abs(abs(angle) - PI * 0.5);
+    float mirrorAngle = abs(abs(angle) - PI * u_speed);
 
-    float tunnel = -(length(p.xy + 0.00001) - 1.8);
+    float tunnel = -(length(p.xy + 0.00001) - 1.618);
 
-    float freq = 2.0 + u_complexity * 3.0; 
-    float amp = 0.05 + u_complexity * 0.4;
+    float freq = 1.18 + u_complexity * 2.28; 
+    float amp = 0.0618 + u_complexity * 0.382;
 
-    float wave = sin(mirrorAngle * freq + u_time) * cos(zLoop * 2.0);
+    float wave = sin(mirrorAngle * freq + u_time) * cos(zLoop * 1.18);
     
-    float noise = hash(floor(p.z * 3.0)) * u_complexity * 2.0;
-    wave += sin(mirrorAngle * freq * 1.5 - u_time + noise) * 0.5;
+    float noise = hash(floor(p.z * 2.28)) * u_complexity * 1.18;
+    wave += sin(mirrorAngle * freq * 1.618 - u_time + noise) * 0.618;
 
     return tunnel + (wave * amp);
 }
