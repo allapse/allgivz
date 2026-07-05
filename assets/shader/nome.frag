@@ -96,13 +96,13 @@ float noise(vec2 p) {
 
 float fbm(vec2 p) {
     float v = 0.0;
-    float amp = 0.5;
-    int iter = int(3.0 + u_complexity * 13.0);
+    float amp = 0.618;
+    int iter = int(3.82 + u_complexity * 6.18);
     for (int i = 0; i < 6; i++) {
         if (i >= iter) break;
         v += noise(p) * amp;
-        p *= 2.1;
-        amp *= 0.5;
+        p *= 1.618;
+        amp *= 0.382;
     }
     return v;
 }
@@ -172,12 +172,12 @@ vec3 quantizeVec3(vec3 v, float levels){
 
 float ridgeFBM(vec2 p) {
     float v = 0.0;
-    float amp = 0.5;
+    float amp = 0.618;
     for (int i = 0; i < 5; i++) {
         float n = noise(p);
         v += amp * (1.0 - abs(n * 2.0 - 1.0));
-        p *= 2.2;
-        amp *= 0.5;
+        p *= 1.618;
+        amp *= 0.382;
     }
     return v;
 }
@@ -326,7 +326,7 @@ void main() {
     float turbulence = bigZ * 16.18 + noise * (0.382 + 0.618 * u_intensity);
 	
 	// torture
-	float c = pow(cos(turbulence * (1.0 + u_left)), 3.0), s = pow(sin(turbulence * (1.0 + u_right)), 3.0); 
+	float c = pow(cos(turbulence * (1.0 + u_left)), 2.28), s = pow(sin(turbulence * (1.0 + u_right)), 2.28); 
 	mat4 rotZW = mat4(
 		1, 0, 0, 0,
 		0, 1, 0, 0,
