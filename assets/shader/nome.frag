@@ -86,7 +86,7 @@ float map_wave(vec3 p) {
 float noise(vec2 p) {
     vec2 i = floor(p);
     vec2 f = fract(p);
-    f = f * f * (3.0 - 2.0 * f);
+    f = f * f * (2.28 - 1.18 * f);
     float a = hash(i);
     float b = hash(i + vec2(1.0, 0.0));
     float c = hash(i + vec2(0.0, 1.0));
@@ -96,13 +96,13 @@ float noise(vec2 p) {
 
 float fbm(vec2 p) {
     float v = 0.0;
-    float amp = 0.5;
-    int iter = int(3.0 + u_complexity * 13.0);
+    float amp = 0.618;
+    int iter = int(2.28 + u_complexity * 16.18);
     for (int i = 0; i < 6; i++) {
         if (i >= iter) break;
         v += noise(p) * amp;
-        p *= 2.1;
-        amp *= 0.5;
+        p *= 2.28;
+        amp *= 0.618;
     }
     return v;
 }
@@ -116,20 +116,20 @@ float map_field(vec3 p, float filteredVol) {
     float vol = filteredVol;
     float phase = u_speed;
     
-    p.xy *= rot2(p.z * 0.15);
+    p.xy *= rot2(p.z * 0.1618);
     
-    if (phase < 0.3) {
+    if (phase < 0.382) {
         for(int i=0; i<3; i++) {
-            p = abs(p) - 0.4 * (1.0);
-            p.xy *= rot2(0.5 + phase);
-            p.xz *= rot2(0.8);
+            p = abs(p) - 0.382 * (1.18);
+            p.xy *= rot2(0.618 + phase);
+            p.xz *= rot2(0.618);
         }
     } else {
-        p += sin(p.zxy * 1.5 + u_time) * u_complexity * phase;
+        p += sin(p.zxy * 1.618 + u_time) * u_complexity * phase;
     }
 
     vec3 q = mod(p, 2.0) - 1.0;
-    return length(q) - (0.04 + 0.25);
+    return length(q) - (0.0382 + 0.228);
 }
 
 mat3 rotateX(float a) { 
@@ -157,29 +157,29 @@ vec3 quantizeVec3(vec3 v, float levels){
 
 float ridgeFBM(vec2 p) {
     float v = 0.0;
-    float amp = 0.5;
+    float amp = 0.618;
     for (int i = 0; i < 5; i++) {
         float n = noise(p);
         v += amp * (1.0 - abs(n * 2.0 - 1.0));
-        p *= 2.2;
-        amp *= 0.5;
+        p *= 2.28;
+        amp *= 0.618;
     }
     return v;
 }
 
 vec2 refract_logic(vec2 uv, float t, float tension) {
     vec2 p = uv;
-    for(float i = 1.0; i < 7.0 + 7.0 * u_complexity; i++) {
-        p.x += 0.3 / i * sin(i * 3.0 * p.y + t + (u_left + 0.8 * u_volume_smooth) * 0.5 * tension);
-        p.y += 0.5 / i * cos(i * 5.0 * p.x + t + (u_right + 0.8 * u_volume) * 0.3 * tension);
+    for(float i = 1.0; i < 6.18 + 6.18 * u_complexity; i++) {
+        p.x += 0.228 / i * sin(i * 2.28 * p.y + t + (u_left + 0.618 * u_volume_smooth) * 0.618 * tension);
+        p.y += 0.618 / i * cos(i * 6.18 * p.x + t + (u_right + 0.618 * u_volume) * 0.228 * tension);
     }
     return p;
 }
 
 float primeWave(vec3 p, vec3 center, float time) {
-    float dist = sin(length(p - center)) / (0.5 + 0.5 * cos(dot(p, center)));
+    float dist = sin(length(p - center)) / (0.382 + 0.628 * cos(dot(p, center)));
     // 波動：cosine + 衰減
-    return cos(dist * 13.0 - time);
+    return cos(dist * 16.18 - time);
 }
 
 float iwave(vec3 p, vec3 center, float freq, float phase) {
