@@ -1314,7 +1314,7 @@ class AudioMap {
 				this.material.depthWrite = false; 
 			} else {
 				// 預設 2D 畫布
-				geo = new THREE.PlaneGeometry(2, 2, 2, 2);
+				geo = new THREE.PlaneGeometry(2, 2, 3, 3);
 				this.currentMesh = new THREE.Mesh(geo, this.material);
 				// 這裡會套用最上方的重置值
 			}
@@ -2286,8 +2286,8 @@ class AudioMap {
 		// 更新時間
 		this.material.uniforms.u_time.value += 0.01 + this.params.speed * 0.02;
 		
-		this.currentMesh.rotation.y = (this.material.uniforms.u_right.value - this.material.uniforms.u_left.value) * 6.18;
-		this.currentMesh.rotation.x = -0.05 + Math.min(Math.max((this.material.uniforms.u_right.value - this.material.uniforms.u_left.value), 0.0), 0.1) * 6.18;
+		this.currentMesh.rotation.y = (this.material.uniforms.u_left.value - this.material.uniforms.u_right.value) * 6.18;
+		this.currentMesh.rotation.x = 0.05 - Math.min(Math.max((this.material.uniforms.u_right.value - this.material.uniforms.u_left.value), 0.0), 0.1) * 6.18;
 
 		//console.log([this.currentMesh.rotation.x, this.currentMesh.rotation.y]);
 
