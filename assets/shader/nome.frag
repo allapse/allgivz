@@ -10,6 +10,8 @@ uniform float u_peak;
 uniform float u_intensity;
 uniform float u_complexity;
 uniform float u_speed;
+uniform float u_fps;
+uniform float u_bpm;
 uniform float u_left;
 uniform float u_right;
 uniform float u_darkGlow;
@@ -265,7 +267,7 @@ void main() {
 
     float motion = pow(0.382 + 0.618 * sin(u_time + length(pos) * u_speed), 3.0);
 
-    vec3 baseColor   = vec3(0.118, 0.228, 0.382);
+    vec3 baseColor   = vec3(0.228, 0.618, 0.382);
     vec3 accentColor = vec3(0.618, 0.382, 0.228);
     vec3 peakColor   = vec3(0.228, 0.382, 0.618);
 
@@ -279,7 +281,7 @@ void main() {
 	color *= rrot;
 	
 	// synapse
-	color = quantizeVec3(color, 16.8);
+	color = quantizeVec3(color, 16.18);
 	
 	// love
 	float resonance = pow(sin(cr.x * 11.8) * sin(cr.y * 13.82) * (0.118 + 0.882 * u_intensity), 3.0);
@@ -303,11 +305,13 @@ void main() {
 		// ridge
 		col /= clamp(ridgeFBM(base), 0.1, 0.2);
 		
+		float swing = sin(u_time * 2.0 * PI * u_fps * u_bpm * length(color));
+		
 		// thunder
 		float fade = pow(0.88, fi);
-        color.r += col.r * fade * (1.0 + u_left);
-        color.g += col.g * fade;
-        color.b += col.b * fade * (1.0 - u_right);
+        color.r += col.r * fade * (1.0 + u_left + 0.382 * swing);
+        color.g += col.g * fade * (1.0 + 0.618 * swing);
+        color.b += col.b * fade * (1.0 - u_right + 0.118 * swing);
 		
 		// prime
 		color += primeWave(col, color, u_time);
@@ -385,4 +389,5 @@ void main() {
 	finalColor = mix(finalColor, past, 0.618);
     
     gl_FragColor = rotZW * vec4(finalColor, 1.0);
+	//gl_FragColor = vec4(0.118, 0.118, 0.118, 1.0);
 }
