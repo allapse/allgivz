@@ -2297,7 +2297,7 @@ class AudioMap {
 		this.currentMesh.rotation.z += -0.05 + Math.min(Math.max(Math.abs(lrdiff), 0.0), 0.1) * 0.618;
 		this.currentMesh.rotation.z *= 0.382;
 
-		console.log([this.currentMesh.rotation.x, this.currentMesh.rotation.y, this.currentMesh.rotation.z]);
+		//console.log([this.currentMesh.rotation.x, this.currentMesh.rotation.y, this.currentMesh.rotation.z]);
 
 		if (this && this.analyser && this.dataArray) {
 			
