@@ -207,9 +207,11 @@ float iwave(vec3 p, vec3 center, float freq, float phase) {
 void main() {
     vec2 uv = v_uv;
 	
+	float timeswing = u_time * (1.0 + 0.118 * cos(u_time * 2.0 * PI * u_fps * u_bpm * length(vec3(uv, v_z))));
+	
 	// singularity
 	uv = abs(uv) - sin(u_left + 0.882 * u_complexity) - cos(u_right + 0.882 * u_intensity);
-	uv *= rot2(0.118 + 0.882 * u_complexity + u_time * 0.118);
+	uv *= rot2(0.118 + 0.882 * u_complexity + timeswing * 0.118);
 	// freedom
 	uv = abs(uv) / (dot(uv, uv)) - ((p1.xy) / (p2.xy));
 	// choice
@@ -218,12 +220,12 @@ void main() {
 	
 	// possibility
 	vec2 warped = uv;
-    warped.x += (0.228 + 0.618 * u_speed) * sin(u_time * 0.228 + uv.y * 6.18 + v_z * 0.618);
-    warped.y += (0.618 + 0.228 * u_complexity) * cos(u_time * 0.618 + uv.x * 2.28 + v_z * 0.618);
+    warped.x += (0.228 + 0.618 * u_speed) * sin(timeswing * 0.228 + uv.y * 6.18 + v_z * 0.618);
+    warped.y += (0.618 + 0.228 * u_complexity) * cos(timeswing * 0.618 + uv.x * 2.28 + v_z * 0.618);
 	
 	if(u_darkGlow > 0.5) {
-		warped.x /= (0.228 + 0.618 * u_speed) * sin(u_time * 0.228 + uv.y * 6.18 + v_z * 0.618);
-		warped.y /= (0.618 + 0.228 * u_complexity) * cos(u_time * 0.618 + uv.x * 2.28 + v_z * 0.618);
+		warped.x /= (0.228 + 0.618 * u_speed) * sin(timeswing * 0.228 + uv.y * 6.18 + v_z * 0.618);
+		warped.y /= (0.618 + 0.228 * u_complexity) * cos(timeswing * 0.618 + uv.x * 2.28 + v_z * 0.618);
 	}
 	
     vec2 pos = warped * 16.18;
@@ -243,29 +245,29 @@ void main() {
 	}
 	
 	// gliding
-	float stripes = pow(sin(abs(atan(pos.y, pos.x)) * floor(6.18 + pow(u_complexity ,3.0) * 6.18)) * sin(1.0 / (sqrt(length(pos) * length(pos) + 0.0118)) + u_time * 2.28), 3.0);
+	float stripes = pow(sin(abs(atan(pos.y, pos.x)) * floor(6.18 + pow(u_complexity ,3.0) * 6.18)) * sin(1.0 / (sqrt(length(pos) * length(pos) + 0.0118)) + timeswing * 2.28), 3.0);
 	// fbm
-    float pattern = pow(fbm(pos + vec2(fbm(pos * 0.382 + u_time), fbm(pos * 0.618 - u_time)) + u_volume_smooth * 0.228), 3.0);
+    float pattern = pow(fbm(pos + vec2(fbm(pos * 0.382 + timeswing), fbm(pos * 0.618 - timeswing)) + u_volume_smooth * 0.228), 3.0);
 	// erosion
 	float rot = pow(0.118 * length(pos) * punch, 3.0);
 	
     pos *= mat2(cos(rot), -sin(rot), sin(rot), cos(rot));
 	// coupling
 	vec2 cq = vec2(0.0);
-    cq.x = pow(fbm(uv + 0.118 * u_time), 3.0);
+    cq.x = pow(fbm(uv + 0.118 * timeswing), 3.0);
     cq.y = pow(fbm(uv + vec2(1.0)), 3.0);
     vec2 cr = vec2(0.0);
-    cr.x = pow(fbm(uv + 1.18 * cq + vec2(1.618, 6.18) + 0.1618 * u_time), 3.0);
-    cr.y = pow(fbm(uv + 1.18 * cq + vec2(3.82, 2.28) + 0.118 * u_time), 3.0);
+    cr.x = pow(fbm(uv + 1.18 * cq + vec2(1.618, 6.18) + 0.1618 * timeswing), 3.0);
+    cr.y = pow(fbm(uv + 1.18 * cq + vec2(3.82, 2.28) + 0.118 * timeswing), 3.0);
 	
     float cf = pow(fbm(uv + cr), 3.0);
 	
-    float wave = pow(0.618 + 0.382 * sin(u_time + pos.x * u_complexity) / (0.382 + 0.618 * bigZ), 3.0);
+    float wave = pow(0.618 + 0.382 * sin(timeswing * 0.618 + pos.x * u_complexity) / (0.382 + 0.618 * bigZ), 3.0);
     wave *= (0.118 + u_volume_smooth);
 	
-    float sym = pow(sin(u_time + pos.x * u_complexity + bigZ) / (0.0618 + 0.9382 * cos(pos.y * u_intensity - bigZ)), 3.0);
+    float sym = pow(sin(timeswing * 0.382 + pos.x * u_complexity + bigZ) / (0.0618 + 0.9382 * cos(timeswing * 0.618 + pos.y * u_intensity - bigZ)), 3.0);
 
-    float motion = pow(0.382 + 0.618 * sin(u_time + length(pos) * u_speed), 3.0);
+    float motion = pow(0.382 + 0.618 * sin(timeswing + length(pos) * u_speed), 3.0);
 
     vec3 baseColor   = vec3(0.228, 0.618, 0.382);
     vec3 accentColor = vec3(0.618, 0.382, 0.228);
@@ -275,7 +277,7 @@ void main() {
     color = mix(color, peakColor, (0.118 + u_peak));
 	
 	// regret
-	mat3 rrot = rotateY(u_orient.x + u_time * 0.382) * rotateX(u_orient.y + u_time * 0.228);
+	mat3 rrot = rotateY(u_orient.x + timeswing * 0.382) * rotateX(u_orient.y + timeswing * 0.228);
 	
     color *= sym * motion * pow(0.382 + 0.618 * u_intensity, 3.0) / (0.118 + 0.882 * pattern) * stripes / (0.118 + 0.882 * cf);
 	color *= rrot;
@@ -285,6 +287,8 @@ void main() {
 	
 	// love
 	float resonance = pow(sin(cr.x * 11.8) * sin(cr.y * 13.82) * (0.118 + 0.882 * u_intensity), 3.0);
+	
+	float swing = sin(timeswing * 2.0 * PI * u_fps * u_bpm * length(color));
 	
 	float r = 0.0618;
 	float sum = 0.0;
@@ -305,8 +309,6 @@ void main() {
 		// ridge
 		col /= clamp(ridgeFBM(base), 0.1, 0.2);
 		
-		float swing = sin(u_time * 2.0 * PI * u_fps * u_bpm * length(color));
-		
 		// thunder
 		float fade = pow(0.88, fi);
         color.r += col.r * fade * (1.0 + u_left + 0.382 * swing);
@@ -314,7 +316,7 @@ void main() {
         color.b += col.b * fade * (1.0 - u_right + 0.118 * swing);
 		
 		// prime
-		color += primeWave(col, color, u_time);
+		color += primeWave(col, color, timeswing);
 		
 		// infinite
 		sum += iwave(col, color, stripes, pattern);
@@ -326,7 +328,7 @@ void main() {
 	finalColor /= 0.1 + (1.0 - smoothstep(0.0, 1.0, sym)) * 0.618;
 	
 	// water
-	float noise = pow(sin(uv.x * 3.82 + u_time) * cos(uv.y * 6.18 - u_time), 3.0);
+	float noise = pow(sin(uv.x * 3.82 + timeswing) * cos(uv.y * 6.18 - timeswing), 3.0);
     float turbulence = bigZ * 16.18 + noise * (0.382 + 0.618 * u_intensity);
 	
 	// torture
