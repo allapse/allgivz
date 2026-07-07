@@ -2286,10 +2286,18 @@ class AudioMap {
 		// 更新時間
 		this.material.uniforms.u_time.value += 0.01 + this.params.speed * 0.02;
 		
-		this.currentMesh.rotation.y = (this.material.uniforms.u_left.value - this.material.uniforms.u_right.value) * 5.62;
-		this.currentMesh.rotation.x = 0.05 - Math.min(Math.max(Math.abs(this.material.uniforms.u_right.value - this.material.uniforms.u_left.value), 0.0), 0.1) * 5.62;
+		const lrdiff = (this.material.uniforms.u_right.value - this.material.uniforms.u_left.value) * this.material.uniforms.u_peak.value;
 
-		//console.log([this.currentMesh.rotation.x, this.currentMesh.rotation.y]);
+		this.currentMesh.rotation.y += lrdiff * 1.618;
+		this.currentMesh.rotation.y *= 0.618;
+		
+		this.currentMesh.rotation.x += 0.05 - Math.min(Math.max(Math.abs(lrdiff), 0.0), 0.1) * 0.618;
+		this.currentMesh.rotation.x *= 0.382;
+		
+		this.currentMesh.rotation.z += -0.05 + Math.min(Math.max(Math.abs(lrdiff), 0.0), 0.1) * 0.618;
+		this.currentMesh.rotation.z *= 0.382;
+
+		console.log([this.currentMesh.rotation.x, this.currentMesh.rotation.y, this.currentMesh.rotation.z]);
 
 		if (this && this.analyser && this.dataArray) {
 			
