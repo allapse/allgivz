@@ -22,16 +22,16 @@ void main() {
 	
 	float punch = pow(0.618 + 0.382 * u_intensity * u_complexity * u_speed * u_peak, 3.0);
 
-    float t = u_time * 0.118;
-    float z = 0.0;
-
     vec2 p = (uv * 16.18 - 8.09) * ratio * (0.618 + punch); 
+	
+	float t = u_time * (1.0 + 0.382 * sin(u_time * 2.0 * PI * u_fps * u_bpm * length(p)));
+    float z = 0.0;
 
     z += sin(p.x * (0.618 + 0.382 * u_intensity) + t) * 0.118;
     z += cos(p.y * (0.382 + 0.618 * u_complexity) + u_time * 0.618) * 0.382;
     z += sin(p.x * (0.618 + 0.382 * u_speed) + p.y * (0.382 + 0.618 * u_peak) + t * 0.382) * 0.618;
 	
-	float swing = sin(u_time * 2.0 * PI * u_fps * u_bpm * length(p));
+	float swing = cos(u_time * 2.0 * PI * u_fps * u_bpm * length(p));
     float lrx = clamp(pow(1.0 + clamp((u_left - u_right), -0.118, 0.118) , 1.0 + abs(8.09 - p.y)), 0.882, 1.118);
 	lrx = 0.882 + 0.382 * smoothstep(0.618, 1.382, lrx + 0.382 * swing);
 
