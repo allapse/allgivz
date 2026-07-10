@@ -176,6 +176,7 @@ class AudioMap {
 		this.moveList=[];
 		
 		this.timeAnchor = 0;
+		this.l = false;
 	}
 	
 	async buildMainUI(overlayText, linkText, url, audioPath) {
@@ -2212,7 +2213,11 @@ class AudioMap {
 	async startEngine(shaderPath) {
 		// 將 init 的邏輯搬進來
 		this.scene = new THREE.Scene();
-		this.camera = new THREE.Camera();
+		this.stereoCamera = new THREE.StereoCamera();
+		this.camera = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -1.0, -1.0, 1.0);
+		this.stereoCamera.cameraL = new THREE.OrthographicCamera(-0.999, 1.0, 0.999, -1.0, -0.618, 1.0);
+		this.stereoCamera.cameraR = new THREE.OrthographicCamera(-1.0, 0.999, 1.0, -0.999, -1.0, 0.618);
+		
 		this.renderer = new THREE.WebGLRenderer({ antialias: true });
 		this.renderer.setSize(window.innerWidth, window.innerHeight);
 		document.getElementById('container').appendChild(this.renderer.domElement);
@@ -2249,7 +2254,7 @@ class AudioMap {
 		//this.scene.add(mesh);
 		
 		let lastTime = performance.now();
-		let frameCount = 0;
+		let frameCount = 0;	
 		let fps = 0;
 		
 		// 啟動渲染迴圈
@@ -2294,10 +2299,16 @@ class AudioMap {
 		this.currentMesh.rotation.x += 0.0618 - Math.min(Math.max(Math.abs(lrdiff), 0.0), 0.1) * 0.618;
 		this.currentMesh.rotation.x *= 0.382;
 		
-		this.currentMesh.rotation.z += -0.0118 + Math.min(Math.max(Math.abs(lrdiff), 0.0), 0.1) * 0.618;
+		this.currentMesh.rotation.z += Math.min(Math.max(-0.0618 + Math.min(Math.max(Math.abs(lrdiff), 0.01), 0.1) * 1.618, -0.0118), 0.0118);
 		this.currentMesh.rotation.z *= 0.382;
+			
+		this.stereoCamera.eyeSep = Math.min(Math.max(this.camera.eyeSep * (1.618 - this.material.uniforms.u_peak.value), 0.618), 1.618);
+		//console.log(this.camera.eyeSep);
 
 		//console.log([this.currentMesh.rotation.x, this.currentMesh.rotation.y, this.currentMesh.rotation.z]);
+		
+		//this.camera.updateWorldMatrix();
+        //this.stereoCamera.update(this.camera);
 
 		if (this && this.analyser && this.dataArray) {
 			
@@ -2310,8 +2321,9 @@ class AudioMap {
 		
 		// 不管有沒有 needsFeedback，都要先畫出這一幀
 		this.renderer.setRenderTarget(this.targetA);
-		this.renderer.render(this.scene, this.camera);
-
+		//this.renderer.render(this.scene, this.camera);
+		this.renderer.render(this.scene, this.l?this.stereoCamera.cameraL:this.stereoCamera.cameraR);
+		
 		// 1. 數據分析：趁 A 還是熱騰騰的新畫面的時候，趕快分析
 		// 這樣所有 Shader（不論有沒有殘影）都能支持音訊回饋
 		if (this.feedback && this.feedbackMode) {
@@ -2332,7 +2344,9 @@ class AudioMap {
 
 		// 2. 顯示到螢幕
 		this.renderer.setRenderTarget(null);
-		this.renderer.render(this.scene, this.camera);
+		//this.renderer.render(this.scene, this.camera);
+		this.renderer.render(this.scene, this.l?this.stereoCamera.cameraR:this.stereoCamera.cameraL);
+		this.l = !this.l;
 
 		// 3. 檢測：這個 Shader 到底需不需要「記憶」？
 		// 檢查 fragmentShader 的原始碼字串
