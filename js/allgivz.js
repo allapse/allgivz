@@ -629,7 +629,7 @@ class AudioMap {
 							<Label id="fftlv-value-label">4</Label>
 							<Label id="fps-split-2">/</Label>
 							<Label class="ari-label">ARI</Label>
-							<Label id="ari-value-label">4</Label>
+							<Label id="ari-value-label">04</Label>
 						</div>
 					</div>
 				</div>
@@ -2275,7 +2275,7 @@ class AudioMap {
 
 			this.updateAudioReaction();
 
-			this.ariLabel.textContent = Math.round(targetInterval);
+			this.ariLabel.textContent = targetInterval.toString().padStart(2, '0');
 
 			if (ariLoop) clearTimeout(ariLoop);
 			ariLoop = setTimeout(runARILoop, targetInterval);
@@ -2293,7 +2293,7 @@ class AudioMap {
 			
 			if (document.hidden) return;
 			
-			this.internalUpdate(); // 處理音訊、時間、Uniforms 同步
+			this.internalUpdate(frameCount); // 處理音訊、時間、Uniforms 同步
 			
 			frameCount++;
 
@@ -2317,7 +2317,7 @@ class AudioMap {
 		});
 	}
 	
-	internalUpdate(){
+	internalUpdate(frameCount){
 		// 更新時間
 		this.material.uniforms.u_time.value += 0.01 + this.params.speed * 0.02;
 		
@@ -2357,8 +2357,10 @@ class AudioMap {
 		// 1. 數據分析：趁 A 還是熱騰騰的新畫面的時候，趕快分析
 		// 這樣所有 Shader（不論有沒有殘影）都能支持音訊回饋
 		if (this.feedback && this.feedbackMode) {
-			this.feedback.update(this.targetA.texture);
-			this.applyEffects(this.feedback);
+			if(frameCount % 4 ==0) {
+				this.feedback.update(this.targetA.texture);
+				this.applyEffects(this.feedback);
+			}
 			
 			let fftlv = 4;
 			if(this.fpsLabel.textContent > 30) {
