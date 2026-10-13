@@ -606,14 +606,14 @@ class AudioMap {
 			<div class="pro-audio-rack">
 				<div class="main-vu-side">
 					<div class="vu-meter vertical-large">
-						<div class="vu-bar" id="main-vol-bar" style="transition: transform 0.6s ease-out;"></div>
+						<div class="vu-bar" id="main-vol-bar" style="transition: transform 0.3s ease-out;"></div>
 					</div>
 					<div class="side-label-bottom">VOL</div>
 				</div>
 			
 				<div class="main-vu-side">
 					<div class="vu-meter vertical-small">
-						<div class="vu-bar" id="main-l-bar" style="transition: transform 0.6s ease-out;"></div>
+						<div class="vu-bar" id="main-l-bar" style="transition: transform 0.3s ease-out;"></div>
 					</div>
 					<div class="side-label-bottom"> L</div>
 				</div>
@@ -636,14 +636,14 @@ class AudioMap {
 				
 				<div class="main-vu-side">
 					<div class="vu-meter vertical-small">
-						<div class="vu-bar" id="main-r-bar" style="transition: transform 0.6s ease-out;"></div>
+						<div class="vu-bar" id="main-r-bar" style="transition: transform 0.3s ease-out;"></div>
 					</div>
 					<div class="side-label-bottom">R </div>
 				</div>
 
 				<div class="main-vu-side">
 					<div class="vu-meter vertical-large">
-						<div id="main-peak-bar" style="transition: transform 0.3s ease-out;"></div>
+						<div id="main-peak-bar" style="transition: transform 0.1s ease-out;"></div>
 					</div>
 					<div class="side-label-bottom">PEAK</div>
 				</div>
@@ -2259,7 +2259,7 @@ class AudioMap {
 		//this.scene.add(mesh);
 		
 		let ariLoop = null;
-		let targetInterval = 4;
+		let targetInterval = 3;
 		let lastCallTime = performance.now();
 
 		const runARILoop = () => {
@@ -2267,10 +2267,10 @@ class AudioMap {
 			const actualDelta = now - lastCallTime;
 			lastCallTime = now;
 			
-			if (actualDelta > targetInterval * 1.25) {
+			if (actualDelta - targetInterval > 1) {
 				targetInterval = Math.min(targetInterval + 1, 16);
 			} else {
-				targetInterval = Math.max(targetInterval - 1, 4);
+				targetInterval = Math.max(targetInterval - 1, 3);
 			}
 
 			this.updateAudioReaction();
