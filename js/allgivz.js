@@ -575,7 +575,7 @@ class AudioMap {
 					bottom: 0;
 					left: 0;
 					/* 初始高度為 0 */
-					height: 0%;			
+					height: 100%;			
 					/* 如果想要絲滑一點，可以加極短的過渡 */
 					
 				}
@@ -605,14 +605,14 @@ class AudioMap {
 			<div class="pro-audio-rack">
 				<div class="main-vu-side">
 					<div class="vu-meter vertical-large">
-						<div class="vu-bar" id="main-vol-bar" style="transition: height 0.3s ease-out;"></div>
+						<div class="vu-bar" id="main-vol-bar" style="transition: transform 0.1s ease-out;"></div>
 					</div>
 					<div class="side-label-bottom">VOL</div>
 				</div>
 			
 				<div class="main-vu-side">
 					<div class="vu-meter vertical-small">
-						<div class="vu-bar" id="main-l-bar" style="transition: height 0.3s ease-out;"></div>
+						<div class="vu-bar" id="main-l-bar" style="transition: transform 0.1s ease-out;"></div>
 					</div>
 					<div class="side-label-bottom"> L</div>
 				</div>
@@ -632,14 +632,14 @@ class AudioMap {
 				
 				<div class="main-vu-side">
 					<div class="vu-meter vertical-small">
-						<div class="vu-bar" id="main-r-bar" style="transition: height 0.3s ease-out;"></div>
+						<div class="vu-bar" id="main-r-bar" style="transition: transform 0.1s ease-out;"></div>
 					</div>
 					<div class="side-label-bottom">R </div>
 				</div>
 
 				<div class="main-vu-side">
 					<div class="vu-meter vertical-large">
-						<div id="main-peak-bar" style="transition: height 0.1s ease-out;"></div>
+						<div id="main-peak-bar" style="transition: transform 0.1s ease-out;"></div>
 					</div>
 					<div class="side-label-bottom">PEAK</div>
 				</div>
@@ -1513,19 +1513,19 @@ class AudioMap {
 		if (this.volBar) {
 			const uiVol = Math.min(Math.sqrt(currentTarget * 1.5), 1.0);
 			// 將 0~1 轉換為 0%~100%
-			this.volBar.style.height = `${uiVol * 100}%`;
+			this.volBar.style.transform = `scaleY(${uiVol})`;
 		}
 		if (this.peakBar) {
 			const uiPeak = Math.min(Math.pow(currentPeak, 3), 1.0);
-			this.peakBar.style.height = `${uiPeak * 100}%`;
+			this.peakBar.style.transform = `scaleY(${uiPeak})`;
 		}
 		if (this.lBar) {
 			const uiLeft = Math.min(0.5 * Math.sqrt(resultLeft) + resultLeft, 1.0);
-			this.lBar.style.height = `${uiLeft * 100}%`;
+			this.lBar.style.transform = `scaleY(${uiLeft})`;
 		}
 		if (this.rBar) {
 			const uiRight = Math.min(0.5 * Math.sqrt(resultRight) + resultRight, 1.0);
-			this.rBar.style.height = `${uiRight * 100}%`;
+			this.rBar.style.transform = `scaleY(${uiRight})`;
 		}
 
 		// 儲存本次狀態供下次循環使用
@@ -2257,6 +2257,10 @@ class AudioMap {
 		let frameCount = 0;	
 		let fps = 0;
 		
+		setInterval(() => {
+			this.updateAudioReaction();
+		}, 10);
+		
 		// 啟動渲染迴圈
 		const animate = (now) => {
 			requestAnimationFrame(animate);
@@ -2312,7 +2316,7 @@ class AudioMap {
 
 		if (this && this.analyser && this.dataArray) {
 			
-			this.updateAudioReaction();
+			//this.updateAudioReaction();
 			this.updateGyroUI();
 			
 			this.material.uniforms.u_progress.value = this.audio.currentTime / this.audio.duration;
