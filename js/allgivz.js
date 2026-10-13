@@ -2259,7 +2259,7 @@ class AudioMap {
 		//this.scene.add(mesh);
 		
 		let ariLoop = null;
-		let targetInterval = 3;
+		let targetInterval = 4;
 		let lastCallTime = performance.now();
 
 		const runARILoop = () => {
@@ -2267,10 +2267,10 @@ class AudioMap {
 			const actualDelta = now - lastCallTime;
 			lastCallTime = now;
 			
-			if (actualDelta - targetInterval > 1) {
-				targetInterval = Math.min(targetInterval + 1, 16);
+			if (actualDelta - targetInterval > 4) {
+				targetInterval = Math.min(targetInterval + 1, 12);
 			} else {
-				targetInterval = Math.max(targetInterval - 1, 3);
+				targetInterval = Math.max(targetInterval - 1, 4);
 			}
 
 			this.updateAudioReaction();
