@@ -2281,7 +2281,7 @@ class AudioMap {
 		};
 
 		// 啟動第一次
-		setTimeout(runARILoop, currentInterval);
+		//setTimeout(runARILoop, currentInterval);
 		
 		let lastTime = performance.now();
 		let frameCount = 0;	
@@ -2342,7 +2342,7 @@ class AudioMap {
 
 		if (this && this.analyser && this.dataArray) {
 			
-			//this.updateAudioReaction();
+			this.updateAudioReaction();
 			this.updateGyroUI();
 			
 			this.material.uniforms.u_progress.value = this.audio.currentTime / this.audio.duration;
