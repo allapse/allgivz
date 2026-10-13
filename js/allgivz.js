@@ -606,14 +606,14 @@ class AudioMap {
 			<div class="pro-audio-rack">
 				<div class="main-vu-side">
 					<div class="vu-meter vertical-large">
-						<div class="vu-bar" id="main-vol-bar" style="transition: transform 0.3s ease-out;"></div>
+						<div class="vu-bar" id="main-vol-bar" style="transition: transform 0.6s ease-out;"></div>
 					</div>
 					<div class="side-label-bottom">VOL</div>
 				</div>
 			
 				<div class="main-vu-side">
 					<div class="vu-meter vertical-small">
-						<div class="vu-bar" id="main-l-bar" style="transition: transform 0.3s ease-out;"></div>
+						<div class="vu-bar" id="main-l-bar" style="transition: transform 0.6s ease-out;"></div>
 					</div>
 					<div class="side-label-bottom"> L</div>
 				</div>
@@ -636,14 +636,14 @@ class AudioMap {
 				
 				<div class="main-vu-side">
 					<div class="vu-meter vertical-small">
-						<div class="vu-bar" id="main-r-bar" style="transition: transform 0.3s ease-out;"></div>
+						<div class="vu-bar" id="main-r-bar" style="transition: transform 0.6s ease-out;"></div>
 					</div>
 					<div class="side-label-bottom">R </div>
 				</div>
 
 				<div class="main-vu-side">
 					<div class="vu-meter vertical-large">
-						<div id="main-peak-bar" style="transition: transform 0.1s ease-out;"></div>
+						<div id="main-peak-bar" style="transition: transform 0.3s ease-out;"></div>
 					</div>
 					<div class="side-label-bottom">PEAK</div>
 				</div>
@@ -2258,36 +2258,38 @@ class AudioMap {
 		//const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.material);
 		//this.scene.add(mesh);
 		
-		let lastTime = performance.now();
-		let frameCount = 0;	
-		let fps = 60;
-
 		let ariLoop = null;
-		let arilastTime = performance.now();
+		let targetInterval = 4; // 預設從 16ms 開始 (約 60fps 節奏)
 		let currentInterval = 4;
 
 		const runARILoop = () => {
-			const now = performance.now();
-			const actualDelta = now - arilastTime;
-			arilastTime = now;
-
-			if (actualDelta > currentInterval * 2.5) { 
-				
-				currentInterval = Math.min(currentInterval + 1, 16);
-			} else {
-				currentInterval = Math.max(currentInterval - 1, 4);
-			}
-			
-			this.ariLabel.textContent = currentInterval;
+			const startTime = performance.now();
 
 			this.updateAudioReaction();
+
+			const executionTime = performance.now() - startTime;
+
+			// 用平滑的加減法取代乘除，避免震盪太劇烈
+			if (executionTime > targetInterval / 2) {
+				targetInterval = Math.min(targetInterval + 1, 16); // 變重就慢慢拉長，上限 32ms
+			} else if (targetInterval > executionTime * 2) {
+				targetInterval = Math.max(targetInterval - 1, 4);  // 變輕就慢慢縮短，下限 4ms
+			}
+
+			// 確保等待時間至少留給瀏覽器喘息（例如設個最低 4ms 緩衝）
+			currentInterval = Math.round(Math.max(2, targetInterval - executionTime));
+
+			this.ariLabel.textContent = currentInterval;
 
 			if (ariLoop) clearTimeout(ariLoop);
 			ariLoop = setTimeout(runARILoop, currentInterval);
 		};
 
-		// 啟動第一次
-		ariLoop = setTimeout(runARILoop, currentInterval);
+		ariLoop = setTimeout(runARILoop, targetInterval);
+		
+		let lastTime = performance.now();
+		let frameCount = 0;	
+		let fps = 60;
 		
 		// 啟動渲染迴圈
 		const animate = (now) => {
