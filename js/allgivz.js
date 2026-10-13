@@ -578,7 +578,7 @@ class AudioMap {
 					/* 初始高度為 0 */
 					height: 100%;			
 					/* 如果想要絲滑一點，可以加極短的過渡 */
-					
+					transform-origin: bottom;
 				}
 				
 				.side-label-bottom {
@@ -622,13 +622,13 @@ class AudioMap {
 					${slidersHtml}
 					<div class="info-labels">
 						<div class="fps-group">
-							<Label class="fps-label">FPS:</Label>
+							<Label class="fps-label">FPS</Label>
 							<Label id="fps-value-label">00</Label>
 							<Label id="fps-split-1">/</Label>
-							<Label class="fftlv-label">FFT:</Label>
+							<Label class="fftlv-label">FFT</Label>
 							<Label id="fftlv-value-label">4</Label>
 							<Label id="fps-split-2">/</Label>
-							<Label class="ari-label">ARI:</Label>
+							<Label class="ari-label">ARI</Label>
 							<Label id="ari-value-label">4</Label>
 						</div>
 					</div>
