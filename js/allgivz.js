@@ -2257,7 +2257,12 @@ class AudioMap {
 		await this.loadShader(shaderPath);
 		//const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.material);
 		//this.scene.add(mesh);
+		
+		let lastTime = performance.now();
+		let frameCount = 0;	
+		let fps = 60;
 
+		let ariLoop = null;
 		let arilastTime = performance.now();
 		let currentInterval = 4;
 
@@ -2277,15 +2282,12 @@ class AudioMap {
 
 			this.updateAudioReaction();
 
-			setTimeout(runARILoop, currentInterval);
+			if (ariLoop) clearTimeout(ariLoop);
+			ariLoop = setTimeout(runARILoop, currentInterval);
 		};
 
 		// 啟動第一次
-		//setTimeout(runARILoop, currentInterval);
-		
-		let lastTime = performance.now();
-		let frameCount = 0;	
-		let fps = 0;
+		ariLoop = setTimeout(runARILoop, currentInterval);
 		
 		// 啟動渲染迴圈
 		const animate = (now) => {
@@ -2342,7 +2344,7 @@ class AudioMap {
 
 		if (this && this.analyser && this.dataArray) {
 			
-			this.updateAudioReaction();
+			//this.updateAudioReaction();
 			this.updateGyroUI();
 			
 			this.material.uniforms.u_progress.value = this.audio.currentTime / this.audio.duration;
