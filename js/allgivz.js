@@ -2259,30 +2259,26 @@ class AudioMap {
 		//this.scene.add(mesh);
 		
 		let ariLoop = null;
-		let targetInterval = 4; // 預設從 16ms 開始 (約 60fps 節奏)
-		let currentInterval = 4;
+		let targetInterval = 4;
+		let lastCallTime = performance.now();
 
 		const runARILoop = () => {
-			const startTime = performance.now();
+			const now = performance.now();
+			const actualDelta = now - lastCallTime;
+			lastCallTime = now;
+			
+			if (actualDelta > targetInterval * 1.25) {
+				targetInterval = Math.min(targetInterval + 1, 16);
+			} else {
+				targetInterval = Math.max(targetInterval - 1, 4);
+			}
 
 			this.updateAudioReaction();
 
-			const executionTime = performance.now() - startTime;
-
-			// 用平滑的加減法取代乘除，避免震盪太劇烈
-			if (executionTime > targetInterval / 2) {
-				targetInterval = Math.min(targetInterval + 1, 16); // 變重就慢慢拉長，上限 32ms
-			} else if (targetInterval > executionTime * 2) {
-				targetInterval = Math.max(targetInterval - 1, 4);  // 變輕就慢慢縮短，下限 4ms
-			}
-
-			// 確保等待時間至少留給瀏覽器喘息（例如設個最低 4ms 緩衝）
-			currentInterval = Math.round(Math.max(2, targetInterval - executionTime));
-
-			this.ariLabel.textContent = currentInterval;
+			this.ariLabel.textContent = Math.round(targetInterval);
 
 			if (ariLoop) clearTimeout(ariLoop);
-			ariLoop = setTimeout(runARILoop, currentInterval);
+			ariLoop = setTimeout(runARILoop, targetInterval);
 		};
 
 		ariLoop = setTimeout(runARILoop, targetInterval);
