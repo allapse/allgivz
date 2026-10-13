@@ -340,7 +340,7 @@ void main() {
 	finalColor *= finalColor;
 	
 	float v_z_st = 0.0;
-	float lrpunch = 0.382 + (u_left - u_right) * 6.18 * punch;
+	float lrpunch = 0.382 + (u_left - u_right) * 6.18 * punch * sin(timeswing);
 	
 	if(u_darkGlow > 0.5) {
 		if(v_uv.x < lrpunch) {
@@ -363,7 +363,7 @@ void main() {
 		leftCol = 1.0 - exp(-finalColor * 3.0);
 	}
 	else {
-		if(v_uv.x < v_uv.y) {
+		if(v_uv.x < v_uv.y * cos(timeswing)) {
 			// bubble
 			if (v_z > 0.618 * wave || 0.382 * stripes > bigZ) discard;
 		}
@@ -374,11 +374,30 @@ void main() {
 		rightCol = 1.0 - exp(-finalColor * 3.0);
 	}
 	
-	float t = smoothstep(0.382 - 0.382 * punch, 0.618 + 0.382 * punch, v_uv.x);
+	float t = smoothstep(0.382 - 0.382 * punch, 0.618 + 0.382 * punch, length(vec3(v_uv, v_z)) * sin(timeswing));
 	finalColor = mix(leftCol, rightCol, t);
 	
 	finalColor = mix(finalColor, past, 0.618);
+	
+    r = length(vec3(v_uv * sin(timeswing), v_z * cos(timeswing)));
+    float a = atan(v_uv.y * cos(timeswing), v_uv.x * sin(timeswing));
     
-    gl_FragColor = rotZW * vec4(finalColor, 1.0);
+    float chaos = sin(a * 6.18 + t * 1.618) * cos(r * 16.18 - t * 3.82);
+		
+    pattern = sin(r * 16.18 - t * 6.18 + chaos * 1.618);
+    pattern = smoothstep(-0.1618, 0.618, pattern);
+    
+    float core = smoothstep(0.1618, 0.0, r);
+    float corePulse = 0.618 + 0.382 * sin(t * 6.18);
+    
+    vec3 colBg = vec3(0.0618, 0.01618, 0.1618);
+    vec3 colDissipation = vec3(0.618, 0.382, 0.1618) * pattern * (1.0 - a * 1.618);
+    vec3 colWinner = vec3(1.0, 0.618, 0.382) * core * (1.0 + corePulse * 1.618);
+
+    finalColor /= 0.1 + colBg + colDissipation + colWinner;
+
+    finalColor /= 0.1 + (1.0 - r * 0.618);
+    
+    gl_FragColor = vec4(finalColor, 1.0);
 	//gl_FragColor = vec4(0.118, 0.118, 0.118, 1.0);
 }
