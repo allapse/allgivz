@@ -153,6 +153,7 @@ class AudioMap {
 		this.peakBar = null;
 		this.fpsLabel = null;
 		this.fftlvLabel = null;
+		this.ariLabel = null;
 		this.effectsLv = 5;
 		
 		this.eqSelect = null;
@@ -623,9 +624,12 @@ class AudioMap {
 						<div class="fps-group">
 							<Label class="fps-label">FPS:</Label>
 							<Label id="fps-value-label">00</Label>
-							<Label id="fps-value-label">/</Label>
-							<Label class="fftlv-label">FFTLv:</Label>
+							<Label id="fps-split-1">/</Label>
+							<Label class="fftlv-label">FFT:</Label>
 							<Label id="fftlv-value-label">4</Label>
+							<Label id="fps-split-2">/</Label>
+							<Label class="ari-label">ARI:</Label>
+							<Label id="ari-value-label">4</Label>
 						</div>
 					</div>
 				</div>
@@ -1045,6 +1049,7 @@ class AudioMap {
 			this.peakBar = document.getElementById('main-peak-bar');
 			this.fpsLabel = document.getElementById('fps-value-label');
 			this.fftlvLabel = document.getElementById('fftlv-value-label');
+			this.ariLabel = document.getElementById('ari-value-label');
 			
 			const advLabel = document.getElementById('adv-label');
 			if (advLabel) {
@@ -2252,14 +2257,35 @@ class AudioMap {
 		await this.loadShader(shaderPath);
 		//const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.material);
 		//this.scene.add(mesh);
+
+		let arilastTime = performance.now();
+		let currentInterval = 4;
+
+		const runARILoop = () => {
+			const now = performance.now();
+			const actualDelta = now - arilastTime;
+			arilastTime = now;
+
+			if (actualDelta > currentInterval * 2.5) { 
+				
+				currentInterval = Math.min(currentInterval + 1, 16);
+			} else {
+				currentInterval = Math.max(currentInterval - 1, 4);
+			}
+			
+			this.ariLabel.textContent = currentInterval;
+
+			this.updateAudioReaction();
+
+			setTimeout(runARILoop, currentInterval);
+		};
+
+		// 啟動第一次
+		setTimeout(runARILoop, currentInterval);
 		
 		let lastTime = performance.now();
 		let frameCount = 0;	
 		let fps = 0;
-		
-		setInterval(() => {
-			this.updateAudioReaction();
-		}, 5);
 		
 		// 啟動渲染迴圈
 		const animate = (now) => {
