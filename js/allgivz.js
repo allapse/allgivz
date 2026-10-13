@@ -605,14 +605,14 @@ class AudioMap {
 			<div class="pro-audio-rack">
 				<div class="main-vu-side">
 					<div class="vu-meter vertical-large">
-						<div class="vu-bar" id="main-vol-bar" style="transition: transform 0.1s ease-out;"></div>
+						<div class="vu-bar" id="main-vol-bar" style="transition: transform 0.3s ease-out;"></div>
 					</div>
 					<div class="side-label-bottom">VOL</div>
 				</div>
 			
 				<div class="main-vu-side">
 					<div class="vu-meter vertical-small">
-						<div class="vu-bar" id="main-l-bar" style="transition: transform 0.1s ease-out;"></div>
+						<div class="vu-bar" id="main-l-bar" style="transition: transform 0.3s ease-out;"></div>
 					</div>
 					<div class="side-label-bottom"> L</div>
 				</div>
@@ -632,7 +632,7 @@ class AudioMap {
 				
 				<div class="main-vu-side">
 					<div class="vu-meter vertical-small">
-						<div class="vu-bar" id="main-r-bar" style="transition: transform 0.1s ease-out;"></div>
+						<div class="vu-bar" id="main-r-bar" style="transition: transform 0.3s ease-out;"></div>
 					</div>
 					<div class="side-label-bottom">R </div>
 				</div>
@@ -2259,7 +2259,7 @@ class AudioMap {
 		
 		setInterval(() => {
 			this.updateAudioReaction();
-		}, 10);
+		}, 5);
 		
 		// 啟動渲染迴圈
 		const animate = (now) => {
