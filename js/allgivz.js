@@ -2258,7 +2258,7 @@ class AudioMap {
 		//const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.material);
 		//this.scene.add(mesh);
 		
-		let ariLoop = null;
+		/*let ariLoop = null;
 		let targetInterval = 4;
 		let lastCallTime = performance.now();
 
@@ -2281,7 +2281,7 @@ class AudioMap {
 			ariLoop = setTimeout(runARILoop, targetInterval);
 		};
 
-		ariLoop = setTimeout(runARILoop, targetInterval);
+		ariLoop = setTimeout(runARILoop, targetInterval);*/
 		
 		let lastTime = performance.now();
 		let frameCount = 0;	
@@ -2342,7 +2342,7 @@ class AudioMap {
 
 		if (this && this.analyser && this.dataArray) {
 			
-			//this.updateAudioReaction();
+			this.updateAudioReaction();
 			this.updateGyroUI();
 			
 			this.material.uniforms.u_progress.value = this.audio.currentTime / this.audio.duration;
