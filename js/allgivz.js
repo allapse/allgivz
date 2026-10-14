@@ -1397,6 +1397,7 @@ class AudioMap {
 				/*this.beatValue = 1.0;
 				this.lastFlashTime = now;*/
 				this.isBPMLocked = false;
+				this.updateAudioReaction();
 			}
 		}
 
