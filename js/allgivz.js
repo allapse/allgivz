@@ -1362,7 +1362,7 @@ class AudioMap {
 		
 		this.handleVol();
 		
-		const now = Date.now();
+		/*const now = Date.now();
 
 		if (!this.isBPMLocked) {
 			const bassAvg = (this.dataArray[0] + this.dataArray[1] + this.dataArray[2]) / 3;
@@ -1394,12 +1394,11 @@ class AudioMap {
 		} else {
 			// 鎖定後循環邏輯
 			if (now - this.lastFlashTime >= this.lockedInterval) {
-				/*this.beatValue = 1.0;
-				this.lastFlashTime = now;*/
+				//this.beatValue = 1.0;
+				//this.lastFlashTime = now;
 				this.isBPMLocked = false;
-				this.updateAudioReaction();
 			}
-		}
+		}*/
 
 		// 每一幀都讓能量衰減 (0.9 代表較長的餘暉，0.8 代表短促的閃爍)
 		this.beatValue *= 0.92; 
@@ -2258,31 +2257,54 @@ class AudioMap {
 		await this.loadShader(shaderPath);
 		//const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.material);
 		//this.scene.add(mesh);
-		
-		/*let ariLoop = null;
+
 		let targetInterval = 4;
-		let lastCallTime = performance.now();
 
-		const runARILoop = () => {
-			const now = performance.now();
-			const actualDelta = now - lastCallTime;
-			lastCallTime = now;
+		setInterval(() => {
+			if (!this.dataArray || !this.audioMappings.length) return;
+			this.analyser.getByteFrequencyData(this.dataArray);
+			this.analyserLeft.getByteFrequencyData(this.leftData);
+			this.analyserRight.getByteFrequencyData(this.rightData);
 			
-			if (actualDelta - targetInterval > 4) {
-				targetInterval = Math.min(targetInterval + 1, 12);
+			const now = Date.now();
+
+			if (!this.isBPMLocked) {
+				const bassAvg = (this.dataArray[0] + this.dataArray[1] + this.dataArray[2]) / 3;
+				const interval = now - this.lastFlashTime;
+
+				// 1. 偵測門檻
+				if (bassAvg > 200
+					&& (!this.material
+					|| (this.material.uniforms.u_volume.value > 0.2 
+					&& this.material.uniforms.u_peak.value > 0.9 ))
+					&& interval >= 300) {
+					if (this.lastFlashTime !== 0 && interval <= 1000) {
+						// 3. 計算 BPM 並做平滑處理
+						const rawBPM = 60000 / interval;
+						const roundedBPM = Math.round(rawBPM); 
+						
+						// 4. 反推回精確的間隔時間
+						this.lockedInterval = 60000 / roundedBPM;
+						this.isBPMLocked = true;
+						if(this.material) {
+							this.material.uniforms.u_bpm.value=roundedBPM;
+						}
+					}
+					this.lastFlashTime = now;
+					this.beatValue = 1.0;
+					this.updateAudioReaction();
+				}
 			} else {
-				targetInterval = Math.max(targetInterval - 1, 4);
+				// 鎖定後循環邏輯
+				if (now - this.lastFlashTime >= this.lockedInterval) {
+					/*this.beatValue = 1.0;
+					this.lastFlashTime = now;*/
+					this.isBPMLocked = false;
+				}
 			}
-
-			this.updateAudioReaction();
-
-			this.ariLabel.textContent = targetInterval.toString().padStart(2, '0');
-
-			if (ariLoop) clearTimeout(ariLoop);
-			ariLoop = setTimeout(runARILoop, targetInterval);
-		};
-
-		ariLoop = setTimeout(runARILoop, targetInterval);*/
+		}, targetInterval);
+		
+		this.ariLabel.textContent = targetInterval.toString().padStart(2, '0');
 		
 		let lastTime = performance.now();
 		let frameCount = 0;	
