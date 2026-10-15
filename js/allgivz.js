@@ -2262,9 +2262,6 @@ class AudioMap {
 
 		setInterval(() => {
 			if (!this.dataArray || !this.audioMappings.length) return;
-			this.analyser.getByteFrequencyData(this.dataArray);
-			this.analyserLeft.getByteFrequencyData(this.leftData);
-			this.analyserRight.getByteFrequencyData(this.rightData);
 			
 			const now = Date.now();
 
