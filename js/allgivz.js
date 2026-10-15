@@ -155,7 +155,7 @@ class AudioMap {
 		this.fftlvLabel = null;
 		this.ariLabel = null;
 		this.effectsLv = 5;
-		this.ari = true;
+		this.ariEnable = true;
 		
 		this.eqSelect = null;
 		this.eqQueue = [];
@@ -630,7 +630,7 @@ class AudioMap {
 							<Label id="fftlv-value-label">4</Label>
 							<Label id="fps-split-2">/</Label>
 							<Label class="ari-label">ARI</Label>
-							<Label id="ari-value-label">ON</Label>
+							<Label id="ari-value-label">04</Label>
 						</div>
 					</div>
 				</div>
@@ -1068,12 +1068,12 @@ class AudioMap {
 				// 使用箭頭函數確保 this 指向你的主程式物件
 				this.ariSelect.onchange = (e) => {
 					if(e.target.value=="ON") {
-						this.ari = true;
-						this.ariLabel.textContent = 'ON';
+						this.ariEnable = true;
+						this.ariLabel.textContent = '04';
 					}
 					else {
-						this.ari = false;
-						this.ariLabel.textContent = 'OFF';
+						this.ariEnable = false;
+						this.ariLabel.textContent = '00';
 					}
 					
 				};
@@ -2298,7 +2298,7 @@ class AudioMap {
 
 		setInterval(() => {
 			if (!this.dataArray || !this.audioMappings.length) return;
-			if(this.ari) {
+			if(this.ariEnable) {
 				const now = Date.now();
 
 				if (!this.isBPMLocked) {
@@ -2327,9 +2327,10 @@ class AudioMap {
 						}
 						this.lastFlashTime = now;
 						this.beatValue = 1.0;
-						this.analyser.getByteFrequencyData(this.dataArray);
+						/*this.analyser.getByteFrequencyData(this.dataArray);
 						this.analyserLeft.getByteFrequencyData(this.leftData);
-						this.analyserRight.getByteFrequencyData(this.rightData);
+						this.analyserRight.getByteFrequencyData(this.rightData);*/
+						this.updateAudioReaction();
 					}
 				} else {
 					// 鎖定後循環邏輯
