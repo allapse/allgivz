@@ -155,6 +155,7 @@ class AudioMap {
 		this.fftlvLabel = null;
 		this.ariLabel = null;
 		this.effectsLv = 5;
+		this.ari = true;
 		
 		this.eqSelect = null;
 		this.eqQueue = [];
@@ -752,6 +753,25 @@ class AudioMap {
 						<option value="1">1</option>
 					</select>
 				</div>
+				<style>
+					#ari-group { margin-top: 20px; position: relative; display: none; }
+					#ari-select {
+						width: 100%; background: transparent; color: #999;
+						border: none; border-bottom: 1px solid #999;
+						font-size: 9px; outline: none; letter-spacing: 1px;
+						-webkit-appearance: none; padding: 0px; cursor: pointer;
+						 margin-left: 2px;
+					}
+					#ari-group::after { content: '▼'; font-size: 8px; color: #999; position: absolute; right: 0; bottom: 8px; pointer-events: none;}
+					#ari-select option { font-size: 9px; background: #000; color: #999;}
+				</style>
+				<div id="ari-group">
+					<select id="ari-select">
+						<option value="" disabled selected>ARI</option>
+						<option value="ON">ON</option>
+						<option value="OFF">OFF</option>
+					</select>
+				</div>
 			</div>
 			<div class="info-labels" style="margin-top: 10px;">
 				<Label id="adv-label">▼</Label>
@@ -1043,6 +1063,20 @@ class AudioMap {
 				};
 			}
 			
+			this.elvSelect = document.getElementById('elv-select');
+			if (this.elvSelect) {
+				// 使用箭頭函數確保 this 指向你的主程式物件
+				this.elvSelect.onchange = (e) => {
+					if(e.target.value=="ON") {
+						this.ari = true;
+					}
+					else {
+						this.ari = false;
+					}
+					
+				};
+			}
+			
 			this.volBar = document.getElementById('main-vol-bar');
 			this.lBar = document.getElementById('main-l-bar');
 			this.rBar = document.getElementById('main-r-bar');
@@ -1055,7 +1089,7 @@ class AudioMap {
 			if (advLabel) {
 				// 使用箭頭函數確保 this 指向你的主程式物件
 				advLabel.onclick = (e) => {
-					const uiElements = ['fs-group', 'elv-group'];
+					const uiElements = ['fs-group', 'elv-group', 'ari-group'];
 					let display = 'none';
 					let text = '▼';
 					
@@ -1362,7 +1396,7 @@ class AudioMap {
 		
 		this.handleVol();
 		
-		/*const now = Date.now();
+		const now = Date.now();
 
 		if (!this.isBPMLocked) {
 			const bassAvg = (this.dataArray[0] + this.dataArray[1] + this.dataArray[2]) / 3;
@@ -1398,7 +1432,7 @@ class AudioMap {
 				//this.lastFlashTime = now;
 				this.isBPMLocked = false;
 			}
-		}*/
+		}
 
 		// 每一幀都讓能量衰減 (0.9 代表較長的餘暉，0.8 代表短促的閃爍)
 		this.beatValue *= 0.92; 
@@ -2262,42 +2296,10 @@ class AudioMap {
 
 		setInterval(() => {
 			if (!this.dataArray || !this.audioMappings.length) return;
-			
-			const now = Date.now();
-
-			if (!this.isBPMLocked) {
-				const bassAvg = (this.dataArray[0] + this.dataArray[1] + this.dataArray[2]) / 3;
-				const interval = now - this.lastFlashTime;
-
-				// 1. 偵測門檻
-				if (bassAvg > 200
-					&& (!this.material
-					|| (this.material.uniforms.u_volume.value > 0.2 
-					&& this.material.uniforms.u_peak.value > 0.9 ))
-					&& interval >= 300) {
-					if (this.lastFlashTime !== 0 && interval <= 1000) {
-						// 3. 計算 BPM 並做平滑處理
-						const rawBPM = 60000 / interval;
-						const roundedBPM = Math.round(rawBPM); 
-						
-						// 4. 反推回精確的間隔時間
-						this.lockedInterval = 60000 / roundedBPM;
-						this.isBPMLocked = true;
-						if(this.material) {
-							this.material.uniforms.u_bpm.value=roundedBPM;
-						}
-					}
-					this.lastFlashTime = now;
-					this.beatValue = 1.0;
-					this.updateAudioReaction();
-				}
-			} else {
-				// 鎖定後循環邏輯
-				if (now - this.lastFlashTime >= this.lockedInterval) {
-					/*this.beatValue = 1.0;
-					this.lastFlashTime = now;*/
-					this.isBPMLocked = false;
-				}
+			if(this.ari) {
+				this.analyser.getByteFrequencyData(this.dataArray);
+				this.analyserLeft.getByteFrequencyData(this.leftData);
+				this.analyserRight.getByteFrequencyData(this.rightData);
 			}
 		}, targetInterval);
 		
