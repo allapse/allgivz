@@ -630,7 +630,7 @@ class AudioMap {
 							<Label id="fftlv-value-label">4</Label>
 							<Label id="fps-split-2">/</Label>
 							<Label class="ari-label">ARI</Label>
-							<Label id="ari-value-label">04</Label>
+							<Label id="ari-value-label">ON</Label>
 						</div>
 					</div>
 				</div>
@@ -1063,15 +1063,17 @@ class AudioMap {
 				};
 			}
 			
-			this.elvSelect = document.getElementById('elv-select');
-			if (this.elvSelect) {
+			this.ariSelect = document.getElementById('ari-select');
+			if (this.ariSelect) {
 				// 使用箭頭函數確保 this 指向你的主程式物件
-				this.elvSelect.onchange = (e) => {
+				this.ariSelect.onchange = (e) => {
 					if(e.target.value=="ON") {
 						this.ari = true;
+						this.ariLabel.textContent = 'ON';
 					}
 					else {
 						this.ari = false;
+						this.ariLabel.textContent = 'OFF';
 					}
 					
 				};
@@ -2302,8 +2304,6 @@ class AudioMap {
 				this.analyserRight.getByteFrequencyData(this.rightData);
 			}
 		}, targetInterval);
-		
-		this.ariLabel.textContent = targetInterval.toString().padStart(2, '0');
 		
 		let lastTime = performance.now();
 		let frameCount = 0;	
