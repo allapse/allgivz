@@ -1398,7 +1398,7 @@ class AudioMap {
 		
 		this.handleVol();
 		
-		const now = Date.now();
+		/*const now = Date.now();
 
 		if (!this.isBPMLocked) {
 			const bassAvg = (this.dataArray[0] + this.dataArray[1] + this.dataArray[2]) / 3;
@@ -1434,7 +1434,7 @@ class AudioMap {
 				//this.lastFlashTime = now;
 				this.isBPMLocked = false;
 			}
-		}
+		}*/
 
 		// 每一幀都讓能量衰減 (0.9 代表較長的餘暉，0.8 代表短促的閃爍)
 		this.beatValue *= 0.92; 
@@ -2299,9 +2299,46 @@ class AudioMap {
 		setInterval(() => {
 			if (!this.dataArray || !this.audioMappings.length) return;
 			if(this.ari) {
-				this.analyser.getByteFrequencyData(this.dataArray);
-				this.analyserLeft.getByteFrequencyData(this.leftData);
-				this.analyserRight.getByteFrequencyData(this.rightData);
+				const now = Date.now();
+
+				if (!this.isBPMLocked) {
+					const bassAvg = (this.dataArray[0] + this.dataArray[1] + this.dataArray[2]) / 3;
+					const interval = now - this.lastFlashTime;
+					
+					// 1. 偵測門檻
+					if (bassAvg > 200
+						&& (!this.material
+						|| (this.material.uniforms.u_volume.value > 0.2 
+						&& this.material.uniforms.u_peak.value > 0.9 ))
+						&& interval >= 300) {
+						if (this.lastFlashTime !== 0 && interval <= 1000) {
+							// 3. 計算 BPM 並做平滑處理
+							const rawBPM = 60000 / interval;
+							const roundedBPM = Math.round(rawBPM); 
+							
+							// 4. 反推回精確的間隔時間
+							this.lockedInterval = 60000 / roundedBPM;
+							this.isBPMLocked = true;
+							if(this.material) {
+								this.material.uniforms.u_bpm.value=roundedBPM;
+							}
+							
+							//console.log(`BPM Locked: ${roundedBPM}, Interval: ${this.lockedInterval}ms`);
+						}
+						this.lastFlashTime = now;
+						this.beatValue = 1.0;
+						this.analyser.getByteFrequencyData(this.dataArray);
+						this.analyserLeft.getByteFrequencyData(this.leftData);
+						this.analyserRight.getByteFrequencyData(this.rightData);
+					}
+				} else {
+					// 鎖定後循環邏輯
+					if (now - this.lastFlashTime >= this.lockedInterval) {
+						//this.beatValue = 1.0;
+						//this.lastFlashTime = now;
+						this.isBPMLocked = false;
+					}
+				}
 			}
 		}, targetInterval);
 		
@@ -2363,7 +2400,6 @@ class AudioMap {
         //this.stereoCamera.update(this.camera);
 
 		if (this && this.analyser && this.dataArray) {
-			
 			this.updateAudioReaction();
 			this.updateGyroUI();
 			
