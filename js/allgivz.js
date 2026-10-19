@@ -1604,7 +1604,7 @@ class AudioMap {
 		const targetVal = min + (max - min) * ratio;
 
 		// 核心：更新這個被引用的 params 物件
-		this.params[mapping.key] += (targetVal - this.params[mapping.key]) * 0.1;
+		this.params[mapping.key] += (targetVal - this.params[mapping.key]) * 0.05;
 	}
 	
 	handleGivz(mapping, min, max) {
@@ -2336,10 +2336,13 @@ class AudioMap {
 						
 						if(this.params[this.zOrder[0]]>0.618 && this.params[this.zOrder[1]]>0.618 && this.params[this.zOrder[2]]>0.618)
 						{
-							const tempOrder = this.zOrder[2];
-							this.zOrder[2] = this.zOrder[1];
-							this.zOrder[1] = this.zOrder[0];
-							this.zOrder[0] = tempOrder;
+							const maxIndex = this.params.indexOf(Math.max(...this.params));
+							const minIndex = this.params.indexOf(Math.min(...this.params));
+							
+							const tempOrder = this.zOrder[maxIndex];
+							
+							this.zOrder[maxIndex] = this.zOrder[minIndex];
+							this.zOrder[minIndex] = tempOrder;
 						}
 					}
 					else {
