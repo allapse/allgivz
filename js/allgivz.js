@@ -1492,18 +1492,6 @@ class AudioMap {
 				}
 			}
 		});
-		
-		if(this.audioMappings[this.zOrder[0]]<0.382 && this.audioMappings[this.zOrder[1]]<0.382 && this.audioMappings[this.zOrder[2]]<0.382)
-		{
-			this.zOrder = ['intensity', 'speed', 'complexity'];
-		}
-		else if(this.audioMappings[this.zOrder[0]]>0.618 && this.audioMappings[this.zOrder[1]]>0.618 && this.audioMappings[this.zOrder[2]]>0.618)
-		{
-			const tempOrder = this.zOrder[2];
-			this.zOrder[2] = this.zOrder[1];
-			this.zOrder[1] = this.zOrder[0];
-			this.zOrder[0] = tempOrder;
-		}
     }
 	
 	handleVol() {
@@ -2345,6 +2333,18 @@ class AudioMap {
 						this.analyserLeft.getByteFrequencyData(this.leftData);
 						this.analyserRight.getByteFrequencyData(this.rightData);*/
 						this.updateAudioReaction();
+						
+						if(this.audioMappings[this.zOrder[0]]<0.382 && this.audioMappings[this.zOrder[1]]<0.382 && this.audioMappings[this.zOrder[2]]<0.382)
+						{
+							this.zOrder = ['intensity', 'speed', 'complexity'];
+						}
+						else if(this.audioMappings[this.zOrder[0]]>0.618 && this.audioMappings[this.zOrder[1]]>0.618 && this.audioMappings[this.zOrder[2]]>0.618)
+						{
+							const tempOrder = this.zOrder[2];
+							this.zOrder[2] = this.zOrder[1];
+							this.zOrder[1] = this.zOrder[0];
+							this.zOrder[0] = tempOrder;
+						}
 					}
 				} else {
 					// 鎖定後循環邏輯
