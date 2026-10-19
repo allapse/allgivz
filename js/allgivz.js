@@ -2334,7 +2334,7 @@ class AudioMap {
 						this.analyserRight.getByteFrequencyData(this.rightData);*/
 						this.updateAudioReaction();
 						
-						if(this.audioMappings[this.zOrder[0]]>0.618 && this.audioMappings[this.zOrder[1]]>0.618 && this.audioMappings[this.zOrder[2]]>0.618)
+						if(this.params[this.zOrder[0]]>0.618 && this.params[this.zOrder[1]]>0.618 && this.params[this.zOrder[2]]>0.618)
 						{
 							const tempOrder = this.zOrder[2];
 							this.zOrder[2] = this.zOrder[1];
@@ -2343,7 +2343,7 @@ class AudioMap {
 						}
 					}
 					else {
-						if(this.audioMappings[this.zOrder[0]]<0.382 && this.audioMappings[this.zOrder[1]]<0.382 && this.audioMappings[this.zOrder[2]]<0.382)
+						if(this.params[this.zOrder[0]]<0.382 && this.params[this.zOrder[1]]<0.382 && this.params[this.zOrder[2]]<0.382)
 						{
 							this.zOrder = ['intensity', 'speed', 'complexity'];
 						}
