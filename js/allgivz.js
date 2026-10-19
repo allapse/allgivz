@@ -179,6 +179,8 @@ class AudioMap {
 		
 		this.timeAnchor = 0;
 		this.l = false;
+		
+		this.zOrder = ['intensity', 'speed', 'complexity'];
 	}
 	
 	async buildMainUI(overlayText, linkText, url, audioPath) {
@@ -1490,6 +1492,18 @@ class AudioMap {
 				}
 			}
 		});
+		
+		if(this.audioMappings[this.zOrder[0]]<0.382 && this.audioMappings[this.zOrder[1]]<0.382 && this.audioMappings[this.zOrder[2]]<0.382)
+		{
+			this.zOrder = ['intensity', 'speed', 'complexity'];
+		}
+		else if(this.audioMappings[this.zOrder[0]]>0.618 && this.audioMappings[this.zOrder[1]]>0.618 && this.audioMappings[this.zOrder[2]]>0.618)
+		{
+			const tempOrder = this.zOrder[2];
+			this.zOrder[2] = this.zOrder[1];
+			this.zOrder[1] = this.zOrder[0];
+			this.zOrder[0] = tempOrder;
+		}
     }
 	
 	handleVol() {
@@ -1617,7 +1631,7 @@ class AudioMap {
 
 		// 各項特徵計算 (你原本的 Switch 內容)
 		switch (mapping.key) {
-			case 'intensity': // 全域重心 (Spectral Centroid)
+			case this.zOrder[0]: // 全域重心 (Spectral Centroid)
 				let weightedSum = 0;
 				let totalAmplitude = 0;
 				for (let i = 0; i < N; i++) {
@@ -1627,7 +1641,7 @@ class AudioMap {
 				result = totalAmplitude > 0 ? (weightedSum / totalAmplitude) / N : 0;
 				break;
 
-			case 'speed': // 全域飽滿度 (Spectral Flatness)
+			case this.zOrder[1]: // 全域飽滿度 (Spectral Flatness)
 				let sumLog = 0;
 				let sumArithmetic = 0;
 				for (let i = 0; i < N; i++) {
@@ -1647,7 +1661,7 @@ class AudioMap {
 				result = am > 0 ? (gm / am) : 0;
 				break;
 
-			case 'complexity': // 全域複雜度 (Spectral Flux)
+			case this.zOrder[2]: // 全域複雜度 (Spectral Flux)
 				if (!this.prevDataArray) this.prevDataArray = new Uint8Array(N);
 				let flux = 0;
 				for (let i = 0; i < N; i++) {
