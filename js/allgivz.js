@@ -2345,10 +2345,6 @@ class AudioMap {
 								this.zOrder[tempOrder] = this.zOrder[maxIndex];
 								this.zOrder[maxIndex] = tempOrder;
 							}
-							else {
-								this.zOrder[tempOrder] = this.zOrder[minIndex];
-								this.zOrder[minIndex] = tempOrder;
-							}
 						}
 						else {
 							this.zOrder = ['intensity', 'speed', 'complexity'];
