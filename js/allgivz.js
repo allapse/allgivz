@@ -2343,7 +2343,11 @@ class AudioMap {
 							
 							if(interval > 618) {
 								this.zOrder[tempOrder] = this.zOrder[maxIndex];
-								this.zOrder[maxIndex] = tempOrder;
+								this.zOrder[maxIndex] = this.zOrder[tempOrder];
+							}
+							else {
+								this.zOrder[tempOrder] = this.zOrder[minIndex];
+								this.zOrder[minIndex] = this.zOrder[tempOrder];
 							}
 						}
 						else {
@@ -2356,9 +2360,10 @@ class AudioMap {
 							const maxIndex = values.indexOf(Math.max(...values));
 							const minIndex = values.indexOf(Math.min(...values));
 							
-							const tempOrder = this.zOrder.indexOf('intensity');
-							this.zOrder[tempOrder] = this.zOrder[maxIndex];
-							this.zOrder[maxIndex] = tempOrder;
+							const intensityOrder = this.zOrder.indexOf('intensity');
+							const complexityOrder = this.zOrder.indexOf('complexity');
+							this.zOrder[intensityOrder] = this.zOrder[complexityOrder];
+							this.zOrder[complexityOrder] = this.zOrder[intensityOrder];
 						}
 						else {
 							this.zOrder = ['intensity', 'speed', 'complexity'];
