@@ -2335,6 +2335,10 @@ class AudioMap {
 						this.internalUpdate(0);
 						
 						if(this.params[this.zOrder[0]]>0.618 && this.params[this.zOrder[1]]>0.618 && this.params[this.zOrder[2]]>0.618) {
+							
+							this.zOrder = ['intensity', 'speed', 'complexity'];
+						}
+						else {
 							const values = this.zOrder.map(key => this.params[key]);
 							const maxIndex = values.indexOf(Math.max(...values));
 							const minIndex = values.indexOf(Math.min(...values));
@@ -2349,9 +2353,6 @@ class AudioMap {
 								this.zOrder[tempOrder] = this.zOrder[minIndex];
 								this.zOrder[minIndex] = 'speed';
 							}
-						}
-						else {
-							this.zOrder = ['intensity', 'speed', 'complexity'];
 						}
 					}
 					else {
