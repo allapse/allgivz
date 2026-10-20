@@ -2332,12 +2332,13 @@ class AudioMap {
 						/*this.analyser.getByteFrequencyData(this.dataArray);
 						this.analyserLeft.getByteFrequencyData(this.leftData);
 						this.analyserRight.getByteFrequencyData(this.rightData);*/
-						this.updateAudioReaction();
+						this.internalUpdate(0);
 						
 						if(this.params[this.zOrder[0]]>0.618 && this.params[this.zOrder[1]]>0.618 && this.params[this.zOrder[2]]>0.618)
 						{
-							const maxIndex = this.params.indexOf(Math.max(...this.params));
-							const minIndex = this.params.indexOf(Math.min(...this.params));
+							const values = this.zOrder.map(key => this.params[key]);
+							const maxIndex = values.indexOf(Math.max(...values));
+							const minIndex = values.indexOf(Math.min(...values));
 							
 							const tempOrder = this.zOrder[maxIndex];
 							
