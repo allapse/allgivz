@@ -2346,17 +2346,20 @@ class AudioMap {
 							const tempOrder = this.zOrder.indexOf('speed');
 							
 							if(interval > 618) {
-								this.zOrder[tempOrder] = this.zOrder[maxIndex];
-								this.zOrder[maxIndex] = 'speed';
-							}
-							else {
 								this.zOrder[tempOrder] = this.zOrder[minIndex];
 								this.zOrder[minIndex] = 'speed';
+							}
+							else {
+								this.zOrder[tempOrder] = this.zOrder[maxIndex];
+								this.zOrder[maxIndex] = 'speed';
 							}
 						}
 					}
 					else {
 						if(this.params[this.zOrder[0]]<0.382 && this.params[this.zOrder[1]]<0.382 && this.params[this.zOrder[2]]<0.382) {
+							this.zOrder = ['intensity', 'speed', 'complexity'];
+						}
+						else {
 							const values = this.zOrder.map(key => this.params[key]);
 							const maxIndex = values.indexOf(Math.max(...values));
 							const minIndex = values.indexOf(Math.min(...values));
@@ -2365,9 +2368,6 @@ class AudioMap {
 							const complexityOrder = this.zOrder.indexOf('complexity');
 							this.zOrder[intensityOrder] = 'complexity';
 							this.zOrder[complexityOrder] = 'intensity';
-						}
-						else {
-							this.zOrder = ['intensity', 'speed', 'complexity'];
 						}
 					}
 				} else {
