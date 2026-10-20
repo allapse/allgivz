@@ -2377,9 +2377,6 @@ class AudioMap {
 						this.isBPMLocked = false;
 					}
 				}
-				
-				if(this.zOrder[0] != 'intensity' || this.zOrder[1] != 'speed' || this.zOrder[2] != 'complexity')
-					console.log(this.zOrder);
 			}
 		}, targetInterval);
 		
