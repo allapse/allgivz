@@ -2334,21 +2334,33 @@ class AudioMap {
 						this.analyserRight.getByteFrequencyData(this.rightData);*/
 						this.internalUpdate(0);
 						
-						if(this.params[this.zOrder[0]]>0.618 && this.params[this.zOrder[1]]>0.618 && this.params[this.zOrder[2]]>0.618)
-						{
+						if(this.params[this.zOrder[0]]>0.618 && this.params[this.zOrder[1]]>0.618 && this.params[this.zOrder[2]]>0.618) {
 							const values = this.zOrder.map(key => this.params[key]);
 							const maxIndex = values.indexOf(Math.max(...values));
 							const minIndex = values.indexOf(Math.min(...values));
 							
-							const tempOrder = this.zOrder[maxIndex];
+							const tempOrder = this.zOrder.indexOf('speed');
 							
-							this.zOrder[maxIndex] = this.zOrder[minIndex];
-							this.zOrder[minIndex] = tempOrder;
+							if(interval > 618) {
+								this.zOrder[tempOrder] = this.zOrder[maxIndex];
+								this.zOrder[maxIndex] = tempOrder;
+							}
+							else {
+								this.zOrder[maxIndex] = this.zOrder[minIndex];
+								this.zOrder[minIndex] = tempOrder;
+							}
+						}
+						else {
+							this.zOrder = ['intensity', 'speed', 'complexity'];
 						}
 					}
 					else {
-						if(this.params[this.zOrder[0]]<0.382 && this.params[this.zOrder[1]]<0.382 && this.params[this.zOrder[2]]<0.382)
-						{
+						if(this.params[this.zOrder[0]]<0.382 && this.params[this.zOrder[1]]<0.382 && this.params[this.zOrder[2]]<0.382) {
+							const tempOrder = this.zOrder.indexOf('complexity');
+							this.zOrder[tempOrder] = this.zOrder[maxIndex];
+							this.zOrder[maxIndex] = tempOrder;
+						}
+						else {
 							this.zOrder = ['intensity', 'speed', 'complexity'];
 						}
 					}
