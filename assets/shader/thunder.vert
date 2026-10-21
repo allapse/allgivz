@@ -1,3 +1,5 @@
+precision highp float;
+
 varying vec2 v_uv;
 varying vec2 v_centered_uv;
 uniform vec2 u_res;
