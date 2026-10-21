@@ -1,3 +1,5 @@
+precision highp float;
+
 varying float vDist;
 varying float vAlpha;
 varying vec3 vColor;
