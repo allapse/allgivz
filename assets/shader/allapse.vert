@@ -15,7 +15,7 @@ uniform vec2 u_orient;
 
 void main() {
 	vec2 ratio = vec2(max(u_res.x / u_res.y, 1.0), max(u_res.y / u_res.x, 1.0));
-    v_uv = uv * 1.618 - 0.809;
+    v_uv = uv * 1.618;
 	
 	float punch = 0.7 + 0.3 * u_intensity * u_complexity * u_speed * u_peak;
 
