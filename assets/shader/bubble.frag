@@ -1,3 +1,5 @@
+precision highp float;
+
 uniform sampler2D u_camera;
 uniform float u_useCamera;
 uniform float u_darkGlow;
