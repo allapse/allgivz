@@ -188,7 +188,7 @@ float iwave(vec3 p, vec3 center, float freq, float phase) {
 }
 
 void main() {
-    vec2 uv = v_uv - 0.5;
+    vec2 uv = v_uv;
 	
 	// singularity
 	uv = abs(uv) - sin(u_left + 0.9 * u_complexity) - cos(u_right + 0.9 * u_intensity);
