@@ -22,7 +22,7 @@ void main() {
     float t = u_time * 0.1;
     float z = 0.0;
 
-    vec2 p = 7.0 * v_uv * punch; 
+    vec2 p = 9.382 * v_uv * punch; 
     z += sin(p.x * (0.7 + 0.3 * u_intensity) + t) * 0.3;
     z += cos(p.y * (0.3 + 0.7 * u_complexity) + u_time * 0.7) * 0.5;
     z += sin(p.x * (0.7 + 0.3 * u_speed) + p.y * (0.3 + 0.7 * u_peak) + t * 0.3);
