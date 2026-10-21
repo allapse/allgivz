@@ -1709,7 +1709,7 @@ class AudioMap {
 			this.params[mapping.key] = paramVal
 		}
 		else {
-			this.params[zKey] = paramVal;
+			this.params[zKey] = this.params[zKey] + (paramVal - this.params[zKey]) * 0.1618;
 		}
 
 		// 更新 UI (CSS Variable)
