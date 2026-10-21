@@ -1,3 +1,5 @@
+precision highp float;
+
 attribute float a_id;
 
 uniform vec2 u_res;
