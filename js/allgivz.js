@@ -967,7 +967,7 @@ class AudioMap {
 								if (el) el.style.display = 'none';
 							});
 						}
-					}, 150); 
+					}, 161); 
 					
 					hideUI.style.color = "#fff";
 					hideUI.textContent = "▲";
@@ -1211,7 +1211,7 @@ class AudioMap {
 		if(this.ueaMode) this.moveList.push('left');
 		
 		this.moveLinec(this.moveList);
-		setTimeout(() => this.moveLinec(), 300);
+		setTimeout(() => this.moveLinec(), 382);
 		this.moveList = [];
 		
 		const nextEQ = this.randomSelect("eqQueue", "currentEQIndex", this.eqSelect);
@@ -1379,9 +1379,9 @@ class AudioMap {
 
 		for (let i = 0; i < count; i++) {
 			// 在一個直徑 10 的立方體空間內隨機散佈
-			positions[i * 3] = (Math.random() - 0.5) * 10.0;
-			positions[i * 3 + 1] = (Math.random() - 0.5) * 10.0;
-			positions[i * 3 + 2] = (Math.random() - 0.5) * 10.0;
+			positions[i * 3] = (Math.random() - 0.618) * 10.0;
+			positions[i * 3 + 1] = (Math.random() - 0.618) * 10.0;
+			positions[i * 3 + 2] = (Math.random() - 0.618) * 10.0;
 			
 			ids[i] = i;
 		}
@@ -1439,7 +1439,7 @@ class AudioMap {
 		}*/
 
 		// 每一幀都讓能量衰減 (0.9 代表較長的餘暉，0.8 代表短促的閃爍)
-		this.beatValue *= 0.92; 
+		this.beatValue *= 0.9382; 
 		if (this.beatValue < 0.01) this.beatValue = 0;
 
 		this.audioMappings.forEach(mapping => {
@@ -1526,15 +1526,15 @@ class AudioMap {
 		resultRight = resultRight / lenLR / 255.0;
 		
 		// 平滑化處理
-		this.smoothedVolume += (currentTarget - this.smoothedVolume) * 0.15;
+		this.smoothedVolume += (currentTarget - this.smoothedVolume) * 0.1618;
 
 		if(this.material){
 			const lastPeak = this.material.uniforms.u_peak.value;
 			// 擾動
 			let jp = 1;
 			for(let i=0; i<6; i++){
-				if(peak === 255 && lastPeak === 1-(0.002 * i)){
-					jp = lastPeak - 0.002;
+				if(peak === 255 && lastPeak === 1-(0.001618 * i)){
+					jp = lastPeak - 0.001618;
 					break;
 				}
 			}
@@ -1542,7 +1542,7 @@ class AudioMap {
 			
 			// 更新 Uniforms
 			this.material.uniforms.u_volume.value = currentTarget;
-			this.material.uniforms.u_volume_smooth.value = Math.pow(this.smoothedVolume, 1.5) * 1.5;
+			this.material.uniforms.u_volume_smooth.value = Math.pow(this.smoothedVolume, 1.618) * 1.618;
 			this.material.uniforms.u_last_volume.value = this.lastVolume;
 			this.material.uniforms.u_left.value = resultLeft;
 			this.material.uniforms.u_right.value = resultRight;
@@ -1554,7 +1554,7 @@ class AudioMap {
 		}
 
 		if (this.volBar) {
-			const uiVol = Math.min(Math.sqrt(currentTarget * 1.5), 1.0);
+			const uiVol = Math.min(Math.sqrt(currentTarget * 1.618), 1.0);
 			// 將 0~1 轉換為 0%~100%
 			this.volBar.style.transform = `scaleY(${uiVol})`;
 		}
@@ -1563,11 +1563,11 @@ class AudioMap {
 			this.peakBar.style.transform = `scaleY(${uiPeak})`;
 		}
 		if (this.lBar) {
-			const uiLeft = Math.min(0.5 * Math.sqrt(resultLeft) + resultLeft, 1.0);
+			const uiLeft = Math.min(0.618 * Math.sqrt(resultLeft) + resultLeft, 1.0);
 			this.lBar.style.transform = `scaleY(${uiLeft})`;
 		}
 		if (this.rBar) {
-			const uiRight = Math.min(0.5 * Math.sqrt(resultRight) + resultRight, 1.0);
+			const uiRight = Math.min(0.618 * Math.sqrt(resultRight) + resultRight, 1.0);
 			this.rBar.style.transform = `scaleY(${uiRight})`;
 		}
 
@@ -1593,8 +1593,8 @@ class AudioMap {
 		currentAvg = Math.max(0, currentAvg - noiseFloor);
 
 		// 強化：動態峰值 (快速上升，極慢下降)
-		if (currentAvg > mapping.peak) mapping.peak += (currentAvg - mapping.peak) * 0.2;
-		else mapping.peak *= 0.995;
+		if (currentAvg > mapping.peak) mapping.peak += (currentAvg - mapping.peak) * 0.1618;
+		else mapping.peak *= 0.99382;
 		
 		mapping.el.style.setProperty('--peak', mapping.peak / (255 - noiseFloor));
 		
@@ -1604,7 +1604,7 @@ class AudioMap {
 		const targetVal = min + (max - min) * ratio;
 
 		// 核心：更新這個被引用的 params 物件
-		this.params[mapping.key] += (targetVal - this.params[mapping.key]) * 0.05;
+		this.params[mapping.key] += (targetVal - this.params[mapping.key]) * 0.0618;
 	}
 	
 	handleGivz(mapping, min, max) {
@@ -1661,7 +1661,7 @@ class AudioMap {
 				let rawComplexity = Math.min(flux / (N * 8), 1.0); 
 				let processedComplexity = Math.sqrt(rawComplexity); 
 
-				this.lastComplexity = (this.lastComplexity || 0) * 0.9 + processedComplexity * 0.1;
+				this.lastComplexity = (this.lastComplexity || 0) * 0.618 + processedComplexity * 0.382;
 				result = this.lastComplexity;
 				break;
 		}
@@ -1674,14 +1674,14 @@ class AudioMap {
 		// 動態觀察範圍 (僅在有訊號時更新)
 		if (hasSignal) {
 			// 正常的 Min 更新
-			mapping.state.min = Math.min(mapping.state.min, result) * 0.999 + result * 0.001;
+			mapping.state.min = Math.min(mapping.state.min, result) * 0.998382 + result * 0.001618;
 			
 			// 改進的 Max 更新：如果目前的結果大於紀錄，快速跟進；
 			// 如果目前的結果小於紀錄，則緩慢下降（防止被舊的高點鎖死）
 			if (result > mapping.state.max) {
 				mapping.state.max = result; // 瞬間跟進最高點
 			} else {
-				mapping.state.max = mapping.state.max * 0.995 + result * 0.005; // 稍微加快下降速度 (0.001 -> 0.005)
+				mapping.state.max = mapping.state.max * 0.99382 + result * 0.00618; // 稍微加快下降速度 (0.001 -> 0.005)
 			}
 		}
 
@@ -1696,14 +1696,21 @@ class AudioMap {
 		if (result > (mapping.peak || 0)) {
 			mapping.peak = result;
 		} else {
-			mapping.peak *= 0.992; // 稍快一點的下降，視覺較俐落
+			mapping.peak *= 0.99382; // 稍快一點的下降，視覺較俐落
 		}
 		
-		const zKey = this.audioMappings[this.zOrder.indexOf(mapping.key)].key;
-
 		// 映射回 User 設定的 min/max 並平滑化輸出
 		const targetVal = min + (max - min) * result;
-		this.params[mapping.key] += (targetVal - this.params[mapping.key]) * 0.15; // 增加反應速度
+		const paramVal = this.params[mapping.key] + (targetVal - this.params[mapping.key]) * 0.1618; // 增加反應速度
+		
+		const zKey = this.audioMappings[this.zOrder.indexOf(mapping.key)].key;
+		
+		if(zKey == mapping.key) {
+			this.params[mapping.key] = paramVal
+		}
+		else {
+			this.params[zKey] = paramVal;
+		}
 
 		// 更新 UI (CSS Variable)
 		if (mapping.el) {
@@ -1869,7 +1876,7 @@ class AudioMap {
 	
 	applyEffects(feedback) {
 		const now = this.audioContext.currentTime;
-		const rampTime = 0.7;
+		const rampTime = 0.618;
 		
 		const length = this.audioContext.sampleRate * 3 * feedback.R; // 2秒的殘響
 		const impulse = this.audioContext.createBuffer(2, length, this.audioContext.sampleRate);
@@ -1877,7 +1884,7 @@ class AudioMap {
 			const channelData = impulse.getChannelData(i);
 			for (let j = 0; j < length; j++) {
 				// 生成指數衰減的白噪音
-				channelData[j] = (Math.random() * 2 * feedback.G - 1) * Math.pow(1 - j / length * feedback.B, 2) * feedback.A;
+				channelData[j] = (Math.random() * 1.618 * feedback.G - 1) * Math.pow(1 - j / length * feedback.B, 2) * feedback.A;
 			}
 		}
 		this.reverbNode.buffer = impulse;
@@ -1887,7 +1894,7 @@ class AudioMap {
 		}
 		
 		try {
-			const k = feedback.R * 0.1;      // mapping amount → strong nonlinearity
+			const k = feedback.R * 0.09382;      // mapping amount → strong nonlinearity
 			const nSamples = 44100;      // high-resolution curve
 			const curve = new Float32Array(nSamples);
 
@@ -1905,23 +1912,23 @@ class AudioMap {
 			return;
 		}
 		
-		this.compressor.knee.setTargetAtTime(7 * feedback.R, now, rampTime);
-		this.compressor.ratio.setTargetAtTime(3 * feedback.G, now, rampTime);
-		this.compressor.attack.setTargetAtTime(0.007 * feedback.B, now, rampTime);
-		this.compressor.release.setTargetAtTime(0.03 * feedback.A, now, rampTime);
+		this.compressor.knee.setTargetAtTime(6.18 * feedback.R, now, rampTime);
+		this.compressor.ratio.setTargetAtTime(3.82 * feedback.G, now, rampTime);
+		this.compressor.attack.setTargetAtTime(0.00618 * feedback.B, now, rampTime);
+		this.compressor.release.setTargetAtTime(0.0382 * feedback.A, now, rampTime);
 		
 		if(this.effectsLv==3) {
 			return;
 		}
 		
-		this.synthDelay.delayTime.setTargetAtTime(0.0001 * feedback.fftLv, now, rampTime);
+		this.synthDelay.delayTime.setTargetAtTime(0.00009382 * feedback.fftLv, now, rampTime);
 		
 		if(this.effectsLv==4) {
 			return;
 		}
 		
 		const feedForward = [feedback.R, feedback.G, feedback.R];
-		const feedBackward = [feedback.B, -feedback.A, 2-feedback.B];
+		const feedBackward = [feedback.B, -feedback.A, 1.618-feedback.B];
 		this.iirFilter.feedForward = feedForward;
 		this.iirFilter.feedBackward = feedBackward;
 		
@@ -1978,13 +1985,13 @@ class AudioMap {
 	
 	// 隨機 ADSR 包絡線
 	applyRandomADSR(gainNode, now, duration) {
-		const attack = Math.random() * 0.8 + 0.2;   // 0.2 ~ 1.0 秒
-		const decay = Math.random() * 0.5 + 0.2;    // 0.2 ~ 0.7 秒
-		const sustain = Math.random() * 0.05 + 0.02; // 0.02 ~ 0.07 音量
-		const release = Math.random() * 1.0 + 0.5;  // 0.5 ~ 1.5 秒
+		const attack = Math.random() * 0.9382 + 0.1618;   // 0.2 ~ 1.0 秒
+		const decay = Math.random() * 0.618 + 0.1618;    // 0.2 ~ 0.7 秒
+		const sustain = Math.random() * 0.0618 + 0.01618; // 0.02 ~ 0.07 音量
+		const release = Math.random() * 0.9382 + 0.618;  // 0.5 ~ 1.5 秒
 	
 		gainNode.gain.setValueAtTime(0, now);
-		gainNode.gain.linearRampToValueAtTime(0.2, now + attack); // Attack
+		gainNode.gain.linearRampToValueAtTime(0.1618, now + attack); // Attack
 		gainNode.gain.linearRampToValueAtTime(sustain, now + attack + decay); // Decay → Sustain
 		gainNode.gain.setValueAtTime(sustain, now + duration - release); // Sustain
 		gainNode.gain.linearRampToValueAtTime(0, now + duration); // Release
@@ -2004,7 +2011,7 @@ class AudioMap {
 		osc.connect(gain);
 		gain.connect(masterGain);
 	
-		const duration = Math.random() * 2 + 1.5; // 每個聲部 1.5 ~ 3.5 秒
+		const duration = Math.random() * 1.618 + 1.618; // 每個聲部 1.5 ~ 3.5 秒
 		this.applyRandomADSR(gain, now, duration);
 	
 		// 隨機泛音層
@@ -2014,7 +2021,7 @@ class AudioMap {
 			harmonicOsc.type = waveform;
 			harmonicOsc.frequency.value = osc.frequency.value * i;
 			const harmonicGain = audioCtx.createGain();
-			harmonicGain.gain.value = 0.02 / i;
+			harmonicGain.gain.value = 0.01618 / i;
 			harmonicOsc.connect(harmonicGain);
 			harmonicGain.connect(masterGain);
 			harmonicOsc.start(now);
@@ -2026,7 +2033,7 @@ class AudioMap {
 		setInterval(() => {
 			const t = audioCtx.currentTime;
 			gain.gain.setValueAtTime(0, t);           // 暫停
-			gain.gain.setValueAtTime(0.1, t + 0.3);     // 恢復
+			gain.gain.setValueAtTime(0.09382, t + 0.382);     // 恢復
 		}, duration * 1000); // 用 duration 當 interval
 		return osc;
 	}
@@ -2154,7 +2161,7 @@ class AudioMap {
 		// 在 handleOrientation 外部定義狀態，用來保存上一次的平滑值
 		let smoothX = 0;
 		let smoothY = 0;
-		const lerpFactor = 0.05; // 防手震強度：0.01 ~ 0.1 之間。越小越穩，但延遲感會增加。
+		const lerpFactor = 0.0618; // 防手震強度：0.01 ~ 0.1 之間。越小越穩，但延遲感會增加。
 
 		// --- 抽離出的重置函數 ---
 		const resetBase = (currentQ, dx, dy) => {
@@ -2310,7 +2317,7 @@ class AudioMap {
 					const interval = now - this.lastFlashTime;
 					
 					// 1. 偵測門檻
-					if (bassAvg > 200
+					if (bassAvg > 161.8
 						&& (!this.material
 						|| (this.material.uniforms.u_volume.value > 0.1618 
 						&& this.material.uniforms.u_peak.value > 0.9382 ))
@@ -2822,7 +2829,7 @@ class UEA {
 	}
 	
 	fractalWeighting(data) {
-		return data.map((val, i) => val * (Math.sin(i) * 0.618 + 1)); // 分形感
+		return data.map((val, i) => val * (Math.sin(i) * 0.618 + 0.9382)); // 分形感
 	}
 	
 	stochasticPerturbation(data) {
