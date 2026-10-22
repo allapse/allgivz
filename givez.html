@@ -9,11 +9,14 @@
 <body>
 	<script src="js/allgivz.js"></script>
     <script type="importmap">
-        { "imports": { "three": "https://esm.sh/three@0.160.0" } }
+        { "imports": { "three": "https://esm.sh/three@0.160.0",
+						"three/examples/jsm/": "https://esm.sh/three@0.160.0/examples/jsm/"} }
     </script>
     <script type="module">
 		import * as THREE from 'three';
+		import { SSAOPass } from 'three/examples/jsm/postprocessing/SSAOPass.js';
 		window.THREE = THREE;
+		window.SSAOPass = SSAOPass;
 
 		const audioMap = new AudioMap();
 		
