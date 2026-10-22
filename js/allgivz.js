@@ -1709,7 +1709,7 @@ class AudioMap {
 			this.params[mapping.key] = paramVal
 		}
 		else {
-			this.params[zKey] = this.params[zKey] + (paramVal - this.params[zKey]) * 0.382;
+			this.params[zKey] = this.params[zKey] + (paramVal - this.params[zKey]) * 0.1618;
 		}
 
 		// 更新 UI (CSS Variable)
@@ -2264,6 +2264,8 @@ class AudioMap {
 	
 	async startEngine(shaderPath) {
 		// 將 init 的邏輯搬進來
+		const width = window.innerWidth;
+		const height = window.innerHeight;
 		this.scene = new THREE.Scene();
 		this.stereoCamera = new THREE.StereoCamera();
 		this.camera = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -1.0, -1.0, 1.0);
@@ -2271,13 +2273,13 @@ class AudioMap {
 		this.stereoCamera.cameraR = new THREE.OrthographicCamera(-1.0, 0.998, 1.0, -0.999, -1.0, 0.618);
 		
 		this.renderer = new THREE.WebGLRenderer({ antialias: true });
-		this.renderer.setSize(window.innerWidth, window.innerHeight);
+		this.renderer.setSize(width, height);
 		document.getElementById('container').appendChild(this.renderer.domElement);
 
 		// 設定 Material (使用 this.params)
 		this.material = new THREE.ShaderMaterial({
 			uniforms: {
-				u_res: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+				u_res: { value: new THREE.Vector2(width, height) },
 				u_time: { value: 0.0 },
 				u_volume: { value: 0.0 },
 				u_volume_smooth: { value: 0.0 },
@@ -2304,6 +2306,48 @@ class AudioMap {
 		await this.loadShader(shaderPath);
 		//const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.material);
 		//this.scene.add(mesh);
+		
+		// 1. 初始化總管
+		const composer = new EffectComposer(this.renderer);
+
+		// 2. 第一道工序：把你的 3D 場景正常畫出來（就像平常的 renderer.render）
+		const renderPassL = new RenderPass(this.scene, this.stereoCamera.cameraL);
+		const renderPassR = new RenderPass(this.scene, this.stereoCamera.cameraR);
+		composer.addPass(renderPassL);
+		composer.addPass(renderPassR);
+
+		// 3. 第二道工序：加上泛光特效（讓畫面中發光或亮部的部分暈開）
+		/*const bloomPass = new UnrealBloomPass(
+			new THREE.Vector2(window.innerWidth, window.innerHeight),
+			0.00618,   // 強度拉大（例如 2.0 ~ 3.0）
+			0.00382,   // 半徑
+			0.0618   // 閾值壓到極低，讓幾乎所有帶點顏色的地方都開始暈開
+		);
+		bloomPass.enabled = false;
+		composer.addPass(bloomPass);
+		
+		const rgbShiftPass = new ShaderPass(RGBShiftShader);
+		rgbShiftPass.uniforms['amount'].value = 0; // 偏移強度
+		composer.addPass(rgbShiftPass);
+		
+		const glitchPass = new GlitchPass();
+		glitchPass.enabled = false;
+		composer.addPass(glitchPass);
+		
+		const dotPass = new DotScreenPass(new THREE.Vector2(0, 0), 0.618, 0.809);
+		dotPass.enabled = false;
+		composer.addPass(dotPass);*/
+		const ssaoPassL = new SSAOPass(this.scene, this.stereoCamera.cameraL, width, height);
+		ssaoPassL.kernelRadius = 0.618;     // 陰影擴散的範圍半徑
+		ssaoPassL.minDistance = 0.0618;  // 最小影響距離
+		ssaoPassL.maxDistance = 0.618;    // 最大影響距離
+		composer.addPass(ssaoPassL);
+		
+		const ssaoPassR = new SSAOPass(this.scene, this.stereoCamera.cameraR, width, height);
+		ssaoPassR.kernelRadius = 0.618;     // 陰影擴散的範圍半徑
+		ssaoPassR.minDistance = 0.0618; // 最小影響距離
+		ssaoPassR.maxDistance = 0.618;  // 最大影響距離
+		composer.addPass(ssaoPassR);
 
 		let targetInterval = 4;
 
@@ -2346,6 +2390,8 @@ class AudioMap {
 						if(this.params['intensity']>0.618 && this.params['complexity']>0.618) {
 							
 							this.zOrder = ['intensity', 'speed', 'complexity'];
+							
+							//glitchPass.enabled = true;
 						}
 						else {
 							const values = this.zOrder.map(key => this.params[key]);
@@ -2362,6 +2408,12 @@ class AudioMap {
 								this.zOrder[tempOrder] = this.zOrder[maxIndex];
 								this.zOrder[maxIndex] = 'speed';
 							}
+							
+								/*bloomPass.strength = this.params['intensity'] * 0.000618;
+								bloomPass.radius = this.params['speed'] * 0.00382;
+								bloomPass.threshold = this.params['complexity'] * 0.0618;
+								
+								bloomPass.enabled = true;*/
 						}
 					}
 					else {
@@ -2374,9 +2426,16 @@ class AudioMap {
 							const complexityOrder = this.zOrder.indexOf('complexity');
 							this.zOrder[intensityOrder] = 'complexity';
 							this.zOrder[complexityOrder] = 'intensity';
+							
+							/*dotPass.uniforms[ 'angle' ].value = this.params['intensity'] * 0.618;
+							dotPass.uniforms[ 'scale' ].value = this.params['complexity'] * 0.382;
+							
+							dotPass.enabled = true;*/
 						}
 						else {
 							this.zOrder = ['intensity', 'speed', 'complexity'];
+							
+							//rgbShiftPass.uniforms['amount'].value = 0.0001 / this.params['speed'];
 						}
 					}
 				} else {
@@ -2385,6 +2444,11 @@ class AudioMap {
 						//this.beatValue = 1.0;
 						//this.lastFlashTime = now;
 						this.isBPMLocked = false;
+						
+						/*bloomPass.enabled = false;
+						rgbShiftPass.uniforms['amount'].value = 0;
+						glitchPass.enabled = false;
+						dotPass.enabled = false;*/
 					}
 				}
 			}
@@ -2398,9 +2462,14 @@ class AudioMap {
 		const animate = (now) => {
 			requestAnimationFrame(animate);
 			
+			
 			if (document.hidden) return;
 			
 			this.internalUpdate(frameCount); // 處理音訊、時間、Uniforms 同步
+			
+			this.setSSAO(ssaoPassL, this.params);
+			this.setSSAO(ssaoPassR, this.params);
+			composer.render();
 			
 			frameCount++;
 
@@ -2419,9 +2488,18 @@ class AudioMap {
 		
 		// 處理 Resize
 		window.addEventListener('resize', () => {
-			this.renderer.setSize(window.innerWidth, window.innerHeight);
-			this.material.uniforms.u_res.value.set(window.innerWidth, window.innerHeight);
+			this.renderer.setSize(width, height);
+			composer.setSize(width, height);
+			ssaoPassL.setSize(width, height);
+			ssaoPassR.setSize(width, height);
+			this.material.uniforms.u_res.value.set(width, height);
 		});
+	}
+	
+	setSSAO(ssaoPass, param){
+		ssaoPass.kernelRadius = param[0] * 0.618;
+		ssaoPass.minDistance = param[1] * 0.0618;
+		ssaoPass.maxDistance = param[2] * 0.618; 
 	}
 	
 	internalUpdate(frameCount){
@@ -2484,7 +2562,7 @@ class AudioMap {
 		this.renderer.setRenderTarget(null);
 		//this.renderer.render(this.scene, this.camera);
 		this.renderer.render(this.scene, this.l?this.stereoCamera.cameraR:this.stereoCamera.cameraL);
-		this.l = !this.l;
+		//this.l = !this.l;
 
 		// 3. 檢測：這個 Shader 到底需不需要「記憶」？
 		// 檢查 fragmentShader 的原始碼字串
