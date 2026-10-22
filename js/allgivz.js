@@ -2466,10 +2466,12 @@ class AudioMap {
 			if (document.hidden) return;
 			
 			this.internalUpdate(frameCount); // 處理音訊、時間、Uniforms 同步
-			
-			this.setSSAO(ssaoPassL, this.params);
-			this.setSSAO(ssaoPassR, this.params);
-			composer.render();
+
+			if(frameCount % 4 ==0) {
+			    this.setSSAO(ssaoPassL, this.params);
+			    this.setSSAO(ssaoPassR, this.params);
+			    composer.render();
+			}
 			
 			frameCount++;
 
