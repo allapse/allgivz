@@ -14,8 +14,12 @@
     </script>
     <script type="module">
 		import * as THREE from 'three';
+		import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+		import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 		import { SSAOPass } from 'three/examples/jsm/postprocessing/SSAOPass.js';
 		window.THREE = THREE;
+		window.EffectComposer = EffectComposer;
+		window.RenderPass = RenderPass;
 		window.SSAOPass = SSAOPass;
 
 		const audioMap = new AudioMap();
