@@ -2338,14 +2338,14 @@ class AudioMap {
 		dotPass.enabled = false;
 		composer.addPass(dotPass);*/
 		const ssaoPassL = new SSAOPass(this.scene, this.stereoCamera.cameraL, width, height);
-		ssaoPassL.kernelRadius = 0.618;     // 陰影擴散的範圍半徑
-		ssaoPassL.minDistance = 0.0618;  // 最小影響距離
+		ssaoPassL.kernelRadius = 61.8;      // 陰影擴散的範圍半徑
+		ssaoPassL.minDistance = -0.618;  // 最小影響距離
 		ssaoPassL.maxDistance = 0.618;    // 最大影響距離
 		composer.addPass(ssaoPassL);
 		
 		const ssaoPassR = new SSAOPass(this.scene, this.stereoCamera.cameraR, width, height);
-		ssaoPassR.kernelRadius = 0.618;     // 陰影擴散的範圍半徑
-		ssaoPassR.minDistance = 0.0618; // 最小影響距離
+		ssaoPassR.kernelRadius = 61.8;     // 陰影擴散的範圍半徑
+		ssaoPassR.minDistance = -0.618; // 最小影響距離
 		ssaoPassR.maxDistance = 0.618;  // 最大影響距離
 		composer.addPass(ssaoPassR);
 
@@ -2497,8 +2497,8 @@ class AudioMap {
 	}
 	
 	setSSAO(ssaoPass, param){
-		ssaoPass.kernelRadius = param[0] * 0.618;
-		ssaoPass.minDistance = param[1] * 0.0618;
+		ssaoPass.kernelRadius = param[1] * 61.8;
+		ssaoPass.minDistance = param[0] * -0.618;
 		ssaoPass.maxDistance = param[2] * 0.618; 
 	}
 	
