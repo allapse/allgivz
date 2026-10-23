@@ -2274,6 +2274,8 @@ class AudioMap {
 		
 		this.renderer = new THREE.WebGLRenderer({ antialias: true });
 		this.renderer.setSize(width, height);
+		this.composer = new EffectComposer(this.renderer);
+		
 		document.getElementById('container').appendChild(this.renderer.domElement);
 
 		// 設定 Material (使用 this.params)
@@ -2307,14 +2309,11 @@ class AudioMap {
 		//const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.material);
 		//this.scene.add(mesh);
 		
-		// 1. 初始化總管
-		const composer = new EffectComposer(this.renderer);
-
 		// 2. 第一道工序：把你的 3D 場景正常畫出來（就像平常的 renderer.render）
 		const renderPassL = new RenderPass(this.scene, this.stereoCamera.cameraL);
 		const renderPassR = new RenderPass(this.scene, this.stereoCamera.cameraR);
-		composer.addPass(renderPassL);
-		composer.addPass(renderPassR);
+		this.composer.addPass(renderPassL);
+		this.composer.addPass(renderPassR);
 
 		// 3. 第二道工序：加上泛光特效（讓畫面中發光或亮部的部分暈開）
 		/*const bloomPass = new UnrealBloomPass(
@@ -2337,17 +2336,17 @@ class AudioMap {
 		const dotPass = new DotScreenPass(new THREE.Vector2(0, 0), 0.618, 0.809);
 		dotPass.enabled = false;
 		composer.addPass(dotPass);*/
-		const ssaoPassL = new SSAOPass(this.scene, this.stereoCamera.cameraL, width, height);
-		ssaoPassL.kernelRadius = 61.8;      // 陰影擴散的範圍半徑
-		ssaoPassL.minDistance = -0.618;  // 最小影響距離
-		ssaoPassL.maxDistance = 0.618;    // 最大影響距離
-		composer.addPass(ssaoPassL);
+		this.ssaoPassL = new SSAOPass(this.scene, this.stereoCamera.cameraL, width, height);
+		this.ssaoPassL.kernelRadius = 61.8;      // 陰影擴散的範圍半徑
+		this.ssaoPassL.minDistance = -0.618;  // 最小影響距離
+		this.ssaoPassL.maxDistance = 0.618;    // 最大影響距離
+		this.composer.addPass(this.ssaoPassL);
 		
-		const ssaoPassR = new SSAOPass(this.scene, this.stereoCamera.cameraR, width, height);
-		ssaoPassR.kernelRadius = 61.8;     // 陰影擴散的範圍半徑
-		ssaoPassR.minDistance = -0.618; // 最小影響距離
-		ssaoPassR.maxDistance = 0.618;  // 最大影響距離
-		composer.addPass(ssaoPassR);
+		this.ssaoPassR = new SSAOPass(this.scene, this.stereoCamera.cameraR, width, height);
+		this.ssaoPassR.kernelRadius = 61.8;     // 陰影擴散的範圍半徑
+		this.ssaoPassR.minDistance = -0.618; // 最小影響距離
+		this.ssaoPassR.maxDistance = 0.618;  // 最大影響距離
+		this.composer.addPass(this.ssaoPassR);
 
 		let targetInterval = 4;
 
@@ -2462,17 +2461,10 @@ class AudioMap {
 		const animate = (now) => {
 			requestAnimationFrame(animate);
 			
-			
 			if (document.hidden) return;
 			
 			this.internalUpdate(frameCount); // 處理音訊、時間、Uniforms 同步
 
-			if(frameCount % 4 ==0) {
-			    this.setSSAO(ssaoPassL, this.params);
-			    this.setSSAO(ssaoPassR, this.params);
-			    composer.render();
-			}
-			
 			frameCount++;
 
             const delta = now - lastTime;
@@ -2492,10 +2484,11 @@ class AudioMap {
 		window.addEventListener('resize', () => {
 			const width = window.innerWidth;
 			const height = window.innerHeight;
-			composer.setSize(width, height);
+			
+			this.renderer.setSize(width, height);
+			this.composer.setSize(width, height);
 			ssaoPassL.setSize(width, height);
 			ssaoPassR.setSize(width, height);
-			this.renderer.setSize(width, height);
 			this.material.uniforms.u_res.value.set(width, height);
 		});
 	}
@@ -2509,6 +2502,8 @@ class AudioMap {
 	internalUpdate(frameCount){
 		// 更新時間
 		this.material.uniforms.u_time.value += 0.00618 + this.params.speed * 0.01618;
+		
+		this.setSSAO(this.l?this.ssaoPassL:this.ssaoPassR, this.params);
 		
 		const lrdiff = (this.material.uniforms.u_right.value - this.material.uniforms.u_left.value) * this.material.uniforms.u_peak.value;
 
@@ -2540,7 +2535,7 @@ class AudioMap {
 		// 不管有沒有 needsFeedback，都要先畫出這一幀
 		this.renderer.setRenderTarget(this.targetA);
 		//this.renderer.render(this.scene, this.camera);
-		this.renderer.render(this.scene, this.l?this.stereoCamera.cameraL:this.stereoCamera.cameraR);
+		this.composer.render(this.scene, this.l?this.stereoCamera.cameraL:this.stereoCamera.cameraR);
 		
 		// 1. 數據分析：趁 A 還是熱騰騰的新畫面的時候，趕快分析
 		// 這樣所有 Shader（不論有沒有殘影）都能支持音訊回饋
@@ -2565,8 +2560,8 @@ class AudioMap {
 		// 2. 顯示到螢幕
 		this.renderer.setRenderTarget(null);
 		//this.renderer.render(this.scene, this.camera);
-		this.renderer.render(this.scene, this.l?this.stereoCamera.cameraR:this.stereoCamera.cameraL);
-		//this.l = !this.l;
+		this.composer.render(this.scene, this.l?this.stereoCamera.cameraR:this.stereoCamera.cameraL);
+		this.l = !this.l;
 
 		// 3. 檢測：這個 Shader 到底需不需要「記憶」？
 		// 檢查 fragmentShader 的原始碼字串
