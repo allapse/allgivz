@@ -1,5 +1,3 @@
-precision highp float;
-
 uniform vec2 u_resolution;
 
 uniform vec2 u_orient;
@@ -28,9 +26,6 @@ float wave(vec3 p, vec3 center, float freq, float phase) {
 }
 
 void main() {
-    vec2 uv = v_uv;
-    uv = uv * 2.0 - 1.0;
-
     float sum = 0.0;
 
     int sources = int(3.0 + u_complexity * 5.0);
@@ -47,7 +42,7 @@ void main() {
         float freq = 28.0 * (0.02 + 0.98 * u_intensity * hash(center * (u_darkGlow + 0.8)));
         float phase = 0.2 + (hash(center * (u_darkGlow + 0.8)));
 
-        sum += wave(vec3(uv, 0.0), center, freq, phase);
+        sum += wave(vec3(v_uv, 0.0), center, freq, phase);
     }
 
     sum *= (0.5 + u_volume * 0.8);
