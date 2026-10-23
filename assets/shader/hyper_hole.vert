@@ -73,7 +73,7 @@ void main() {
 
     // --- 準備 UV 用於採樣相機 ---
     // 將 p.xy 的 (-1~1) 映射到 (0~1)
-    vUv = p.xy * 0.5 + 0.5;
+    vUv = p.xy + 1.0;
 
     vDist = currentRadius;
     // 讓 Alpha 隨時間產生一點隨機抖動，偽造出虛無的閃爍感
