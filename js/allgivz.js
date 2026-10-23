@@ -2503,8 +2503,6 @@ class AudioMap {
 		// 更新時間
 		this.material.uniforms.u_time.value += 0.00618 + this.params.speed * 0.01618;
 		
-		this.setSSAO(this.l?this.ssaoPassL:this.ssaoPassR, this.params);
-		
 		const lrdiff = (this.material.uniforms.u_right.value - this.material.uniforms.u_left.value) * this.material.uniforms.u_peak.value;
 
 		this.currentMesh.rotation.y += lrdiff * 1.618;
@@ -2535,7 +2533,7 @@ class AudioMap {
 		// 不管有沒有 needsFeedback，都要先畫出這一幀
 		this.renderer.setRenderTarget(this.targetA);
 		//this.renderer.render(this.scene, this.camera);
-		this.composer.render(this.scene, this.l?this.stereoCamera.cameraL:this.stereoCamera.cameraR);
+		this.renderer.render(this.scene, this.l?this.stereoCamera.cameraL:this.stereoCamera.cameraR);
 		
 		// 1. 數據分析：趁 A 還是熱騰騰的新畫面的時候，趕快分析
 		// 這樣所有 Shader（不論有沒有殘影）都能支持音訊回饋
@@ -2560,7 +2558,13 @@ class AudioMap {
 		// 2. 顯示到螢幕
 		this.renderer.setRenderTarget(null);
 		//this.renderer.render(this.scene, this.camera);
-		this.composer.render(this.scene, this.l?this.stereoCamera.cameraR:this.stereoCamera.cameraL);
+		this.renderer.render(this.scene, this.l?this.stereoCamera.cameraR:this.stereoCamera.cameraL);
+
+		if(frameCount % 3 ==0) {
+		    this.setSSAO(this.l?this.ssaoPassL:this.ssaoPassR, this.params);
+            this.composer
+		}
+		
 		this.l = !this.l;
 
 		// 3. 檢測：這個 Shader 到底需不需要「記憶」？
