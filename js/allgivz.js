@@ -2490,10 +2490,12 @@ class AudioMap {
 		
 		// 處理 Resize
 		window.addEventListener('resize', () => {
-			this.renderer.setSize(width, height);
+			const width = window.innerWidth;
+			const height = window.innerHeight;
 			composer.setSize(width, height);
 			ssaoPassL.setSize(width, height);
 			ssaoPassR.setSize(width, height);
+			this.renderer.setSize(width, height);
 			this.material.uniforms.u_res.value.set(width, height);
 		});
 	}
