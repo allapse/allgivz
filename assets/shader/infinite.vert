@@ -1,7 +1,4 @@
-precision highp float;
-
 varying vec2 v_uv;
-varying vec2 v_centered_uv;
 varying float v_z;
 
 uniform vec2 u_res;
@@ -19,16 +16,15 @@ mat3 rotateY(float a) {
 }
 
 void main() {
-    v_uv = uv;
     vec2 ratio = vec2(max(u_res.x / u_res.y, 1.0), max(u_res.y / u_res.x, 1.0));
-    v_centered_uv = (uv - 0.5) * ratio;
 
     // --- 讓紙張波動的靈魂：多頻率湍流波 ---
     float t = u_time * 0.5; // 波動速度
     float z = 0.0;
     
     // 用三個不同方向的波疊加，創造非線性的「紙張揉動感」
-    vec2 p = uv * 4.0; 
+    vec2 p = (uv - 0.5) * 2.0; 
+	v_uv = p;
     z += sin(p.x + t) * 0.1;
     z += cos(p.y + t * 0.8) * 0.1;
     z += sin((p.x + p.y) * 0.5 + t * 1.2) * 0.08;
@@ -40,7 +36,7 @@ void main() {
     v_z = z; 
 
     // 建立 3D 位置
-    vec3 pos = vec3(position.xy, v_z);
+    vec3 pos = vec3(p.xy, v_z);
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
 }
