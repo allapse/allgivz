@@ -2487,8 +2487,8 @@ class AudioMap {
 			
 			this.renderer.setSize(width, height);
 			this.composer.setSize(width, height);
-			ssaoPassL.setSize(width, height);
-			ssaoPassR.setSize(width, height);
+			this.ssaoPassL.setSize(width, height);
+			this.ssaoPassR.setSize(width, height);
 			this.material.uniforms.u_res.value.set(width, height);
 		});
 	}
