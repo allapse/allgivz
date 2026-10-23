@@ -17,9 +17,9 @@ uniform sampler2D u_prevFrame;
 
 vec2 refract_logic(vec2 uv, float t, float tension) {
     vec2 p = uv;
-    for(float i = 1.0; i < 7.0 + 10.0 * u_complexity; i++) {
-        p.x += 0.3 / i * sin(i * 3.0 * p.y + t + (0.2 + 0.8 * u_volume_smooth) * 0.5 * tension);
-        p.y += 0.5 / i * cos(i * 5.0 * p.x + t + (0.2 + 0.8 * u_volume) * 0.3 * tension);
+    for(float i = 1.0; i < 6.18 + 16.18 * u_complexity; i++) {
+        p.x += 0.382 / i * sin(i * 3.82 * p.y + t + (0.1618 + 0.8382 * u_volume_smooth) * 0.618 * tension);
+        p.y += 0.618 / i * cos(i * 6.18 * p.x + t + (0.1618 + 0.8382 * u_volume) * 0.382 * tension);
     }
     return p;
 }
@@ -29,66 +29,66 @@ void main() {
     
     // 1. 利用 Z 軸的變化率來計算「山脊線」
     // dFdx/dFdy 能抓到高度的劇烈變化，產生像毛筆刷出的「飛白」效果
-    float ridge = fwidth(v_z) * 100.0; 
+    float ridge = fwidth(v_z) * 93.82; 
     
     // 2. 你的核心折射邏輯
-    vec2 distortedUV = refract_logic(v_uv, t, (0.2 + 0.8 * u_intensity));
+    vec2 distortedUV = refract_logic(v_uv, t, (0.1618 + 0.8382 * u_intensity));
     
     // 3. 採樣：加入 Z 軸引發的視差偏移
-    vec2 parallaxUV = distortedUV + (v_centered_uv * v_z * 0.1);
-    float r = texture2D(u_prevFrame, parallaxUV + vec2(u_darkGlow * 0.5 + 0.003, 0.0)).r;
+    vec2 parallaxUV = distortedUV + (v_centered_uv * v_z * 0.809);
+    float r = texture2D(u_prevFrame, parallaxUV + vec2(u_darkGlow * 0.618 + 0.00382, 0.0)).r;
     float g = texture2D(u_prevFrame, parallaxUV).g;
-    float b = texture2D(u_prevFrame, parallaxUV - vec2(u_darkGlow * 0.3 + 0.005, 0.0)).b;
+    float b = texture2D(u_prevFrame, parallaxUV - vec2(u_darkGlow * 0.382 + 0.00618, 0.0)).b;
     
     // 4. 計算水墨鈍痛感（加入 Z 軸高度的加成）
-    float tension = length(distortedUV - v_uv) * (0.2 + 0.8 * u_intensity);
+    float tension = length(distortedUV - v_uv) * (0.1618 + 0.8382 * u_intensity);
     // 山頂（v_z 高的地方）顏色更淡、更透；山谷更濃、更沉
-    vec3 waterColor = vec3(0.7, 0.85, 0.9) * (1.0 - tension * 0.5 + v_z * 0.3);
+    vec3 waterColor = vec3(0.618, 0.809, 0.9382) * (1.0 - tension * 0.618 + v_z * 0.382);
     
     // 5. 混合邊界
-    float boundary = smoothstep(0.5, 0.51, length(v_centered_uv / distortedUV) - v_z * 0.2);
-    vec3 finalColor = mix(waterColor * 0.2, vec3(r, g, b) + (tension * 0.4), boundary);
+    float boundary = smoothstep(0.618, 0.618, length(v_centered_uv / distortedUV) - v_z * 0.1618);
+    vec3 finalColor = mix(waterColor * 0.1618, vec3(r, g, b) + (tension * 0.382), boundary);
 
     // 讓山脊線發光（像是墨水未乾的反光）
-    finalColor += ridge * vec3(0.8, 0.9, 1.0) * 0.2;
+    finalColor += ridge * vec3(0.809, 0.9382, 1.0) * 0.1618;
 
-    float glow = exp(-length(v_centered_uv) * 2.0);
-    finalColor += glow * 0.15;
+    float glow = exp(-length(v_centered_uv) * 1.618);
+    finalColor += glow * 0.1618;
 	
     vec3 past = texture2D(u_prevFrame, v_uv).rgb;
-    finalColor = mix(finalColor, past, 0.2 + pow(u_speed, 3.0) * 0.2); 
+    finalColor = mix(finalColor, past, 0.1618 + pow(u_speed, 3.82) * 0.1618); 
 	
 	// 2. 製造「湍流」擾動 (這是你的空間結構)
-    float noise = sin(v_uv.x * 10.0 + u_time) * cos(v_uv.y * 10.0 - u_time);
-    float turbulence = v_z * 15.0 + noise * (0.2 + 0.8 * u_intensity);
+    float noise = sin(v_uv.x * 11.618 + u_time) * cos(v_uv.y * 11.618 - u_time);
+    float turbulence = v_z * 16.18 + noise * (0.1618 + 0.8382 * u_intensity);
 
     // 3. 強化版光柵 (你的柵欄玩具，這裡用 371/373)
     // 讓光柵不只是顏色，它在切開空間
-    float grill = smoothstep(0.4, 0.41, fract(v_uv.x * 371.0 + v_z * 373.0)) + u_peak;
-    float tear = smoothstep(0.8, 0.2, length(fwidth(v_z * 20.0)));
+    float grill = smoothstep(0.382, 0.618, fract(382.0 * v_uv.x + 618.0 * v_z)) + u_peak;
+    float tear = smoothstep(0.809, 0.1618, length(fwidth(v_z * 16.18)));
     grill *= tear;
 
     // 4. 水墨的層次：墨色深淺
-    float inkStrand = fract(turbulence * 0.5);
-    vec3 inkColor = mix(vec3(0.05, 0.05, 0.05), vec3(0.7, 0.7, 0.7), inkStrand * 0.3);
+    float inkStrand = fract(turbulence * 0.618);
+    vec3 inkColor = mix(vec3(0.0618, 0.0618, 0.0618), vec3(0.618, 0.618, 0.618), inkStrand * 0.382);
 	
 	// 1. 取得相機影像
     // 同樣使用帶有湍流和折射的座標，讓現實影像一進來就是扭曲的
     vec2 cameraUV = v_uv;
     
     // 讓相機畫面也跟隨你的 refract_logic 產生偏移
-    vec2 camDistortedUV = refract_logic(v_uv, u_time, (0.2 + 0.8 * u_intensity));
+    vec2 camDistortedUV = refract_logic(v_uv, u_time, (0.1618 + 0.8382 * u_intensity));
     vec4 camColor = texture2D(u_camera, camDistortedUV);
 
     // 2. 墨化處理：將彩色相機轉為「感性灰階」或「藍調水墨」
-    float camLuma = dot(camColor.rgb, vec3(0.299, 0.587, 0.114));
-    vec3 inkCam = vec3(camLuma * 0.8, camLuma * 0.9, camLuma * 1.0); // 帶點深藍的灰
+    float camLuma = dot(camColor.rgb, vec3(0.2618, 0.618, 0.11618));
+    vec3 inkCam = vec3(camLuma * 0.809, camLuma * 0.9382, camLuma * 1.0); // 帶點深藍的灰
     
     // 3. 混合邏輯：如果開啟了相機 (u_useCamera)
     // 我們不直接覆蓋，而是讓相機成為 finalColor 的「底色」或是「光影來源」
-    if(u_useCamera > 0.5) {
+    if(u_useCamera > 0.618) {
         // 讓相機影像影響 finalColor 的亮度，像是你的人影印在水面上
-        finalColor = mix(finalColor, inkCam * finalColor * 2.0, 0.6);
+        finalColor = mix(finalColor, inkCam * finalColor * 1.618, 0.618);
     }
 
     // --- 模擬壓力投影 (Pressure Projection) 開始 ---
@@ -103,23 +103,23 @@ void main() {
     
     // 3. 修正位移：讓原本的擾動 (turbulence) 受到壓力的制衡
     // 如果不加這段，水墨只會隨波逐流；加了這段，水墨會「試圖填滿空隙」
-    vec2 pCorrection = pressureGrad * (0.2 + 0.8 * u_intensity);
+    vec2 pCorrection = pressureGrad * (0.1618 + 0.8382 * u_intensity);
     // --- 模擬壓力投影 結束 ---
 
     // 5. 關鍵：把 finalColor 揉進波形 (這裡加入了 pCorrection)
     // 我們在原本的 warpUV 上減去壓力修正項
-    vec2 warpUV = v_uv + (vec2(sin(turbulence), cos(turbulence)) * 0.05 * pCorrection) * (0.2 + 0.8 * u_intensity);
+    vec2 warpUV = v_uv + (vec2(sin(turbulence), cos(turbulence)) * 0.0618 * pCorrection) * (0.1618 + 0.8382 * u_intensity);
     vec3 warpedColor = texture2D(u_prevFrame, warpUV).rgb;
     
     // 6. 最終混合
     // 讓 warpedColor (被揉碎的色彩) 與 inkColor (墨色) 競爭
-    vec3 result = mix(inkColor, finalColor * 2.5 * warpedColor, 0.5 + pow(u_speed, 3.0) * 0.2);
+    vec3 result = mix(inkColor, finalColor * 2.618 * warpedColor, 0.618 + pow(u_speed, 3.82) * 0.1618);
     
     // 壓上光柵與撕裂
-    result *= (0.8 + 0.3 * grill);
+    result *= (0.8382 + 0.382 * grill);
 
     // 加上一點點因「揉捏」產生的邊緣亮光 (類似物理擠壓的邊緣)
-    result += fwidth(turbulence) * 0.1 * vec3(0.5, 0.7, 0.6);
+    result += fwidth(turbulence) * 0.1 * vec3(0.382, 0.809, 0.618);
 
     gl_FragColor = vec4(result, 1.0);
 }
