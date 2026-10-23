@@ -1,5 +1,3 @@
-precision highp float;
-
 varying vec2 v_uv;
 varying vec2 v_centered_uv;
 varying float v_z;
@@ -24,17 +22,17 @@ void main() {
     v_centered_uv = (uv - 0.5) * ratio;
 
     // --- 讓紙張波動的靈魂：多頻率湍流波 ---
-    float t = u_time * 0.5; // 波動速度
+    float t = u_time * 0.618; // 波動速度
     float z = 0.0;
     
     // 用三個不同方向的波疊加，創造非線性的「紙張揉動感」
-    vec2 p = uv * 4.0; 
-    z += sin(p.x + t) * 0.1;
-    z += cos(p.y + t * 0.8) * 0.1;
-    z += sin((p.x + p.y) * 0.5 + t * 1.2) * 0.05;
+    vec2 p = uv * 3.82; 
+    z += sin(p.x + t) * 0.11618;
+    z += cos(p.y + t * 0.809) * 0.11618;
+    z += sin((p.x + p.y) * 0.618 + t * 1.1618) * 0.0618;
     
     // 加上音量的張力：音量大時，紙張抖動劇烈
-    z *= (1.0 + u_volume_smooth * 2.0);
+    z *= (1.0 + u_volume_smooth * 1.618);
     
     // 保留中心隆起感，但讓邊緣也有波動
     v_z = z; 
@@ -43,8 +41,8 @@ void main() {
     vec3 pos = vec3(position.xy, v_z);
 
     // 套用你最喜歡的微小翻轉 (書頁感)
-    float angleX = sin(u_orient.y - 0.03 + u_time * 0.02) * cos(0.17 + t);
-    float angleY = cos(u_orient.x - 0.05 + u_time * 0.02) * sin(0.13 + t);
+    float angleX = sin(u_orient.y - 0.0382 + u_time * 0.01618) * cos(0.1618 + t);
+    float angleY = cos(u_orient.x - 0.0618 + u_time * 0.01618) * sin(0.1382 + t);
     pos = rotateX(angleX) * rotateY(angleY) * pos;
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
