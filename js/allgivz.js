@@ -2269,17 +2269,17 @@ class AudioMap {
 		this.scene = new THREE.Scene();
 		
 		this.camera = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -1.0, -1.0, 1.0);
-		this.cameraL = new THREE.OrthographicCamera(-0.999, 1.0, 1.0, -1.0, -1.0, 1.0);
-		this.cameraR = new THREE.OrthographicCamera(-1.0, 0.998, 1.0, -1.0, -1.0, 1.0);
-		this.cameraU = new THREE.OrthographicCamera(-1.0, 1.0, 0.999, -1.0, -1.0, 1.0);
-		this.cameraD = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -0.998, -1.0, 1.0);
-		this.cameraF = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -1.0, -0.997, 1.0);
-		this.cameraB = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -1.0, -1.0, 0.997);
-		this.stereoCamera = new THREE.ArrayCamera([this.cameraL, this.cameraR, this.cameraU, this.cameraD, this.cameraF, this.cameraB]);
+		this.cameraL = new THREE.OrthographicCamera(-0.996, 1.0, 1.0, -1.0, -1.0, 1.0);
+		this.cameraR = new THREE.OrthographicCamera(-1.0, 0.996, 1.0, -1.0, -1.0, 1.0);
+		this.cameraU = new THREE.OrthographicCamera(-1.0, 1.0, 0.996, -1.0, -1.0, 1.0);
+		this.cameraD = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -0.996, -1.0, 1.0);
+		this.cameraF = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -1.0, -0.996, 1.0);
+		this.cameraB = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -1.0, -1.0, 0.996);
+		this.stereoCamera = new THREE.ArrayCamera([this.cameraL, this.cameraF, this.cameraU, this.cameraR, this.cameraB, this.cameraD]);
 		
 		this.renderer = new THREE.WebGLRenderer({ antialias: true });
 		this.renderer.setSize(width, height);
-		this.composer = new EffectComposer(this.renderer);
+		//this.composer = new EffectComposer(this.renderer);
 		
 		document.getElementById('container').appendChild(this.renderer.domElement);
 
@@ -2315,7 +2315,7 @@ class AudioMap {
 		//this.scene.add(mesh);
 		
 		// 2. 第一道工序：把你的 3D 場景正常畫出來（就像平常的 renderer.render）
-		const renderPassL = new RenderPass(this.scene, this.cameraL);
+		/*const renderPassL = new RenderPass(this.scene, this.cameraL);
 		const renderPassR = new RenderPass(this.scene, this.cameraR);
 		const renderPassU = new RenderPass(this.scene, this.cameraU);
 		const renderPassD = new RenderPass(this.scene, this.cameraD);
@@ -2326,7 +2326,7 @@ class AudioMap {
 		this.composer.addPass(renderPassU);
 		this.composer.addPass(renderPassD);
 		this.composer.addPass(renderPassF);
-		this.composer.addPass(renderPassB);
+		this.composer.addPass(renderPassB);*/
 
 		// 3. 第二道工序：加上泛光特效（讓畫面中發光或亮部的部分暈開）
 		/*const bloomPass = new UnrealBloomPass(
@@ -2349,7 +2349,7 @@ class AudioMap {
 		const dotPass = new DotScreenPass(new THREE.Vector2(0, 0), 0.618, 0.809);
 		dotPass.enabled = false;
 		composer.addPass(dotPass);*/
-		this.ssaoPassL = new SSAOPass(this.scene, this.cameraL, width, height);
+		/*this.ssaoPassL = new SSAOPass(this.scene, this.cameraL, width, height);
 		this.ssaoPassL.kernelRadius = 61.8;      // 陰影擴散的範圍半徑
 		this.ssaoPassL.minDistance = -0.618;  // 最小影響距離
 		this.ssaoPassL.maxDistance = 0.618;    // 最大影響距離
@@ -2385,7 +2385,7 @@ class AudioMap {
 		this.ssaoPassB.maxDistance = 0.618;  // 最大影響距離
 		this.composer.addPass(this.ssaoPassB);
 		
-		this.ssaoArray = [this.ssaoPassL, this.ssaoPassR, this.ssaoPassU, this.ssaoPassD, this.ssaoPassF, this.ssaoPassB];
+		this.ssaoArray = [this.ssaoPassL, this.ssaoPassR, this.ssaoPassU, this.ssaoPassD, this.ssaoPassF, this.ssaoPassB];*/
 
 		let targetInterval = 4;
 
@@ -2525,9 +2525,9 @@ class AudioMap {
 			const height = window.innerHeight;
 			
 			this.renderer.setSize(width, height);
-			this.composer.setSize(width, height);
+			/*this.composer.setSize(width, height);
 			this.ssaoPassL.setSize(width, height);
-			this.ssaoPassR.setSize(width, height);
+			this.ssaoPassR.setSize(width, height);*/
 			this.material.uniforms.u_res.value.set(width, height);
 		});
 	}
