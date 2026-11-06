@@ -2267,10 +2267,15 @@ class AudioMap {
 		const width = window.innerWidth;
 		const height = window.innerHeight;
 		this.scene = new THREE.Scene();
-		this.stereoCamera = new THREE.StereoCamera();
+		
 		this.camera = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -1.0, -1.0, 1.0);
-		this.stereoCamera.cameraL = new THREE.OrthographicCamera(-0.999, 1.0, 0.998, -1.0, -0.618, 1.0);
-		this.stereoCamera.cameraR = new THREE.OrthographicCamera(-1.0, 0.998, 1.0, -0.999, -1.0, 0.618);
+		this.cameraL = new THREE.OrthographicCamera(-0.999, 1.0, 1.0, -1.0, -1.0, 1.0);
+		this.cameraR = new THREE.OrthographicCamera(-1.0, 0.998, 1.0, -1.0, -1.0, 1.0);
+		this.cameraU = new THREE.OrthographicCamera(-1.0, 1.0, 0.999, -1.0, -1.0, 1.0);
+		this.cameraD = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -0.998, -1.0, 1.0);
+		this.cameraF = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -1.0, -0.997, 1.0);
+		this.cameraB = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -1.0, -1.0, 0.997);
+		this.stereoCamera = new THREE.ArrayCamera([this.cameraL, this.cameraR, this.cameraU, this.cameraD, this.cameraF, this.cameraB]);
 		
 		this.renderer = new THREE.WebGLRenderer({ antialias: true });
 		this.renderer.setSize(width, height);
@@ -2310,10 +2315,18 @@ class AudioMap {
 		//this.scene.add(mesh);
 		
 		// 2. 第一道工序：把你的 3D 場景正常畫出來（就像平常的 renderer.render）
-		const renderPassL = new RenderPass(this.scene, this.stereoCamera.cameraL);
-		const renderPassR = new RenderPass(this.scene, this.stereoCamera.cameraR);
+		const renderPassL = new RenderPass(this.scene, this.cameraL);
+		const renderPassR = new RenderPass(this.scene, this.cameraR);
+		const renderPassU = new RenderPass(this.scene, this.cameraU);
+		const renderPassD = new RenderPass(this.scene, this.cameraD);
+		const renderPassF = new RenderPass(this.scene, this.cameraF);
+		const renderPassB = new RenderPass(this.scene, this.cameraB);
 		this.composer.addPass(renderPassL);
 		this.composer.addPass(renderPassR);
+		this.composer.addPass(renderPassU);
+		this.composer.addPass(renderPassD);
+		this.composer.addPass(renderPassF);
+		this.composer.addPass(renderPassB);
 
 		// 3. 第二道工序：加上泛光特效（讓畫面中發光或亮部的部分暈開）
 		/*const bloomPass = new UnrealBloomPass(
@@ -2336,17 +2349,43 @@ class AudioMap {
 		const dotPass = new DotScreenPass(new THREE.Vector2(0, 0), 0.618, 0.809);
 		dotPass.enabled = false;
 		composer.addPass(dotPass);*/
-		this.ssaoPassL = new SSAOPass(this.scene, this.stereoCamera.cameraL, width, height);
+		this.ssaoPassL = new SSAOPass(this.scene, this.cameraL, width, height);
 		this.ssaoPassL.kernelRadius = 61.8;      // 陰影擴散的範圍半徑
 		this.ssaoPassL.minDistance = -0.618;  // 最小影響距離
 		this.ssaoPassL.maxDistance = 0.618;    // 最大影響距離
 		this.composer.addPass(this.ssaoPassL);
 		
-		this.ssaoPassR = new SSAOPass(this.scene, this.stereoCamera.cameraR, width, height);
+		this.ssaoPassR = new SSAOPass(this.scene, this.cameraR, width, height);
 		this.ssaoPassR.kernelRadius = 61.8;     // 陰影擴散的範圍半徑
 		this.ssaoPassR.minDistance = -0.618; // 最小影響距離
 		this.ssaoPassR.maxDistance = 0.618;  // 最大影響距離
 		this.composer.addPass(this.ssaoPassR);
+		
+		this.ssaoPassU = new SSAOPass(this.scene, this.cameraU, width, height);
+		this.ssaoPassU.kernelRadius = 61.8;      // 陰影擴散的範圍半徑
+		this.ssaoPassU.minDistance = -0.618;  // 最小影響距離
+		this.ssaoPassU.maxDistance = 0.618;    // 最大影響距離
+		this.composer.addPass(this.ssaoPassU);
+		
+		this.ssaoPassD = new SSAOPass(this.scene, this.cameraD, width, height);
+		this.ssaoPassD.kernelRadius = 61.8;     // 陰影擴散的範圍半徑
+		this.ssaoPassD.minDistance = -0.618; // 最小影響距離
+		this.ssaoPassD.maxDistance = 0.618;  // 最大影響距離
+		this.composer.addPass(this.ssaoPassD);
+		
+		this.ssaoPassF = new SSAOPass(this.scene, this.cameraF, width, height);
+		this.ssaoPassF.kernelRadius = 61.8;      // 陰影擴散的範圍半徑
+		this.ssaoPassF.minDistance = -0.618;  // 最小影響距離
+		this.ssaoPassF.maxDistance = 0.618;    // 最大影響距離
+		this.composer.addPass(this.ssaoPassF);
+		
+		this.ssaoPassB = new SSAOPass(this.scene, this.cameraB, width, height);
+		this.ssaoPassB.kernelRadius = 61.8;     // 陰影擴散的範圍半徑
+		this.ssaoPassB.minDistance = -0.618; // 最小影響距離
+		this.ssaoPassB.maxDistance = 0.618;  // 最大影響距離
+		this.composer.addPass(this.ssaoPassB);
+		
+		this.ssaoArray = [this.ssaoPassL, this.ssaoPassR, this.ssaoPassU, this.ssaoPassD, this.ssaoPassF, this.ssaoPassB];
 
 		let targetInterval = 4;
 
@@ -2514,7 +2553,7 @@ class AudioMap {
 		this.currentMesh.rotation.z += Math.min(Math.max(-0.0618 + Math.min(Math.max(Math.abs(lrdiff), 0.01), 0.1) * 1.618, -0.0118), 0.0118);
 		this.currentMesh.rotation.z *= 0.382;
 			
-		this.stereoCamera.eyeSep = Math.min(Math.max(this.camera.eyeSep * (1.618 - this.material.uniforms.u_peak.value), 0.618), 1.618);
+		this.stereoCamera.eyeSep = Math.min(Math.max(this.stereoCamera.eyeSep * (1.618 - this.material.uniforms.u_peak.value), 0.618), 1.618);
 		//console.log(this.camera.eyeSep);
 
 		//console.log([this.currentMesh.rotation.x, this.currentMesh.rotation.y, this.currentMesh.rotation.z]);
@@ -2530,10 +2569,12 @@ class AudioMap {
 			this.material.uniforms.u_orient.value.set(this.orient.x, this.orient.y);
 		}
 		
+		const index = frameCount % 6;
+		
 		// 不管有沒有 needsFeedback，都要先畫出這一幀
 		this.renderer.setRenderTarget(this.targetA);
 		//this.renderer.render(this.scene, this.camera);
-		this.renderer.render(this.scene, this.l?this.stereoCamera.cameraL:this.stereoCamera.cameraR);
+		this.renderer.render(this.scene, this.stereoCamera.cameras[index]);
 		
 		// 1. 數據分析：趁 A 還是熱騰騰的新畫面的時候，趕快分析
 		// 這樣所有 Shader（不論有沒有殘影）都能支持音訊回饋
@@ -2558,11 +2599,11 @@ class AudioMap {
 		// 2. 顯示到螢幕
 		this.renderer.setRenderTarget(null);
 		//this.renderer.render(this.scene, this.camera);
-		this.renderer.render(this.scene, this.l?this.stereoCamera.cameraR:this.stereoCamera.cameraL);
+		this.renderer.render(this.scene, this.stereoCamera.cameras[index]);
 
-		if(frameCount % 3 ==0) {
-		    this.setSSAO(this.l?this.ssaoPassL:this.ssaoPassR, this.params);
-            this.composer
+		if(frameCount % 2 ==0 && frameCount % 12 >= 0) {
+		    this.setSSAO(this.ssaoArray[frameCount % 12 / 2], this.params);
+            this.composer.render();
 		}
 		
 		this.l = !this.l;
