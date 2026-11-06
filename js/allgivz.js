@@ -2409,7 +2409,7 @@ class AudioMap {
 								bloomPass.radius = this.params['speed'] * 0.00382;
 								bloomPass.threshold = this.params['complexity'] * 0.0618;
 								
-								bloomPass.enabled = true;
+								//bloomPass.enabled = true;
 						}
 					}
 					else {
