@@ -2336,6 +2336,7 @@ class AudioMap {
 		const rgbShiftPass = new ShaderPass(RGBShiftShader);
 		rgbShiftPass.uniforms['amount'].value = 0; // 偏移強度
 		this.composer.addPass(rgbShiftPass);
+		rgbShiftPass.enabled = false;
 		
 		const glitchPass = new GlitchPass();
 		glitchPass.enabled = false;
@@ -2426,12 +2427,13 @@ class AudioMap {
 							dotPass.uniforms[ 'angle' ].value = this.params['intensity'] * 0.618;
 							dotPass.uniforms[ 'scale' ].value = this.params['complexity'] * 0.382;
 							
-							dotPass.enabled = true;
+							//dotPass.enabled = true;
 						}
 						else {
 							this.zOrder = ['intensity', 'speed', 'complexity'];
 							
 							rgbShiftPass.uniforms['amount'].value = 0.0001 / this.params['speed'];
+							//rgbShiftPass.enabled = true;
 						}
 					}
 				} else {
@@ -2442,7 +2444,7 @@ class AudioMap {
 						this.isBPMLocked = false;
 						
 						bloomPass.enabled = false;
-						rgbShiftPass.uniforms['amount'].value = 0;
+						rgbShiftPass.enabled = false;
 						glitchPass.enabled = false;
 						dotPass.enabled = false;
 					}
