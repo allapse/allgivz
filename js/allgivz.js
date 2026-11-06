@@ -2324,26 +2324,26 @@ class AudioMap {
 		this.composer.addPass(this.ssaoPass);
 
 		// 3. 第二道工序：加上泛光特效（讓畫面中發光或亮部的部分暈開）
-		/*const bloomPass = new UnrealBloomPass(
+		const bloomPass = new UnrealBloomPass(
 			new THREE.Vector2(window.innerWidth, window.innerHeight),
 			0.00618,   // 強度拉大（例如 2.0 ~ 3.0）
 			0.00382,   // 半徑
 			0.0618   // 閾值壓到極低，讓幾乎所有帶點顏色的地方都開始暈開
 		);
 		bloomPass.enabled = false;
-		composer.addPass(bloomPass);
+		this.composer.addPass(bloomPass);
 		
 		const rgbShiftPass = new ShaderPass(RGBShiftShader);
 		rgbShiftPass.uniforms['amount'].value = 0; // 偏移強度
-		composer.addPass(rgbShiftPass);
+		this.composer.addPass(rgbShiftPass);
 		
 		const glitchPass = new GlitchPass();
 		glitchPass.enabled = false;
-		composer.addPass(glitchPass);
+		this.composer.addPass(glitchPass);
 		
 		const dotPass = new DotScreenPass(new THREE.Vector2(0, 0), 0.618, 0.809);
 		dotPass.enabled = false;
-		composer.addPass(dotPass);*/
+		this.composer.addPass(dotPass);
 
 		let targetInterval = 4;
 
@@ -2405,11 +2405,11 @@ class AudioMap {
 								this.zOrder[maxIndex] = 'speed';
 							}
 							
-								/*bloomPass.strength = this.params['intensity'] * 0.000618;
+								bloomPass.strength = this.params['intensity'] * 0.000618;
 								bloomPass.radius = this.params['speed'] * 0.00382;
 								bloomPass.threshold = this.params['complexity'] * 0.0618;
 								
-								bloomPass.enabled = true;*/
+								bloomPass.enabled = true;
 						}
 					}
 					else {
@@ -2423,15 +2423,15 @@ class AudioMap {
 							this.zOrder[intensityOrder] = 'complexity';
 							this.zOrder[complexityOrder] = 'intensity';
 							
-							/*dotPass.uniforms[ 'angle' ].value = this.params['intensity'] * 0.618;
+							dotPass.uniforms[ 'angle' ].value = this.params['intensity'] * 0.618;
 							dotPass.uniforms[ 'scale' ].value = this.params['complexity'] * 0.382;
 							
-							dotPass.enabled = true;*/
+							dotPass.enabled = true;
 						}
 						else {
 							this.zOrder = ['intensity', 'speed', 'complexity'];
 							
-							//rgbShiftPass.uniforms['amount'].value = 0.0001 / this.params['speed'];
+							rgbShiftPass.uniforms['amount'].value = 0.0001 / this.params['speed'];
 						}
 					}
 				} else {
@@ -2441,10 +2441,10 @@ class AudioMap {
 						//this.lastFlashTime = now;
 						this.isBPMLocked = false;
 						
-						/*bloomPass.enabled = false;
+						bloomPass.enabled = false;
 						rgbShiftPass.uniforms['amount'].value = 0;
 						glitchPass.enabled = false;
-						dotPass.enabled = false;*/
+						dotPass.enabled = false;
 					}
 				}
 			}
