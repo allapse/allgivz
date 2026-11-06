@@ -2333,10 +2333,10 @@ class AudioMap {
 		bloomPass.enabled = false;
 		this.composer.addPass(bloomPass);*/
 		
-		const rgbShiftPass = new ShaderPass(RGBShiftShader);
+		/*const rgbShiftPass = new ShaderPass(RGBShiftShader);
 		rgbShiftPass.uniforms['amount'].value = 0; // 偏移強度
 		this.composer.addPass(rgbShiftPass);
-		rgbShiftPass.enabled = false;
+		rgbShiftPass.enabled = false;*/
 		
 		const glitchPass = new GlitchPass();
 		glitchPass.enabled = false;
@@ -2432,8 +2432,8 @@ class AudioMap {
 						else {
 							this.zOrder = ['intensity', 'speed', 'complexity'];
 							
-							rgbShiftPass.uniforms['amount'].value = 0.0001 / this.params['speed'];
-							rgbShiftPass.enabled = true;
+							/*rgbShiftPass.uniforms['amount'].value = 0.0001 / this.params['speed'];
+							rgbShiftPass.enabled = true;*/
 						}
 					}
 				} else {
@@ -2444,7 +2444,7 @@ class AudioMap {
 						this.isBPMLocked = false;
 						
 						//bloomPass.enabled = false;
-						rgbShiftPass.enabled = false;
+						//rgbShiftPass.enabled = false;
 						glitchPass.enabled = false;
 						dotPass.enabled = false;
 					}
