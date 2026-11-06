@@ -2331,12 +2331,12 @@ class AudioMap {
 			0.0618   // 閾值壓到極低，讓幾乎所有帶點顏色的地方都開始暈開
 		);
 		bloomPass.enabled = false;
-		this.composer.addPass(bloomPass);*/
+		this.composer.addPass(bloomPass);
 		
-		/*const rgbShiftPass = new ShaderPass(RGBShiftShader);
+		const rgbShiftPass = new ShaderPass(RGBShiftShader);
 		rgbShiftPass.uniforms['amount'].value = 0; // 偏移強度
 		this.composer.addPass(rgbShiftPass);
-		rgbShiftPass.enabled = false;*/
+		rgbShiftPass.enabled = false;
 		
 		const glitchPass = new GlitchPass();
 		glitchPass.enabled = false;
@@ -2344,7 +2344,7 @@ class AudioMap {
 		
 		const dotPass = new DotScreenPass(new THREE.Vector2(0, 0), 0.618, 0.809);
 		dotPass.enabled = false;
-		this.composer.addPass(dotPass);
+		this.composer.addPass(dotPass);*/
 
 		let targetInterval = 4;
 
@@ -2388,7 +2388,7 @@ class AudioMap {
 							
 							this.zOrder = ['intensity', 'speed', 'complexity'];
 							
-							glitchPass.enabled = true;
+							//glitchPass.enabled = true;
 						}
 						else {
 							const values = this.zOrder.map(key => this.params[key]);
@@ -2424,10 +2424,10 @@ class AudioMap {
 							this.zOrder[intensityOrder] = 'complexity';
 							this.zOrder[complexityOrder] = 'intensity';
 							
-							dotPass.uniforms[ 'angle' ].value = this.params['intensity'] * 0.618;
+							/*dotPass.uniforms[ 'angle' ].value = this.params['intensity'] * 0.618;
 							dotPass.uniforms[ 'scale' ].value = this.params['complexity'] * 0.382;
 							
-							dotPass.enabled = true;
+							dotPass.enabled = true;*/
 						}
 						else {
 							this.zOrder = ['intensity', 'speed', 'complexity'];
@@ -2443,10 +2443,10 @@ class AudioMap {
 						//this.lastFlashTime = now;
 						this.isBPMLocked = false;
 						
-						//bloomPass.enabled = false;
-						//rgbShiftPass.enabled = false;
+						/*bloomPass.enabled = false;
+						rgbShiftPass.enabled = false;
 						glitchPass.enabled = false;
-						dotPass.enabled = false;
+						dotPass.enabled = false;*/
 					}
 				}
 			}
