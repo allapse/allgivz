@@ -2275,11 +2275,11 @@ class AudioMap {
 		this.cameraD = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -0.996, -1.0, 1.0);
 		this.cameraF = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -1.0, -0.996, 1.0);
 		this.cameraB = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -1.0, -1.0, 0.996);
-		this.stereoCamera = new THREE.ArrayCamera([this.cameraL, this.cameraF, this.cameraU, this.cameraR, this.cameraB, this.cameraD]);
+		this.arrayCamera = new THREE.ArrayCamera([this.cameraL, this.cameraF, this.cameraU, this.cameraR, this.cameraB, this.cameraD]);
 		
 		this.renderer = new THREE.WebGLRenderer({ antialias: true });
 		this.renderer.setSize(width, height);
-		//this.composer = new EffectComposer(this.renderer);
+		this.composer = new EffectComposer(this.renderer);
 		
 		document.getElementById('container').appendChild(this.renderer.domElement);
 
@@ -2315,18 +2315,13 @@ class AudioMap {
 		//this.scene.add(mesh);
 		
 		// 2. 第一道工序：把你的 3D 場景正常畫出來（就像平常的 renderer.render）
-		/*const renderPassL = new RenderPass(this.scene, this.cameraL);
-		const renderPassR = new RenderPass(this.scene, this.cameraR);
-		const renderPassU = new RenderPass(this.scene, this.cameraU);
-		const renderPassD = new RenderPass(this.scene, this.cameraD);
-		const renderPassF = new RenderPass(this.scene, this.cameraF);
-		const renderPassB = new RenderPass(this.scene, this.cameraB);
-		this.composer.addPass(renderPassL);
-		this.composer.addPass(renderPassR);
-		this.composer.addPass(renderPassU);
-		this.composer.addPass(renderPassD);
-		this.composer.addPass(renderPassF);
-		this.composer.addPass(renderPassB);*/
+		this.renderPass = new RenderPass(this.scene, this.cameraB);
+		this.composer.addPass(this.renderPass);
+		this.ssaoPass = new SSAOPass(this.scene, this.cameraB, width, height);
+		this.ssaoPass.kernelRadius = 61.8;      // 陰影擴散的範圍半徑
+		this.ssaoPass.minDistance = -0.618;  // 最小影響距離
+		this.ssaoPass.maxDistance = 0.618;    // 最大影響距離
+		this.composer.addPass(this.ssaoPass);
 
 		// 3. 第二道工序：加上泛光特效（讓畫面中發光或亮部的部分暈開）
 		/*const bloomPass = new UnrealBloomPass(
@@ -2349,43 +2344,6 @@ class AudioMap {
 		const dotPass = new DotScreenPass(new THREE.Vector2(0, 0), 0.618, 0.809);
 		dotPass.enabled = false;
 		composer.addPass(dotPass);*/
-		/*this.ssaoPassL = new SSAOPass(this.scene, this.cameraL, width, height);
-		this.ssaoPassL.kernelRadius = 61.8;      // 陰影擴散的範圍半徑
-		this.ssaoPassL.minDistance = -0.618;  // 最小影響距離
-		this.ssaoPassL.maxDistance = 0.618;    // 最大影響距離
-		this.composer.addPass(this.ssaoPassL);
-		
-		this.ssaoPassR = new SSAOPass(this.scene, this.cameraR, width, height);
-		this.ssaoPassR.kernelRadius = 61.8;     // 陰影擴散的範圍半徑
-		this.ssaoPassR.minDistance = -0.618; // 最小影響距離
-		this.ssaoPassR.maxDistance = 0.618;  // 最大影響距離
-		this.composer.addPass(this.ssaoPassR);
-		
-		this.ssaoPassU = new SSAOPass(this.scene, this.cameraU, width, height);
-		this.ssaoPassU.kernelRadius = 61.8;      // 陰影擴散的範圍半徑
-		this.ssaoPassU.minDistance = -0.618;  // 最小影響距離
-		this.ssaoPassU.maxDistance = 0.618;    // 最大影響距離
-		this.composer.addPass(this.ssaoPassU);
-		
-		this.ssaoPassD = new SSAOPass(this.scene, this.cameraD, width, height);
-		this.ssaoPassD.kernelRadius = 61.8;     // 陰影擴散的範圍半徑
-		this.ssaoPassD.minDistance = -0.618; // 最小影響距離
-		this.ssaoPassD.maxDistance = 0.618;  // 最大影響距離
-		this.composer.addPass(this.ssaoPassD);
-		
-		this.ssaoPassF = new SSAOPass(this.scene, this.cameraF, width, height);
-		this.ssaoPassF.kernelRadius = 61.8;      // 陰影擴散的範圍半徑
-		this.ssaoPassF.minDistance = -0.618;  // 最小影響距離
-		this.ssaoPassF.maxDistance = 0.618;    // 最大影響距離
-		this.composer.addPass(this.ssaoPassF);
-		
-		this.ssaoPassB = new SSAOPass(this.scene, this.cameraB, width, height);
-		this.ssaoPassB.kernelRadius = 61.8;     // 陰影擴散的範圍半徑
-		this.ssaoPassB.minDistance = -0.618; // 最小影響距離
-		this.ssaoPassB.maxDistance = 0.618;  // 最大影響距離
-		this.composer.addPass(this.ssaoPassB);
-		
-		this.ssaoArray = [this.ssaoPassL, this.ssaoPassR, this.ssaoPassU, this.ssaoPassD, this.ssaoPassF, this.ssaoPassB];*/
 
 		let targetInterval = 4;
 
@@ -2525,17 +2483,18 @@ class AudioMap {
 			const height = window.innerHeight;
 			
 			this.renderer.setSize(width, height);
-			/*this.composer.setSize(width, height);
-			this.ssaoPassL.setSize(width, height);
-			this.ssaoPassR.setSize(width, height);*/
+			this.composer.setSize(width, height);
+			this.ssaoPass.setSize(width, height);
 			this.material.uniforms.u_res.value.set(width, height);
 		});
 	}
 	
-	setSSAO(ssaoPass, param){
-		ssaoPass.kernelRadius = param[1] * 61.8;
-		ssaoPass.minDistance = param[0] * -0.618;
-		ssaoPass.maxDistance = param[2] * 0.618; 
+	setSSAO(index, param){
+		this.renderPass.camera = this.arrayCamera.cameras[index];
+		this.ssaoPass.camera = this.arrayCamera.cameras[index];
+		this.ssaoPass.kernelRadius = param[1] * 61.8;
+		this.ssaoPass.minDistance = param[0] * -0.618;
+		this.ssaoPass.maxDistance = param[2] * 0.618; 
 	}
 	
 	internalUpdate(frameCount){
@@ -2553,7 +2512,7 @@ class AudioMap {
 		this.currentMesh.rotation.z += Math.min(Math.max(-0.0618 + Math.min(Math.max(Math.abs(lrdiff), 0.01), 0.1) * 1.618, -0.0118), 0.0118);
 		this.currentMesh.rotation.z *= 0.382;
 			
-		this.stereoCamera.eyeSep = Math.min(Math.max(this.stereoCamera.eyeSep * (1.618 - this.material.uniforms.u_peak.value), 0.618), 1.618);
+		this.arrayCamera.eyeSep = Math.min(Math.max(this.arrayCamera.eyeSep * (1.618 - this.material.uniforms.u_peak.value), 0.618), 1.618);
 		//console.log(this.camera.eyeSep);
 
 		//console.log([this.currentMesh.rotation.x, this.currentMesh.rotation.y, this.currentMesh.rotation.z]);
@@ -2574,7 +2533,7 @@ class AudioMap {
 		// 不管有沒有 needsFeedback，都要先畫出這一幀
 		this.renderer.setRenderTarget(this.targetA);
 		//this.renderer.render(this.scene, this.camera);
-		this.renderer.render(this.scene, this.stereoCamera.cameras[index]);
+		this.renderer.render(this.scene, this.arrayCamera.cameras[index]);
 		
 		// 1. 數據分析：趁 A 還是熱騰騰的新畫面的時候，趕快分析
 		// 這樣所有 Shader（不論有沒有殘影）都能支持音訊回饋
@@ -2599,12 +2558,12 @@ class AudioMap {
 		// 2. 顯示到螢幕
 		this.renderer.setRenderTarget(null);
 		//this.renderer.render(this.scene, this.camera);
-		this.renderer.render(this.scene, this.stereoCamera.cameras[index]);
+		this.renderer.render(this.scene, this.arrayCamera.cameras[index]);
 
-		/*if(frameCount % 2 ==0 && frameCount % 12 >= 0) {
-		    this.setSSAO(this.ssaoArray[frameCount % 12 / 2], this.params);
+		if(frameCount % 2 ==0) {
+		    this.setSSAO(index, this.params);
             this.composer.render();
-		}*/
+		}
 		
 		this.l = !this.l;
 
