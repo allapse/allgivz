@@ -1,4 +1,4 @@
-
+ 
 class MapSlider extends HTMLElement {
     constructor() {
         super();
