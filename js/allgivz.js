@@ -2601,10 +2601,10 @@ class AudioMap {
 		//this.renderer.render(this.scene, this.camera);
 		this.renderer.render(this.scene, this.stereoCamera.cameras[index]);
 
-		if(frameCount % 2 ==0 && frameCount % 12 >= 0) {
+		/*if(frameCount % 2 ==0 && frameCount % 12 >= 0) {
 		    this.setSSAO(this.ssaoArray[frameCount % 12 / 2], this.params);
             this.composer.render();
-		}
+		}*/
 		
 		this.l = !this.l;
 
