@@ -2387,7 +2387,7 @@ class AudioMap {
 							
 							this.zOrder = ['intensity', 'speed', 'complexity'];
 							
-							glitchPass.enabled = true;
+							//glitchPass.enabled = true;
 						}
 						else {
 							const values = this.zOrder.map(key => this.params[key]);
