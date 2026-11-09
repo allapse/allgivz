@@ -2410,7 +2410,7 @@ class AudioMap {
 								bloomPass.radius = this.params['speed'] * 0.00382;
 								bloomPass.threshold = this.params['complexity'] * 0.0618;
 								
-								//bloomPass.enabled = true;
+								bloomPass.enabled = true;
 						}
 					}
 					else {
@@ -2433,7 +2433,7 @@ class AudioMap {
 							this.zOrder = ['intensity', 'speed', 'complexity'];
 							
 							rgbShiftPass.uniforms['amount'].value = 0.0001 / this.params['speed'];
-							//rgbShiftPass.enabled = true;
+							rgbShiftPass.enabled = true;
 						}
 					}
 				} else {
@@ -2443,10 +2443,10 @@ class AudioMap {
 						//this.lastFlashTime = now;
 						this.isBPMLocked = false;
 						
-						/*bloomPass.enabled = false;
+						bloomPass.enabled = false;
 						rgbShiftPass.enabled = false;
-						glitchPass.enabled = false;
-						dotPass.enabled = false;*/
+						//glitchPass.enabled = false;
+						//dotPass.enabled = false;
 					}
 				}
 			}
