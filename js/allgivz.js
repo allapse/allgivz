@@ -1,4 +1,4 @@
- 
+
 class MapSlider extends HTMLElement {
     constructor() {
         super();
@@ -2331,14 +2331,14 @@ class AudioMap {
 			0.0618   // 閾值壓到極低，讓幾乎所有帶點顏色的地方都開始暈開
 		);
 		bloomPass.enabled = false;
-		this.composer.addPass(bloomPass);
+		this.composer.addPass(bloomPass);*/
 		
 		const rgbShiftPass = new ShaderPass(RGBShiftShader);
 		rgbShiftPass.uniforms['amount'].value = 0; // 偏移強度
 		this.composer.addPass(rgbShiftPass);
 		rgbShiftPass.enabled = false;
 		
-		const glitchPass = new GlitchPass();
+		/*const glitchPass = new GlitchPass();
 		glitchPass.enabled = false;
 		this.composer.addPass(glitchPass);
 		
@@ -2432,8 +2432,8 @@ class AudioMap {
 						else {
 							this.zOrder = ['intensity', 'speed', 'complexity'];
 							
-							/*rgbShiftPass.uniforms['amount'].value = 0.0001 / this.params['speed'];
-							rgbShiftPass.enabled = true;*/
+							rgbShiftPass.uniforms['amount'].value = 0.0001 / this.params['speed'];
+							rgbShiftPass.enabled = true;
 						}
 					}
 				} else {
@@ -2443,10 +2443,10 @@ class AudioMap {
 						//this.lastFlashTime = now;
 						this.isBPMLocked = false;
 						
-						/*bloomPass.enabled = false;
+						//bloomPass.enabled = false;
 						rgbShiftPass.enabled = false;
-						glitchPass.enabled = false;
-						dotPass.enabled = false;*/
+						//glitchPass.enabled = false;
+						//dotPass.enabled = false;
 					}
 				}
 			}
