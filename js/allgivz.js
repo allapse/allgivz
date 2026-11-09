@@ -2324,14 +2324,14 @@ class AudioMap {
 		this.composer.addPass(this.ssaoPass);
 
 		// 3. 第二道工序：加上泛光特效（讓畫面中發光或亮部的部分暈開）
-		const bloomPass = new UnrealBloomPass(
+		this.bloomPass = new UnrealBloomPass(
 			new THREE.Vector2(window.innerWidth, window.innerHeight),
 			0.00618,   // 強度拉大（例如 2.0 ~ 3.0）
 			0.00382,   // 半徑
 			0.0618   // 閾值壓到極低，讓幾乎所有帶點顏色的地方都開始暈開
 		);
-		bloomPass.enabled = false;
-		this.composer.addPass(bloomPass);
+		this.bloomPass.enabled = false;
+		this.composer.addPass(this.bloomPass);
 		
 		const rgbShiftPass = new ShaderPass(RGBShiftShader);
 		rgbShiftPass.uniforms['amount'].value = 0; // 偏移強度
@@ -2406,11 +2406,11 @@ class AudioMap {
 								this.zOrder[maxIndex] = 'speed';
 							}
 							
-								bloomPass.strength = this.params['intensity'] * 0.000618;
-								bloomPass.radius = this.params['speed'] * 0.00382;
-								bloomPass.threshold = this.params['complexity'] * 0.0618;
+								this.bloomPass.strength = this.params['intensity'] * 0.0382;
+								this.bloomPass.radius = this.params['speed'] * 0.01618;
+								this.bloomPass.threshold = this.params['complexity'] * 0.382;
 								
-								bloomPass.enabled = true;
+								this.bloomPass.enabled = true;
 						}
 					}
 					else {
@@ -2432,7 +2432,7 @@ class AudioMap {
 						else {
 							this.zOrder = ['intensity', 'speed', 'complexity'];
 							
-							rgbShiftPass.uniforms['amount'].value = 0.0001 / this.params['speed'];
+							rgbShiftPass.uniforms['amount'].value = 0.000382 / this.params['speed'];
 							rgbShiftPass.enabled = true;
 						}
 					}
@@ -2443,7 +2443,7 @@ class AudioMap {
 						//this.lastFlashTime = now;
 						this.isBPMLocked = false;
 						
-						bloomPass.enabled = false;
+						this.bloomPass.enabled = false;
 						rgbShiftPass.enabled = false;
 						//glitchPass.enabled = false;
 						//dotPass.enabled = false;
@@ -2562,10 +2562,14 @@ class AudioMap {
 		//this.renderer.render(this.scene, this.camera);
 		this.renderer.render(this.scene, this.arrayCamera.cameras[index]);
 
-		if(frameCount % 2 ==0) {
+		/*if(frameCount % 2 ==0) {
 		    this.setSSAO(index, this.params);
             this.composer.render();
-		}
+			this.bloomPass.enabled = false;
+		}*/
+		
+		this.setSSAO(index, this.params);
+        this.composer.render();
 		
 		this.l = !this.l;
 
