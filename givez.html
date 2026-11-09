@@ -16,10 +16,21 @@
 		import * as THREE from 'three';
 		import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 		import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+		import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+		import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+		import { RGBShiftShader } from 'three/examples/jsm/shaders/RGBShiftShader.js';
+		import { GlitchPass } from 'three/examples/jsm/postprocessing/GlitchPass.js';
+		import { DotScreenPass } from 'three/examples/jsm/postprocessing/DotScreenPass.js';
 		import { SSAOPass } from 'three/examples/jsm/postprocessing/SSAOPass.js';
+		
 		window.THREE = THREE;
 		window.EffectComposer = EffectComposer;
 		window.RenderPass = RenderPass;
+		window.UnrealBloomPass = UnrealBloomPass;
+		window.ShaderPass = ShaderPass;
+		window.RGBShiftShader = RGBShiftShader;
+		window.GlitchPass = GlitchPass;
+		window.DotScreenPass = DotScreenPass;
 		window.SSAOPass = SSAOPass;
 
 		const audioMap = new AudioMap();
