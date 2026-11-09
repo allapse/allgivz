@@ -2343,7 +2343,7 @@ class AudioMap {
 		this.composer.addPass(glitchPass);*/
 		
 		const dotPass = new DotScreenPass(new THREE.Vector2(0, 0), 0.618, 0.809);
-		dotPass.enabled = false;
+		//dotPass.enabled = false;
 		this.composer.addPass(dotPass);
 
 		let targetInterval = 4;
@@ -2427,7 +2427,7 @@ class AudioMap {
 							dotPass.uniforms[ 'angle' ].value = this.params['intensity'] * 0.618;
 							dotPass.uniforms[ 'scale' ].value = this.params['complexity'] * 0.382;
 							
-							dotPass.enabled = true;
+							//dotPass.enabled = true;
 						}
 						else {
 							this.zOrder = ['intensity', 'speed', 'complexity'];
@@ -2446,7 +2446,7 @@ class AudioMap {
 						//bloomPass.enabled = false;
 						//rgbShiftPass.enabled = false;
 						//glitchPass.enabled = false;
-						dotPass.enabled = false;
+						//dotPass.enabled = false;
 					}
 				}
 			}
