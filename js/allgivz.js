@@ -2333,10 +2333,10 @@ class AudioMap {
 		this.bloomPass.enabled = false;
 		this.composer.addPass(this.bloomPass);
 		
-		const rgbShiftPass = new ShaderPass(RGBShiftShader);
-		rgbShiftPass.uniforms['amount'].value = 0; // 偏移強度
-		this.composer.addPass(rgbShiftPass);
-		rgbShiftPass.enabled = false;
+		this.rgbShiftPass = new ShaderPass(RGBShiftShader);
+		this.rgbShiftPass.uniforms['amount'].value = 0; // 偏移強度
+		this.composer.addPass(this.rgbShiftPass);
+		this.rgbShiftPass.enabled = false;
 		
 		/*const glitchPass = new GlitchPass();
 		glitchPass.enabled = false;
@@ -2407,11 +2407,7 @@ class AudioMap {
 							}
 							
 								if(this.feedback) {
-									if(this.feedback.R < 0.382) {
-										rgbShiftPass.uniforms['amount'].value = 0.00382 / this.params['speed'];
-										rgbShiftPass.enabled = true;
-									}
-									this.bloomPass.strength = this.params['intensity'] * 0.0382 / this.feedback.R;
+									this.bloomPass.strength = this.params['intensity'] * 0.0618 * this.feedback.R;
 									this.bloomPass.radius = this.params['speed'] * 0.01618;
 									this.bloomPass.threshold = this.params['complexity'] * 0.382;
 									
@@ -2439,8 +2435,8 @@ class AudioMap {
 						else {
 							this.zOrder = ['intensity', 'speed', 'complexity'];
 							
-							rgbShiftPass.uniforms['amount'].value = 0.000382 / this.params['speed'];
-							rgbShiftPass.enabled = true;
+							this.rgbShiftPass.uniforms['amount'].value = 0.000382 / this.params['speed'];
+							this.rgbShiftPass.enabled = true;
 						}
 					}
 				} else {
@@ -2451,7 +2447,7 @@ class AudioMap {
 						this.isBPMLocked = false;
 						
 						this.bloomPass.enabled = false;
-						rgbShiftPass.enabled = false;
+						this.rgbShiftPass.enabled = false;
 						//glitchPass.enabled = false;
 						//dotPass.enabled = false;
 					}
@@ -2494,6 +2490,8 @@ class AudioMap {
 			this.renderer.setSize(width, height);
 			this.composer.setSize(width, height);
 			this.ssaoPass.setSize(width, height);
+			this.bloomPass.setSize(width, height);
+			this.rgbShiftPass.setSize(width, height);
 			this.material.uniforms.u_res.value.set(width, height);
 		});
 	}
@@ -2547,7 +2545,7 @@ class AudioMap {
 		// 1. 數據分析：趁 A 還是熱騰騰的新畫面的時候，趕快分析
 		// 這樣所有 Shader（不論有沒有殘影）都能支持音訊回饋
 		if (this.feedback && this.feedbackMode) {
-			if(frameCount % 4 ==0) {
+			if(frameCount % 3 ==0) {
 				this.feedback.update(this.targetA.texture);
 				this.applyEffects(this.feedback);
 			}
@@ -2565,9 +2563,9 @@ class AudioMap {
 		}
 
 		// 2. 顯示到螢幕
-		this.renderer.setRenderTarget(null);
+		/*this.renderer.setRenderTarget(null);
 		//this.renderer.render(this.scene, this.camera);
-		this.renderer.render(this.scene, this.arrayCamera.cameras[index]);
+		this.renderer.render(this.scene, this.arrayCamera.cameras[index]);*/
 
 		/*if(frameCount % 2 ==0) {
 		    this.setSSAO(index, this.params);
