@@ -2418,6 +2418,13 @@ class AudioMap {
 										
 										this.bloomPass.enabled = true;
 									}
+									else {
+										this.bloomPass.strength = this.params['intensity'] * 0.01618;
+										this.bloomPass.radius = this.params['speed'] * 0.00618;
+										this.bloomPass.threshold = this.params['complexity'] * 0.618;
+										
+										this.bloomPass.enabled = true;
+									}
 								}
 								
 						}
