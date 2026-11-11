@@ -2269,15 +2269,18 @@ class AudioMap {
 		this.scene = new THREE.Scene();
 		
 		this.camera = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -1.0, -1.0, 1.0);
-		this.cameraL = new THREE.OrthographicCamera(-0.996, 1.0, 1.0, -1.0, -1.0, 1.0);
-		this.cameraR = new THREE.OrthographicCamera(-1.0, 0.996, 1.0, -1.0, -1.0, 1.0);
+		this.cameraL = new THREE.OrthographicCamera(-0.997, 1.0, 1.0, -1.0, -1.0, 1.0);
+		this.cameraR = new THREE.OrthographicCamera(-1.0, 0.997, 1.0, -1.0, -1.0, 1.0);
 		this.cameraU = new THREE.OrthographicCamera(-1.0, 1.0, 0.996, -1.0, -1.0, 1.0);
 		this.cameraD = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -0.996, -1.0, 1.0);
-		this.cameraF = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -1.0, -0.996, 1.0);
-		this.cameraB = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -1.0, -1.0, 0.996);
+		this.cameraF = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -1.0, -0.995, 1.0);
+		this.cameraB = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -1.0, -1.0, 0.995);
 		this.arrayCamera = new THREE.ArrayCamera([this.cameraL, this.cameraF, this.cameraU, this.cameraR, this.cameraB, this.cameraD]);
 		
 		this.renderer = new THREE.WebGLRenderer({ antialias: true });
+		//this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+		//this.renderer.toneMapping = AgXToneMapping; // 必須要有 Tone Mapping 來壓制高光
+		this.renderer.toneMappingExposure = 4.237;
 		this.renderer.setSize(width, height);
 		this.composer = new EffectComposer(this.renderer);
 		
@@ -2317,8 +2320,9 @@ class AudioMap {
 		// 2. 第一道工序：把你的 3D 場景正常畫出來（就像平常的 renderer.render）
 		this.renderPass = new RenderPass(this.scene, this.cameraB);
 		this.composer.addPass(this.renderPass);
+		
 		this.ssaoPass = new SSAOPass(this.scene, this.cameraB, width, height);
-		this.ssaoPass.kernelRadius = 61.8;      // 陰影擴散的範圍半徑
+		this.ssaoPass.kernelRadius = 0.00812;      // 陰影擴散的範圍半徑
 		this.ssaoPass.minDistance = -0.618;  // 最小影響距離
 		this.ssaoPass.maxDistance = 0.618;    // 最大影響距離
 		this.composer.addPass(this.ssaoPass);
@@ -2326,12 +2330,12 @@ class AudioMap {
 		// 3. 第二道工序：加上泛光特效（讓畫面中發光或亮部的部分暈開）
 		this.bloomPass = new UnrealBloomPass(
 			new THREE.Vector2(window.innerWidth, window.innerHeight),
-			0.00618,   // 強度拉大（例如 2.0 ~ 3.0）
-			0.00382,   // 半徑
-			0.0618   // 閾值壓到極低，讓幾乎所有帶點顏色的地方都開始暈開
+			0.001918,   // 強度拉大（例如 2.0 ~ 3.0）
+			0.001918,   // 半徑
+			0.618   // 閾值壓到極低，讓幾乎所有帶點顏色的地方都開始暈開
 		);
-		this.bloomPass.enabled = false;
-		this.composer.addPass(this.bloomPass);
+		//this.bloomPass.enabled = false;
+		//this.composer.addPass(this.bloomPass);
 		
 		this.rgbShiftPass = new ShaderPass(RGBShiftShader);
 		this.rgbShiftPass.uniforms['amount'].value = 0; // 偏移強度
@@ -2345,6 +2349,12 @@ class AudioMap {
 		const dotPass = new DotScreenPass(new THREE.Vector2(0, 0), 0.618, 0.809);
 		dotPass.enabled = false;
 		this.composer.addPass(dotPass);*/
+		
+		const gammaPass = new ShaderPass(GammaCorrectionShader);
+		this.composer.addPass(gammaPass);
+		
+		const outputPass = new OutputPass();
+		//this.composer.addPass(outputPass); // 必須放在最後一個！
 
 		let targetInterval = 4;
 
@@ -2406,14 +2416,11 @@ class AudioMap {
 								this.zOrder[maxIndex] = 'speed';
 							}
 							
-								if(this.feedback) {
-									this.bloomPass.strength = this.params['intensity'] * 0.0618 * this.feedback.R;
-									this.bloomPass.radius = this.params['speed'] * 0.01618;
-									this.bloomPass.threshold = this.params['complexity'] * 0.382;
-									
-									this.bloomPass.enabled = true;
-								}
-								
+							/*if(this.feedback) {
+								this.bloomPass.strength = this.tuneEffect(this.bloomPass.strength, this.feedback.R);
+								this.bloomPass.radius = this.tuneEffect(this.bloomPass.radius, this.feedback.G);
+								this.bloomPass.threshold = this.tuneEffect(this.bloomPass.threshold, this.feedback.B);
+							}*/
 						}
 					}
 					else {
@@ -2435,7 +2442,7 @@ class AudioMap {
 						else {
 							this.zOrder = ['intensity', 'speed', 'complexity'];
 							
-							this.rgbShiftPass.uniforms['amount'].value = 0.000382 / this.params['speed'];
+							this.rgbShiftPass.uniforms['amount'].value = 0.000382 / (this.params['speed'] + 0.1);
 							this.rgbShiftPass.enabled = true;
 						}
 					}
@@ -2446,7 +2453,7 @@ class AudioMap {
 						//this.lastFlashTime = now;
 						this.isBPMLocked = false;
 						
-						this.bloomPass.enabled = false;
+						//this.bloomPass.enabled = false;
 						this.rgbShiftPass.enabled = false;
 						//glitchPass.enabled = false;
 						//dotPass.enabled = false;
@@ -2496,12 +2503,16 @@ class AudioMap {
 		});
 	}
 	
-	setSSAO(index, param){
+	setSSAO(index){
 		this.renderPass.camera = this.arrayCamera.cameras[index];
 		this.ssaoPass.camera = this.arrayCamera.cameras[index];
-		this.ssaoPass.kernelRadius = param[1] * 61.8;
-		this.ssaoPass.minDistance = param[0] * -0.618;
-		this.ssaoPass.maxDistance = param[2] * 0.618; 
+		this.ssaoPass.kernelRadius = this.smoothEffect(this.ssaoPass.kernelRadius, this.params['intensity'], 0.382, 0.618);
+		this.ssaoPass.minDistance = this.smoothEffect(this.ssaoPass.minDistance, -1 * this.params['complexity'], -0.618, -0.382);
+		this.ssaoPass.maxDistance = this.smoothEffect(this.ssaoPass.maxDistance, this.params['speed'], 0.382, 0.618);
+	}
+	
+	smoothEffect(src, target, min, max){
+		return Math.min(Math.max(src + (target - src) * 0.005, min), max);
 	}
 	
 	internalUpdate(frameCount){
@@ -2566,14 +2577,8 @@ class AudioMap {
 		/*this.renderer.setRenderTarget(null);
 		//this.renderer.render(this.scene, this.camera);
 		this.renderer.render(this.scene, this.arrayCamera.cameras[index]);*/
-
-		/*if(frameCount % 2 ==0) {
-		    this.setSSAO(index, this.params);
-            this.composer.render();
-			this.bloomPass.enabled = false;
-		}*/
 		
-		this.setSSAO(index, this.params);
+		this.setSSAO(index);
         this.composer.render();
 		
 		this.l = !this.l;
