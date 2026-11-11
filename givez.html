@@ -22,6 +22,9 @@
 		import { GlitchPass } from 'three/examples/jsm/postprocessing/GlitchPass.js';
 		import { DotScreenPass } from 'three/examples/jsm/postprocessing/DotScreenPass.js';
 		import { SSAOPass } from 'three/examples/jsm/postprocessing/SSAOPass.js';
+		import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js';
+		import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+		import { SRGBColorSpace, AgXToneMapping } from 'three';
 		
 		window.THREE = THREE;
 		window.EffectComposer = EffectComposer;
@@ -32,6 +35,10 @@
 		window.GlitchPass = GlitchPass;
 		window.DotScreenPass = DotScreenPass;
 		window.SSAOPass = SSAOPass;
+		window.GammaCorrectionShader = GammaCorrectionShader;
+		window.OutputPass = OutputPass;
+		window.SRGBColorSpace = SRGBColorSpace;
+		window.AgXToneMapping = AgXToneMapping;
 
 		const audioMap = new AudioMap();
 		
