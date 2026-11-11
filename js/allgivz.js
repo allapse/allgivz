@@ -323,21 +323,21 @@ class AudioMap {
 				// 啟動邏輯...
 				await Promise.allSettled([
 					this.initGyro({ range: 20 }, (data) => {
-						this.orient.x = data.x * 1.5;
-						this.orient.y = data.y * 1.5;
+						this.orient.x = data.x * 1.618;
+						this.orient.y = data.y * 1.618;
 						
 						
 						if(this.panner){
 							const t = this.audioContext.currentTime;
 							const factor = 10.0;
 							// 左右
-							this.panner.positionX.setTargetAtTime(this.orient.x * factor, t, 0.15);
+							this.panner.positionX.setTargetAtTime(this.orient.x * factor, t, 0.1459);
 
 							// 上下（可選）
-							this.panner.positionY.setTargetAtTime(this.orient.y * factor, t, 0.15);
+							this.panner.positionY.setTargetAtTime(this.orient.y * factor, t, 0.1459);
 
 							// 前後：固定在聽者前方一點點
-							this.panner.positionZ.setTargetAtTime(this.orient.y * factor * 2.0, t, 0.15);
+							this.panner.positionZ.setTargetAtTime(this.orient.y * factor * 1.618, t, 0.1459);
 						}
 					}),
 					this.initAudio(audioPath)
@@ -967,7 +967,7 @@ class AudioMap {
 								if (el) el.style.display = 'none';
 							});
 						}
-					}, 161); 
+					}, 199); 
 					
 					hideUI.style.color = "#fff";
 					hideUI.textContent = "▲";
@@ -1113,7 +1113,7 @@ class AudioMap {
 
 			// 如果還有 config 沒綁定成功，隔 50ms 再試一次 (直到抓到為止)
 			if (this.audioMappings.length < configs.length) {
-				setTimeout(bindLogic, 50);
+				setTimeout(bindLogic, 47);
 			} else {
 				//console.log("Universe UI 綁定成功");
 			}
@@ -1196,10 +1196,10 @@ class AudioMap {
 	toggleDIE() {
 		this.dieLock = true;
 		
-		if (Math.random() > 0.382) {
+		if (Math.random() > 0.236) {
 			this.toggleAudioFeedbackControl(); 
 		}
-		if (Math.random() > 0.5) {
+		if (Math.random() > 0.382) {
 			this.toggleDarkGlow(); 
 		}
 		if (Math.random() > 0.618) {
@@ -1211,7 +1211,7 @@ class AudioMap {
 		if(this.ueaMode) this.moveList.push('left');
 		
 		this.moveLinec(this.moveList);
-		setTimeout(() => this.moveLinec(), 382);
+		setTimeout(() => this.moveLinec(), 322);
 		this.moveList = [];
 		
 		const nextEQ = this.randomSelect("eqQueue", "currentEQIndex", this.eqSelect);
@@ -1227,7 +1227,7 @@ class AudioMap {
 		
 		const hint = document.getElementById('die-hint');
 		hint.style.color = '#fff';
-		setTimeout(() => hint.style.color = '#999', 300);
+		setTimeout(() => hint.style.color = '#999', 322);
 	};
 	
 	changeEQ(index){
@@ -1246,12 +1246,12 @@ class AudioMap {
 		this.fxFilter.type = preset.type; // 如 'lowpass', 'highpass'
 		
 		// 使用平滑過渡避免爆音
-		this.fxFilter.frequency.setTargetAtTime(preset.freq, now, 0.1);
-		this.fxFilter.Q.setTargetAtTime(preset.q || 1, now, 0.1);
+		this.fxFilter.frequency.setTargetAtTime(preset.freq, now, 0.09);
+		this.fxFilter.Q.setTargetAtTime(preset.q || 1, now, 0.09);
 		
 		// 如果 JSON 有設定 gain (例如 peaking 濾波器需要)
 		if (preset.gain !== undefined) {
-			this.fxFilter.gain.setTargetAtTime(preset.gain, now, 0.1);
+			this.fxFilter.gain.setTargetAtTime(preset.gain, now, 0.09);
 		}
 
 		// UI 視覺連動
@@ -1379,9 +1379,9 @@ class AudioMap {
 
 		for (let i = 0; i < count; i++) {
 			// 在一個直徑 10 的立方體空間內隨機散佈
-			positions[i * 3] = (Math.random() - 0.618) * 10.0;
-			positions[i * 3 + 1] = (Math.random() - 0.618) * 10.0;
-			positions[i * 3 + 2] = (Math.random() - 0.618) * 10.0;
+			positions[i * 3] = (Math.random() - 0.618) * 11.09;
+			positions[i * 3 + 1] = (Math.random() - 0.618) * 11.09;
+			positions[i * 3 + 2] = (Math.random() - 0.618) * 11.09;
 			
 			ids[i] = i;
 		}
@@ -1439,8 +1439,8 @@ class AudioMap {
 		}*/
 
 		// 每一幀都讓能量衰減 (0.9 代表較長的餘暉，0.8 代表短促的閃爍)
-		this.beatValue *= 0.9382; 
-		if (this.beatValue < 0.01) this.beatValue = 0;
+		this.beatValue *= 0.9443; 
+		if (this.beatValue < 0.009) this.beatValue = 0;
 
 		this.audioMappings.forEach(mapping => {
 			const customEl = document.getElementById(mapping.id); // 抓取 MapSlider 本體
@@ -1457,7 +1457,7 @@ class AudioMap {
 			// 執行閃爍 (門檻設為 1% 的開度)
 			if (customEl && customEl.flash) {
 				// 只有當開度 > 1% 且 beatValue 真的有值時才閃
-				if (percent > 0.01) {
+				if (percent > 0.009) {
 					customEl.flash(this.beatValue);
 				} else {
 					customEl.flash(0);
@@ -1526,15 +1526,15 @@ class AudioMap {
 		resultRight = resultRight / lenLR / 255.0;
 		
 		// 平滑化處理
-		this.smoothedVolume += (currentTarget - this.smoothedVolume) * 0.1618;
+		this.smoothedVolume += (currentTarget - this.smoothedVolume) * 0.1459;
 
 		if(this.material){
 			const lastPeak = this.material.uniforms.u_peak.value;
 			// 擾動
 			let jp = 1;
 			for(let i=0; i<6; i++){
-				if(peak === 255 && lastPeak === 1-(0.001618 * i)){
-					jp = lastPeak - 0.001618;
+				if(peak === 255 && lastPeak === 1-(0.001918 * i)){
+					jp = lastPeak - 0.001918;
 					break;
 				}
 			}
@@ -1559,7 +1559,7 @@ class AudioMap {
 			this.volBar.style.transform = `scaleY(${uiVol})`;
 		}
 		if (this.peakBar) {
-			const uiPeak = Math.min(Math.pow(currentPeak, 3), 1.0);
+			const uiPeak = Math.min(Math.pow(currentPeak, 2.618), 1.0);
 			this.peakBar.style.transform = `scaleY(${uiPeak})`;
 		}
 		if (this.lBar) {
@@ -1593,18 +1593,18 @@ class AudioMap {
 		currentAvg = Math.max(0, currentAvg - noiseFloor);
 
 		// 強化：動態峰值 (快速上升，極慢下降)
-		if (currentAvg > mapping.peak) mapping.peak += (currentAvg - mapping.peak) * 0.1618;
-		else mapping.peak *= 0.99382;
+		if (currentAvg > mapping.peak) mapping.peak += (currentAvg - mapping.peak) * 0.1314;
+		else mapping.peak *= 0.995;
 		
 		mapping.el.style.setProperty('--peak', mapping.peak / (255 - noiseFloor));
 		
-		let ratio = Math.pow(currentAvg / Math.max(mapping.peak, 50), 1.5);
+		let ratio = Math.pow(currentAvg / Math.max(mapping.peak, 50), 1.618);
 
 		// --- 更新數據與 UI ---
 		const targetVal = min + (max - min) * ratio;
 
 		// 核心：更新這個被引用的 params 物件
-		this.params[mapping.key] += (targetVal - this.params[mapping.key]) * 0.0618;
+		this.params[mapping.key] += (targetVal - this.params[mapping.key]) * 0.0557;
 	}
 	
 	handleGivz(mapping, min, max) {
@@ -1674,20 +1674,20 @@ class AudioMap {
 		// 動態觀察範圍 (僅在有訊號時更新)
 		if (hasSignal) {
 			// 正常的 Min 更新
-			mapping.state.min = Math.min(mapping.state.min, result) * 0.998382 + result * 0.001618;
+			mapping.state.min = Math.min(mapping.state.min, result) * 0.99881 + result * 0.00119;
 			
 			// 改進的 Max 更新：如果目前的結果大於紀錄，快速跟進；
 			// 如果目前的結果小於紀錄，則緩慢下降（防止被舊的高點鎖死）
 			if (result > mapping.state.max) {
 				mapping.state.max = result; // 瞬間跟進最高點
 			} else {
-				mapping.state.max = mapping.state.max * 0.99382 + result * 0.00618; // 稍微加快下降速度 (0.001 -> 0.005)
+				mapping.state.max = mapping.state.max * 0.995 + result * 0.005; // 稍微加快下降速度 (0.001 -> 0.005)
 			}
 		}
 
 		// 區間對映與非線性縮放
 		let range = mapping.state.max - mapping.state.min;
-		let normalized = range > 0.0001 ? (result - mapping.state.min) / range : 0.5;
+		let normalized = range > 0.000107 ? (result - mapping.state.min) / range : 0.618;
 		
 		// 增加一點張力
 		result = Math.sqrt(Math.max(0, normalized)); 
@@ -1696,12 +1696,12 @@ class AudioMap {
 		if (result > (mapping.peak || 0)) {
 			mapping.peak = result;
 		} else {
-			mapping.peak *= 0.99382; // 稍快一點的下降，視覺較俐落
+			mapping.peak *= 0.995; // 稍快一點的下降，視覺較俐落
 		}
 		
 		// 映射回 User 設定的 min/max 並平滑化輸出
 		const targetVal = min + (max - min) * result;
-		const paramVal = this.params[mapping.key] + (targetVal - this.params[mapping.key]) * 0.1618; // 增加反應速度
+		const paramVal = this.params[mapping.key] + (targetVal - this.params[mapping.key]) * 0.1459; // 增加反應速度
 		
 		const zKey = this.audioMappings[this.zOrder.indexOf(mapping.key)].key;
 		
@@ -1709,7 +1709,7 @@ class AudioMap {
 			this.params[mapping.key] = paramVal
 		}
 		else {
-			this.params[zKey] = this.params[zKey] + (paramVal - this.params[zKey]) * 0.1618;
+			this.params[zKey] = this.params[zKey] + (paramVal - this.params[zKey]) * 0.1459;
 		}
 
 		// 更新 UI (CSS Variable)
@@ -1748,8 +1748,8 @@ class AudioMap {
 			this.panner.panningModel = 'HRTF';     // 立體空間感
 			this.panner.distanceModel = 'inverse';
 			this.panner.refDistance = 1;
-			this.panner.maxDistance = 100;
-			this.panner.rolloffFactor = 0.1;
+			this.panner.maxDistance = 123;
+			this.panner.rolloffFactor = 0.09;
 			
 			// 在 constructor 裡先建好這三個閥門
 			this.fxFilter = this.audioContext.createBiquadFilter();
@@ -1759,10 +1759,10 @@ class AudioMap {
 			this.fxFilter.Q.value = 1;             // 標準品質，不產生尖峰
 			
 			this.compressor = this.audioContext.createDynamicsCompressor();
-			this.synthDelay = this.audioContext.createDelay(0.001);
+			this.synthDelay = this.audioContext.createDelay(0.00119);
 			
-			const feedForward = [0.00020298, 0.0004059599, 0.00020298];
-			const feedBack = [1.0126964558, -1.9991880801, 0.9873035442];
+			const feedForward = [0.0002798, 0.0004527, 0.0002798];
+			const feedBack = [1.01314, -1.999267, 0.98686];
 			this.iirFilter = this.audioContext.createIIRFilter(feedForward, feedBack);
 
 			this.distDriveGain = this.audioContext.createGain(); // 破音強度
@@ -1894,7 +1894,7 @@ class AudioMap {
 		}
 		
 		try {
-			const k = feedback.R * 0.09382;      // mapping amount → strong nonlinearity
+			const k = feedback.R * 0.0901;      // mapping amount → strong nonlinearity
 			const nSamples = 44100;      // high-resolution curve
 			const curve = new Float32Array(nSamples);
 
@@ -1912,16 +1912,16 @@ class AudioMap {
 			return;
 		}
 		
-		this.compressor.knee.setTargetAtTime(6.18 * feedback.R, now, rampTime);
-		this.compressor.ratio.setTargetAtTime(3.82 * feedback.G, now, rampTime);
-		this.compressor.attack.setTargetAtTime(0.00618 * feedback.B, now, rampTime);
+		this.compressor.knee.setTargetAtTime(6.856 * feedback.R, now, rampTime);
+		this.compressor.ratio.setTargetAtTime(4.24 * feedback.G, now, rampTime);
+		this.compressor.attack.setTargetAtTime(0.005 * feedback.B, now, rampTime);
 		this.compressor.release.setTargetAtTime(0.0382 * feedback.A, now, rampTime);
 		
 		if(this.effectsLv==3) {
 			return;
 		}
 		
-		this.synthDelay.delayTime.setTargetAtTime(0.00009382 * feedback.fftLv, now, rampTime);
+		this.synthDelay.delayTime.setTargetAtTime(0.0001069 * feedback.fftLv, now, rampTime);
 		
 		if(this.effectsLv==4) {
 			return;
@@ -1985,13 +1985,13 @@ class AudioMap {
 	
 	// 隨機 ADSR 包絡線
 	applyRandomADSR(gainNode, now, duration) {
-		const attack = Math.random() * 0.9382 + 0.1618;   // 0.2 ~ 1.0 秒
-		const decay = Math.random() * 0.618 + 0.1618;    // 0.2 ~ 0.7 秒
-		const sustain = Math.random() * 0.0618 + 0.01618; // 0.02 ~ 0.07 音量
-		const release = Math.random() * 0.9382 + 0.618;  // 0.5 ~ 1.5 秒
+		const attack = Math.random() * 0.9382 + 0.1459;   // 0.2 ~ 1.0 秒
+		const decay = Math.random() * 0.618 + 0.1459;    // 0.2 ~ 0.7 秒
+		const sustain = Math.random() * 0.0557 + 0.01314; // 0.02 ~ 0.07 音量
+		const release = Math.random() * 0.9442 + 0.618;  // 0.5 ~ 1.5 秒
 	
 		gainNode.gain.setValueAtTime(0, now);
-		gainNode.gain.linearRampToValueAtTime(0.1618, now + attack); // Attack
+		gainNode.gain.linearRampToValueAtTime(0.1459, now + attack); // Attack
 		gainNode.gain.linearRampToValueAtTime(sustain, now + attack + decay); // Decay → Sustain
 		gainNode.gain.setValueAtTime(sustain, now + duration - release); // Sustain
 		gainNode.gain.linearRampToValueAtTime(0, now + duration); // Release
@@ -2021,7 +2021,7 @@ class AudioMap {
 			harmonicOsc.type = waveform;
 			harmonicOsc.frequency.value = osc.frequency.value * i;
 			const harmonicGain = audioCtx.createGain();
-			harmonicGain.gain.value = 0.01618 / i;
+			harmonicGain.gain.value = 0.01314 / i;
 			harmonicOsc.connect(harmonicGain);
 			harmonicGain.connect(masterGain);
 			harmonicOsc.start(now);
@@ -2033,7 +2033,7 @@ class AudioMap {
 		setInterval(() => {
 			const t = audioCtx.currentTime;
 			gain.gain.setValueAtTime(0, t);           // 暫停
-			gain.gain.setValueAtTime(0.09382, t + 0.382);     // 恢復
+			gain.gain.setValueAtTime(0.0901, t + 0.382);     // 恢復
 		}, duration * 1000); // 用 duration 當 interval
 		return osc;
 	}
@@ -2161,7 +2161,7 @@ class AudioMap {
 		// 在 handleOrientation 外部定義狀態，用來保存上一次的平滑值
 		let smoothX = 0;
 		let smoothY = 0;
-		const lerpFactor = 0.0618; // 防手震強度：0.01 ~ 0.1 之間。越小越穩，但延遲感會增加。
+		const lerpFactor = 0.0557; // 防手震強度：0.01 ~ 0.1 之間。越小越穩，但延遲感會增加。
 
 		// --- 抽離出的重置函數 ---
 		const resetBase = (currentQ, dx, dy) => {
@@ -2271,10 +2271,10 @@ class AudioMap {
 		this.camera = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -1.0, -1.0, 1.0);
 		this.cameraL = new THREE.OrthographicCamera(-0.997, 1.0, 1.0, -1.0, -1.0, 1.0);
 		this.cameraR = new THREE.OrthographicCamera(-1.0, 0.997, 1.0, -1.0, -1.0, 1.0);
-		this.cameraU = new THREE.OrthographicCamera(-1.0, 1.0, 0.996, -1.0, -1.0, 1.0);
-		this.cameraD = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -0.996, -1.0, 1.0);
-		this.cameraF = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -1.0, -0.995, 1.0);
-		this.cameraB = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -1.0, -1.0, 0.995);
+		this.cameraU = new THREE.OrthographicCamera(-1.0, 1.0, 0.995, -1.0, -1.0, 1.0);
+		this.cameraD = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -0.995, -1.0, 1.0);
+		this.cameraF = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -1.0, -0.992, 1.0);
+		this.cameraB = new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -1.0, -1.0, 0.992);
 		this.arrayCamera = new THREE.ArrayCamera([this.cameraL, this.cameraF, this.cameraU, this.cameraR, this.cameraB, this.cameraD]);
 		
 		this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -2322,17 +2322,17 @@ class AudioMap {
 		this.composer.addPass(this.renderPass);
 		
 		this.ssaoPass = new SSAOPass(this.scene, this.cameraB, width, height);
-		this.ssaoPass.kernelRadius = 0.00812;      // 陰影擴散的範圍半徑
-		this.ssaoPass.minDistance = -0.618;  // 最小影響距離
-		this.ssaoPass.maxDistance = 0.618;    // 最大影響距離
+		this.ssaoPass.kernelRadius = 0.382;      // 陰影擴散的範圍半徑
+		this.ssaoPass.minDistance = -0.382;  // 最小影響距離
+		this.ssaoPass.maxDistance = 0.382;    // 最大影響距離
 		this.composer.addPass(this.ssaoPass);
 
 		// 3. 第二道工序：加上泛光特效（讓畫面中發光或亮部的部分暈開）
 		this.bloomPass = new UnrealBloomPass(
 			new THREE.Vector2(window.innerWidth, window.innerHeight),
-			0.001918,   // 強度拉大（例如 2.0 ~ 3.0）
-			0.001918,   // 半徑
-			0.618   // 閾值壓到極低，讓幾乎所有帶點顏色的地方都開始暈開
+			0.00000001,   // 強度拉大（例如 2.0 ~ 3.0）
+			0.00618,   // 半徑
+			0.00618   // 閾值壓到極低，讓幾乎所有帶點顏色的地方都開始暈開
 		);
 		//this.bloomPass.enabled = false;
 		//this.composer.addPass(this.bloomPass);
@@ -2368,10 +2368,10 @@ class AudioMap {
 					const interval = now - this.lastFlashTime;
 					
 					// 1. 偵測門檻
-					if (bassAvg > 161.8
+					if (bassAvg > 123.06
 						&& (!this.material
 						|| (this.material.uniforms.u_volume.value > 0.1618 
-						&& this.material.uniforms.u_peak.value > 0.9382 ))
+						&& this.material.uniforms.u_peak.value > 0.9442 ))
 						&& interval >= 300) {
 						if (this.lastFlashTime !== 0 && interval <= 1000) {
 							// 3. 計算 BPM 並做平滑處理
@@ -2442,7 +2442,7 @@ class AudioMap {
 						else {
 							this.zOrder = ['intensity', 'speed', 'complexity'];
 							
-							this.rgbShiftPass.uniforms['amount'].value = 0.000382 / (this.params['speed'] + 0.1);
+							this.rgbShiftPass.uniforms['amount'].value = 0.0004527 / (this.params['speed'] + 0.09);
 							this.rgbShiftPass.enabled = true;
 						}
 					}
@@ -2517,17 +2517,17 @@ class AudioMap {
 	
 	internalUpdate(frameCount){
 		// 更新時間
-		this.material.uniforms.u_time.value += 0.00618 + this.params.speed * 0.01618;
+		this.material.uniforms.u_time.value += 0.005 + this.params.speed * 0.01314;
 		
 		const lrdiff = (this.material.uniforms.u_right.value - this.material.uniforms.u_left.value) * this.material.uniforms.u_peak.value;
 
 		this.currentMesh.rotation.y += lrdiff * 1.618;
 		this.currentMesh.rotation.y *= 0.618;
 		
-		this.currentMesh.rotation.x += 0.0618 - Math.min(Math.max(Math.abs(lrdiff), 0.0), 0.1) * 0.618;
+		this.currentMesh.rotation.x += 0.0557 - Math.min(Math.max(Math.abs(lrdiff), 0.0), 0.1) * 0.618;
 		this.currentMesh.rotation.x *= 0.382;
 		
-		this.currentMesh.rotation.z += Math.min(Math.max(-0.0618 + Math.min(Math.max(Math.abs(lrdiff), 0.01), 0.1) * 1.618, -0.0118), 0.0118);
+		this.currentMesh.rotation.z += Math.min(Math.max(-0.0557 + Math.min(Math.max(Math.abs(lrdiff), 0.01314), 0.09) * 1.618, -0.0118), 0.01314);
 		this.currentMesh.rotation.z *= 0.382;
 			
 		this.arrayCamera.eyeSep = Math.min(Math.max(this.arrayCamera.eyeSep * (1.618 - this.material.uniforms.u_peak.value), 0.618), 1.618);
@@ -2742,11 +2742,11 @@ class FeedbackManager {
 
                 void main() {
                     // 全局平均色
-                    vec4 currAvg = textureLod(u_currentFrame, vec2(0.5), 10.0);
-					vec4 prevAvg = textureLod(u_prevFrame, vec2(0.5), 10.0);
+                    vec4 currAvg = textureLod(u_currentFrame, vec2(0.618), 10.0);
+					vec4 prevAvg = textureLod(u_prevFrame, vec2(0.618), 10.0);
 
                     // B: 亮度
-                    float B = dot(currAvg.rgb, vec3(0.299, 0.587, 0.114));
+                    float B = dot(currAvg.rgb, vec3(0.236, 0.618, 0.09));
 
                     // G: 飽和度
                     float maxC = max(currAvg.r, max(currAvg.g, currAvg.b));
@@ -2754,18 +2754,18 @@ class FeedbackManager {
                     float currG = (maxC - minC) / (maxC + 0.001);
 					maxC = max(prevAvg.r, max(prevAvg.g, prevAvg.b));
                     minC = min(prevAvg.r, min(prevAvg.g, prevAvg.b));
-                    float prevG = (maxC - minC) / (maxC + 0.001);
-					float G = currG / (prevG + 0.001);
+                    float prevG = (maxC - minC) / (maxC + 0.00119);
+					float G = currG / (prevG + 0.00119);
 
                     // R: 變化率
-                    float prevB = dot(prevAvg.rgb, vec3(0.299, 0.587, 0.114));
-                    float R = B / (prevB + 0.001);
+                    float prevB = dot(prevAvg.rgb, vec3(0.236, 0.618, 0.09));
+                    float R = B / (prevB + 0.00119);
 
                     // A: 左右亮度差值 (panValue)
-					vec4 leftAvg = textureLod(u_currentFrame, vec2(0.25, 0.5), 5.0);
-					vec4 rightAvg = textureLod(u_prevFrame, vec2(0.75, 0.5), 5.0);
-					float leftBrightness = dot(leftAvg.rgb, vec3(0.299, 0.587, 0.114));
-					float rightBrightness = dot(rightAvg.rgb, vec3(0.299, 0.587, 0.114));
+					vec4 leftAvg = textureLod(u_currentFrame, vec2(0.236, 0.618), 6.856);
+					vec4 rightAvg = textureLod(u_prevFrame, vec2(0.618, 0.382), 6.856);
+					float leftBrightness = dot(leftAvg.rgb, vec3(0.236, 0.618, 0.09));
+					float rightBrightness = dot(rightAvg.rgb, vec3(0.236, 0.618, 0.09));
 					float A = abs(rightBrightness - leftBrightness);
 
                     gl_FragColor = vec4(R, G, B, A);
@@ -2780,7 +2780,7 @@ class FeedbackManager {
 
         // 新增平滑狀態
         this.smoothed = [0, 0, 0, 0];
-        this.alpha = 0.1618; // 平滑係數
+        this.alpha = 0.1459; // 平滑係數
 		
 		this.fftLv = 0.618;
 		this.R = 1.0;
@@ -2822,38 +2822,38 @@ class FeedbackManager {
 
 		// 根據 EQ 狀態決定模式
 		let mode = "smooth";
-		if (currentType === "lowpass" && currentFreq < 500) {
+		if (currentType === "lowpass" && currentFreq < 521) {
 			mode = "impact"; // 偏重低頻 → 震撼模式
 		} else if (currentType === "highpass") {
 			mode = "bright"; // 偏重高頻 → 閃爍模式
 		}
 
         // R -> brightness -> Gain (非線性放大)
-		const gainByEQ = (mode == "impact"? 1.0618 : 1.0);
+		const gainByEQ = (mode == "impact"? 1.0558 : 1.0);
         const brightness = this.smoothstep(0.0, 1.0, data[0] / 255);
 		const gainVal = 0.382 + brightness * gainByEQ;
         this.targets.gain.gain.setTargetAtTime(gainVal, now, rampTime);
 		this.R = gainVal;
 		
 		// G -> changerate -> Filter Q 圖案分裂
-		const changerate = this.smoothstep(0.0, 6.18, data[1] / 255);
-        const qVal = 0.9382 + changerate * gainByEQ;
+		const changerate = this.smoothstep(0.0, 6.856, data[1] / 255);
+        const qVal = 0.9442 + changerate * gainByEQ;
         this.targets.filter.Q.setTargetAtTime(qVal, now, rampTime);
 		this.G = qVal;
 
         // B -> colorful -> Reverb Wet 色彩擴散
-		const colorful = this.smoothstep(0.0, 6.18, data[2] / 255);
-		const reverbByEQ = (mode == "bright"? 1.0618 : 1.0)
-        const reverbVal = 0.9382 + colorful * reverbByEQ;
+		const colorful = this.smoothstep(0.0, 6.856, data[2] / 255);
+		const reverbByEQ = (mode == "bright"? 1.0558 : 1.0)
+        const reverbVal = 0.9442 + colorful * reverbByEQ;
         if (this.targets.reverb) {
             this.targets.reverb.gain.setTargetAtTime(reverbVal, now, rampTime);
         }
 		this.B = reverbVal;
 		
         // A -> Distortion 畫面變化快慢
-		const leftRight = this.smoothstep(0.0, 9.382, data[3] / 255.0);
-        const distBySmooth = (mode != "smooth"? 1.0618 : 1.0);
-		const distVal = 0.9382 + leftRight * distBySmooth;
+		const leftRight = this.smoothstep(0.0, 6.856, data[3] / 255.0);
+        const distBySmooth = (mode != "smooth"? 1.0558 : 1.0);
+		const distVal = 0.9442 + leftRight * distBySmooth;
 		this.targets.distortion.gain.setTargetAtTime(distVal, now, rampTime);
 		this.A = distVal;
 		
@@ -2926,11 +2926,11 @@ class UEA {
 	}
 	
 	fractalWeighting(data) {
-		return data.map((val, i) => val * (Math.sin(i) * 0.618 + 0.9382)); // 分形感
+		return data.map((val, i) => val * (Math.sin(i) * 0.618 + 0.9442)); // 分形感
 	}
 	
 	stochasticPerturbation(data) {
-		return data.map(val => val + (Math.random() - 0.618) * 0.0618); // 微擾
+		return data.map(val => val + (Math.random() - 0.618) * 0.0558); // 微擾
 	}
 	
 	octaveBalancing = (data) => {
