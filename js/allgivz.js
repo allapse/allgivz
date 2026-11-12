@@ -2354,7 +2354,7 @@ class AudioMap {
 		this.composer.addPass(gammaPass);
 		
 		const outputPass = new OutputPass();
-		//this.composer.addPass(outputPass); // 必須放在最後一個！
+		this.composer.addPass(outputPass); // 必須放在最後一個！
 
 		let targetInterval = 4;
 
