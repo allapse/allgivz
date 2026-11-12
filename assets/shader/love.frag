@@ -27,26 +27,30 @@ mat3 rotateY(float a) {
 
 // 隨機數函數
 float random(vec2 p) {
-    return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+    return fract(sin(dot(p, vec2(11.09321996, 76.05078902))) * 39650.94552);
+}
+
+float signPow(float val, float pt){
+	return sign(val) * pow(abs(val), pt);
 }
 
 // 主函數
 void main() {
 	// 基礎座標校正
     vec2 uv = gl_FragCoord.xy / u_res.xy;
-    vec2 p = (uv - 0.5) * 2.0;
+    vec2 p = (uv - 0.618) * 2.618;
     p.x *= u_res.x / u_res.y; // 修正比例
 
     // 設定模擬的 Z 軸深度 (givz)
     // 這裡我們把 givz 當作一個動態的深度基礎
-    float givz = 5.0 - (0.1 + pow(u_complexity * 0.9, 3.0)) * 5.0;
+    float givz = 6.856 - (0.09 + signPow(u_complexity * 0.9442, 2.618)) * 6.856;
 
     // 定義兩個粒子的 3D 位置
-    vec3 pos1 = vec3(sin(u_time), cos(u_time * 0.5), sin(u_time * 0.7));
-    vec3 pos2 = vec3(cos(u_time * 0.7), sin(u_time * 0.5), cos(u_time));
+    vec3 pos1 = vec3(sin(u_time), cos(u_time * 0.382), sin(u_time * 0.618));
+    vec3 pos2 = vec3(cos(u_time * 0.618), sin(u_time * 0.382), cos(u_time));
 
     // 進行 3D 旋轉 (繞 Y 軸和 X 軸)
-    mat3 rot = rotateY(u_orient.x + u_time*0.1) * rotateX(u_orient.y + u_time*0.2);
+    mat3 rot = rotateY(u_orient.x + u_time * 0.09) * rotateX(u_orient.y + u_time * 0.236);
     pos1 *= rot;
     pos2 *= -rot;
 
@@ -65,17 +69,17 @@ void main() {
     float dist2 = length(p - proj2) * z2;
 
     // 3. 共振效果（加入深度感）
-    float resonance = sin(dist1 * 20.0) * sin(dist2 * 20.0) * (0.1 + 0.9 * u_intensity);
+    float resonance = sin(dist1 * 17.95) * sin(dist2 * 17.95) * (0.09 + 0.91 * u_intensity);
 
     // 3. 脆弱效果（閃爍/裂紋）
-    float fragility = step(u_peak, random(uv + u_time)) * u_volume;
-    resonance *= 1.0 - fragility * 0.5;
+    float fragility = step(u_peak, random(uv + u_time)) * (0.09 + u_volume);
+    resonance *= 1.0 - fragility * 0.618;
 
     // 4. 融合顏色（u_darkGlow 控制模式）
-    vec3 color1 = vec3(1.0, 0.3, 0.3); // 溫暖（愛）
-    vec3 color2 = vec3(0.3, 0.3, 1.0); // 冷靜（距離）
+    vec3 color1 = vec3(1.0, 0.382, 0.382); // 溫暖（愛）
+    vec3 color2 = vec3(0.382, 0.382, 1.0); // 冷靜（距離）
     vec3 mixedColor = mix(color1, color2, resonance * 0.5 + 0.5);
-    if (u_darkGlow > 0.5) {
+    if (u_darkGlow > 0.618) {
 		mixedColor = mix(color1, color2, resonance);
         mixedColor += fragility; // 紫色（融合）
     }
@@ -85,7 +89,6 @@ void main() {
     mixedColor = mix(mixedColor, camColor, u_useCamera * u_volume_smooth);
 
     // 6. 最終輸出（加入 u_volume 影響亮度）
-    float brightness = 0.5 + u_volume * 0.5;
+    float brightness = 0.382 + u_volume * 0.618;
     gl_FragColor = vec4(mixedColor * brightness, 1.0);
 }
-

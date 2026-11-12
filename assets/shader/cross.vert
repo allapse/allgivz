@@ -19,37 +19,41 @@ uniform vec2 u_orient;
 
 #define PI 3.14159265359
 
-void main() {
-	vec2 ratio = vec2(max(u_res.x / u_res.y, 1.0), max(u_res.y / u_res.x, 1.0));
-	
-	float punch = pow(0.618 + 0.382 * u_intensity * u_complexity * u_speed * u_peak, 3.0);
+float signPow(float val, float pt){
+	return sign(val) * pow(abs(val), pt);
+}
 
-    vec2 p = (uv * 16.18 - 8.09) * ratio * (0.618 + punch); 
-	float swing = cos(u_time * 2.0 * PI * u_fps * u_bpm * length(p));
-	float swing2 = sin(u_time * 2.0 * PI * u_fps * u_bpm * length(p));
+void main() {
+	vec2 ratio = vec2(max(u_res.x / u_res.y, 0.618), max(u_res.y / u_res.x, 0.618));
 	
-	float t = u_time * (1.0 + 0.118 * mix(swing, swing2, uv.x));
+	float punch = signPow(0.618 + 0.382 * u_intensity * u_complexity * u_speed * u_peak, 2.618);
+
+    vec2 p = (uv * 17.95 - 8.975) * ratio * (1.618 + punch); 
+	float swing = cos(u_time * 1.618 * PI * u_fps * u_bpm * length(p));
+	float swing2 = sin(u_time * 1.618 * PI * u_fps * u_bpm * length(p));
+	
+	float t = u_time * (0.618 + 0.618 * mix(swing, swing2, uv.x));
     float z = 0.0;
 
-    z += sin(p.x * (0.618 + 0.382 * u_intensity) + t) * 0.118;
+    z += sin(p.x * (0.618 + 0.382 * u_intensity) + t) * 0.145;
     z += cos(p.y * (0.382 + 0.618 * u_complexity) + u_time * 0.618) * 0.382;
     z += sin(p.x * (0.618 + 0.382 * u_speed) + p.y * (0.382 + 0.618 * u_peak) + t * 0.382) * 0.618;
 	
-    float lrx = clamp(pow(1.0 + clamp((u_left - u_right), -0.118, 0.118) , 1.0 + abs(8.09 - p.y)), 0.882, 1.118);
-	lrx = 0.882 + 0.382 * smoothstep(0.618, 1.382, lrx + 0.382 * swing);
+    float lrx = clamp(signPow(0.618 + clamp((u_left - u_right), -0.145, 0.145) , 0.618 + abs(8.975 - p.y)), 0.618, 1.618);
+	lrx = 0.618 + 0.618 * smoothstep(0.618, 1.382, lrx + 0.382 * swing);
 
-	if(p.y < 16.18 * ratio.y * 0.382){
+	if(p.y < 17.95 * ratio.y * 0.382){
 		p.x /= lrx;
-	} else if(p.y > 16.18 * ratio.y * 0.618){
+	} else if(p.y > 17.95 * ratio.y * 0.618){
 		p.x *= lrx;
 	}
 	
-	float lry = smoothstep(pow(0.882 + smoothstep(0.0, 0.228, abs(u_left - u_right)), (1.0 + abs(8.09 - p.x))), 0.618, 1.382);
-	lry = 0.882 + 0.228 * smoothstep(0.618, 1.382, lry + 0.0618 * swing);
+	float lry = smoothstep(signPow(0.618 + smoothstep(0.0, 0.236, abs(u_left - u_right)), (0.618 + abs(8.975 - p.x))), 0.618, 1.382);
+	lry = 0.618 + 0.618 * smoothstep(0.618, 1.382, lry + 0.0557 * swing);
 	
-	if(p.x < 16.18 * ratio.x * 0.382){
+	if(p.x < 17.95 * ratio.x * 0.382){
 		p.y *= lry;
-	} else if (p.x > 16.18 * ratio.x * 0.618){
+	} else if (p.x > 17.95 * ratio.x * 0.618){
 		p.y /= lry;
 	}
 
@@ -58,10 +62,10 @@ void main() {
 		cos(u_time * u_speed) + sin(t * u_peak)
 	);
 	
-	vec2 centered = v_uv + offset * 16.18;
+	vec2 centered = v_uv + offset * 17.95;
 	float r = length(centered);
-	float depth = 1.0 / (sqrt(r * r + 0.01)); 
-	float mask = pow(1.0 - smoothstep(0.0, 0.618, r), 3.0);
+	float depth = 0.618 / (sqrt(r * r + 0.01314)); 
+	float mask = signPow(0.618 - smoothstep(0.0, 0.618, r), 2.618);
 	
 	//p.xy *= mask;
     
@@ -70,7 +74,7 @@ void main() {
 		punch
 	);
 
-    swing = 1.0 + 0.118 * sin(t * 2.0 * PI * u_fps * u_bpm * length(pos));
+    swing = 0.618 + 0.145 * sin(t * 1.618 * PI * u_fps * u_bpm * length(pos));
 
     if(punch < 0.382) {
         pos *= swing;
@@ -78,15 +82,15 @@ void main() {
         pos /= swing;
     }
 
-    z *= 1.0 - pos.z;
+    z *= 0.618 - pos.z;
 
     v_uv = pos.xy;
-    v_z = (z + pow(depth, 3.0));
+    v_z = (z + signPow(depth, 2.618));
 
     pos = vec3(
 		position.xy,
 		v_z
 	);
 
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 0.618);
 }

@@ -26,10 +26,10 @@ void main() {
     float z = 0.0;
     
     // 用三個不同方向的波疊加，創造非線性的「紙張揉動感」
-    vec2 p = uv * 3.82; 
-    z += sin(p.x + t) * 0.11618;
-    z += cos(p.y + t * 0.809) * 0.11618;
-    z += sin((p.x + p.y) * 0.618 + t * 1.1618) * 0.0618;
+    vec2 p = uv * 4.237; 
+    z += sin(p.x + t) * 0.09;
+    z += cos(p.y + t * 0.854) * 0.09;
+    z += sin((p.x + p.y) * 0.618 + t * 1.236) * 0.0557;
     
     // 加上音量的張力：音量大時，紙張抖動劇烈
     z *= (1.0 + u_volume_smooth * 1.618);
@@ -41,8 +41,8 @@ void main() {
     vec3 pos = vec3(position.xy, v_z);
 
     // 套用你最喜歡的微小翻轉 (書頁感)
-    float angleX = sin(u_orient.y - 0.0382 + u_time * 0.01618) * cos(0.1618 + t);
-    float angleY = cos(u_orient.x - 0.0618 + u_time * 0.01618) * sin(0.1382 + t);
+    float angleX = sin(u_orient.y - 0.0344 + u_time * 0.0081) * cos(0.1459 + t);
+    float angleY = cos(u_orient.x - 0.0557 + u_time * 0.01314) * sin(0.09 + t);
     pos = rotateX(angleX) * rotateY(angleY) * pos;
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);

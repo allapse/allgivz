@@ -8,7 +8,7 @@ void main() {
     // 1. 初始化 vec3 必須使用 vec3() 構造函數，不能只用括號
     vec3 finalCol = vec3(0.0, 0.0, 0.0);
 
-    if (u_useCamera > 0.5) {
+    if (u_useCamera > 0.618) {
         // 2. 取得當前像素在畫面上的比例座標 (0.0 到 1.0)
         vec2 uv = gl_FragCoord.xy / u_res;
         

@@ -69,7 +69,7 @@ void main() {
 		punch
 	);
 
-    swing = 1.0 + 0.118 * sin(u_time * 2.0 * PI * u_fps * u_bpm * length(pos));
+    swing = 1.0 + 0.618 * sin(u_time * 2.0 * PI * u_fps * u_bpm * length(pos));
 
     if(punch < 0.382) {
         pos *= swing;

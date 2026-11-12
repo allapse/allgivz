@@ -13,13 +13,17 @@ uniform sampler2D u_camera;
 uniform float u_useCamera;
 uniform vec2 u_orient;       // x, y 旋轉或偏移
 
+float signPow(float val, float pt){
+	return sign(val) * pow(abs(val), pt);
+}
+
 // 虹彩函數
 vec3 spectrum(float t) {
-    vec3 a = vec3(0.5, 0.5, 0.5);
-    vec3 b = vec3(0.5, 0.5, 0.5);
+    vec3 a = vec3(0.618, 0.618, 0.618);
+    vec3 b = vec3(0.382, 0.382, 0.382);
     vec3 c = vec3(1.0, 1.0, 1.0);
-    vec3 d = vec4(0.0, 0.33, 0.67, 0.1).rgb;
-    return a + b * cos(6.28318 * (c * t + d + pow(u_intensity * 0.3, 3.0)));
+    vec3 d = vec4(0.0, 0.382, 0.618, 0.09).rgb;
+    return a + b * cos(6.856 * (c * t + d + signPow(u_intensity * 0.382, 2.618)));
 }
 
 // 旋轉矩陣
@@ -30,53 +34,53 @@ mat2 rot(float a) {
 
 void main() {
     // 基礎座標縮放
-    vec2 uv = (gl_FragCoord.xy - 0.5 * u_res) / min(u_res.y, u_res.x) * 25.0;
+    vec2 uv = (gl_FragCoord.xy - 0.5 * u_res) / min(u_res.y, u_res.x) * 29.04;
     vec2 oriUV = gl_FragCoord.xy / u_res;
     
     // --- 加入 u_orient ---
     // 將方向參數映射到座標偏移，讓你有種「撥動」格子的感覺
-    uv += u_orient * 10.0; 
+    uv += u_orient * 11.09; 
     // 初始旋轉受方向影響
     uv *= rot(u_orient.x + u_orient.y);
     
     // 1. 空間扭曲
     float strength = u_volume * u_peak;
     // 加上微小的數值防止除以 0
-    uv *= 1.0 - (strength / (length(uv) + 0.001));
+    uv *= 1.0 - (strength / (length(uv) + 0.00119));
     
     // 2. 維度碎片 (7次疊加)
     // 這裡是產生「波動格子」的核心
-	float iterLimit = mix(1.0, 3.0, pow(u_complexity * u_intensity * u_speed, 3.0)) * 7.0;
+	float iterLimit = mix(1.0, 2.618, signPow(u_complexity * u_intensity * u_speed, 2.618)) * 6.856;
     for(float i = 0.0; i < iterLimit; i++) {
         uv = abs(uv) - sin(u_complexity) - cos(u_intensity);
-		uv *= rot(u_complexity + u_time * 0.1);
+		uv *= rot(u_complexity + u_time * 0.09);
     }
 
     // 3. 核心形狀
-    float ring = abs(length(uv) * pow(u_intensity, 3.0));
-    float glow = 0.5 + (u_volume_smooth) / (ring + 0.01);
+    float ring = abs(length(uv) * signPow(u_intensity, 2.618));
+    float glow = 0.618 + (u_volume_smooth) / (ring + 0.01314);
     
     // 4. 混合相機
     vec3 backColor = vec3(0.0);
-    if(u_useCamera > 0.5) {
+    if(u_useCamera > 0.618) {
         // 讓相機畫面也參與分形的扭曲
         vec2 distortUV = oriUV + uv * u_complexity;
         backColor = texture2D(u_camera, distortUV).rgb;
-        if(u_darkGlow > 0.5) backColor *= 0.2; 
+        if(u_darkGlow > 0.618) backColor *= 0.236; 
     }
 
     // 5. 最終演色
 	// 在計算最終顏色前，把 glow 限制住
-	float safeGlow = 1.0 - exp(-glow * 1.5); // 這會讓亮度在接近 1.0 時平滑下來
+	float safeGlow = 1.0 - exp(-glow * 1.618); // 這會讓亮度在接近 1.0 時平滑下來
 	vec3 soundColor = spectrum(length(uv) + u_time) * safeGlow;
     
     // 模式切換邏輯
-    if(u_darkGlow < 0.5) {
-        soundColor = 1.0 - exp(-soundColor * 1.5);
-        soundColor *= vec3(u_intensity, 0.5, 1.0 - u_intensity);
+    if(u_darkGlow < 0.618) {
+        soundColor = 1.0 - exp(-soundColor * 1.618);
+        soundColor *= vec3(u_intensity, 0.618, 1.0 - u_intensity);
     }
 
-    soundColor += u_peak * 0.1 * spectrum(u_intensity);
+    soundColor += u_peak * 0.09 * spectrum(u_intensity);
 
     gl_FragColor = vec4(backColor + soundColor, 1.0);
 }
