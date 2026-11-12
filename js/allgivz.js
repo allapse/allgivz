@@ -2278,9 +2278,9 @@ class AudioMap {
 		this.arrayCamera = new THREE.ArrayCamera([this.cameraL, this.cameraF, this.cameraU, this.cameraR, this.cameraB, this.cameraD]);
 		
 		this.renderer = new THREE.WebGLRenderer({ antialias: true });
-		//this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
-		//this.renderer.toneMapping = AgXToneMapping; // 必須要有 Tone Mapping 來壓制高光
-		//this.renderer.toneMappingExposure = 4.237;
+		this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+		this.renderer.toneMapping = AgXToneMapping; // 必須要有 Tone Mapping 來壓制高光
+		this.renderer.toneMappingExposure = 1.618;
 		this.renderer.setSize(width, height);
 		this.composer = new EffectComposer(this.renderer);
 		
@@ -2330,9 +2330,9 @@ class AudioMap {
 		// 3. 第二道工序：加上泛光特效（讓畫面中發光或亮部的部分暈開）
 		this.bloomPass = new UnrealBloomPass(
 			new THREE.Vector2(window.innerWidth, window.innerHeight),
-			0.05,   // 強度拉大（例如 2.0 ~ 3.0）
-			0.05,   // 半徑
-			0.05   // 閾值壓到極低，讓幾乎所有帶點顏色的地方都開始暈開
+			0.005,   // 強度拉大（例如 2.0 ~ 3.0）
+			0.005,   // 半徑
+			0.005   // 閾值壓到極低，讓幾乎所有帶點顏色的地方都開始暈開
 		);
 		//this.bloomPass.enabled = false;
 		this.composer.addPass(this.bloomPass);
@@ -2351,7 +2351,7 @@ class AudioMap {
 		this.composer.addPass(dotPass);*/
 		
 		const gammaPass = new ShaderPass(GammaCorrectionShader);
-		this.composer.addPass(gammaPass);
+		//this.composer.addPass(gammaPass);
 		
 		const outputPass = new OutputPass();
 		this.composer.addPass(outputPass); // 必須放在最後一個！
@@ -2417,9 +2417,9 @@ class AudioMap {
 							}
 							
 							if(this.feedback) {
-								this.bloomPass.strength = this.smoothEffect(this.bloomPass.strength, this.feedback.R * 0.9, 0.031, 0.081);
-								this.bloomPass.radius = this.smoothEffect(this.bloomPass.radius, this.feedback.G * 0.9, 0.031, 0.081);
-								this.bloomPass.threshold = this.smoothEffect(this.bloomPass.threshold, this.feedback.B * 0.9, 0.031, 0.081);
+								this.bloomPass.strength = this.smoothEffect(this.bloomPass.strength, this.feedback.R * 0.09, 0.0031, 0.0081);
+								this.bloomPass.radius = this.smoothEffect(this.bloomPass.radius, this.feedback.G * 0.09, 0.0031, 0.0081);
+								this.bloomPass.threshold = this.smoothEffect(this.bloomPass.threshold, this.feedback.B * 0.09, 0.0031, 0.0081);
 							}
 						}
 					}
