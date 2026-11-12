@@ -2278,8 +2278,8 @@ class AudioMap {
 		this.arrayCamera = new THREE.ArrayCamera([this.cameraL, this.cameraF, this.cameraU, this.cameraR, this.cameraB, this.cameraD]);
 		
 		this.renderer = new THREE.WebGLRenderer({ antialias: true });
-		this.renderer.outputColorSpace = SRGBColorSpace;
-		this.renderer.toneMapping = THREE.NeutralToneMapping; // 必須要有 Tone Mapping 來壓制高光
+		//this.renderer.outputColorSpace = SRGBColorSpace;
+		//this.renderer.toneMapping = THREE.NeutralToneMapping; // 必須要有 Tone Mapping 來壓制高光
 		this.renderer.toneMappingExposure = 1.618;
 		this.renderer.setSize(width, height);
 		this.composer = new EffectComposer(this.renderer);
@@ -2574,9 +2574,9 @@ class AudioMap {
 		}
 
 		// 2. 顯示到螢幕
-		/*this.renderer.setRenderTarget(null);
+		this.renderer.setRenderTarget(null);
 		//this.renderer.render(this.scene, this.camera);
-		this.renderer.render(this.scene, this.arrayCamera.cameras[index]);*/
+		//this.renderer.render(this.scene, this.arrayCamera.cameras[index]);
 		
 		this.setSSAO(index);
         this.composer.render();
