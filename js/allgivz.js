@@ -2335,7 +2335,7 @@ class AudioMap {
 			0.005   // 閾值壓到極低，讓幾乎所有帶點顏色的地方都開始暈開
 		);
 		//this.bloomPass.enabled = false;
-		this.composer.addPass(this.bloomPass);
+		//this.composer.addPass(this.bloomPass);
 		
 		this.rgbShiftPass = new ShaderPass(RGBShiftShader);
 		this.rgbShiftPass.uniforms['amount'].value = 0; // 偏移強度
@@ -2354,7 +2354,7 @@ class AudioMap {
 		this.composer.addPass(gammaPass);
 		
 		const outputPass = new OutputPass();
-		this.composer.addPass(outputPass); // 必須放在最後一個！
+		//this.composer.addPass(outputPass); // 必須放在最後一個！
 
 		let targetInterval = 4;
 
