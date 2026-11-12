@@ -2279,7 +2279,7 @@ class AudioMap {
 		
 		this.renderer = new THREE.WebGLRenderer({ antialias: true });
 		this.renderer.outputColorSpace = SRGBColorSpace;
-		this.renderer.toneMapping = AgXToneMapping; // 必須要有 Tone Mapping 來壓制高光
+		this.renderer.toneMapping = THREE.NeutralToneMapping; // 必須要有 Tone Mapping 來壓制高光
 		this.renderer.toneMappingExposure = 1.618;
 		this.renderer.setSize(width, height);
 		this.composer = new EffectComposer(this.renderer);
