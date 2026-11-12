@@ -2280,7 +2280,7 @@ class AudioMap {
 		this.renderer = new THREE.WebGLRenderer({ antialias: true });
 		//this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
 		//this.renderer.toneMapping = AgXToneMapping; // 必須要有 Tone Mapping 來壓制高光
-		this.renderer.toneMappingExposure = 4.237;
+		//this.renderer.toneMappingExposure = 4.237;
 		this.renderer.setSize(width, height);
 		this.composer = new EffectComposer(this.renderer);
 		
@@ -2330,12 +2330,12 @@ class AudioMap {
 		// 3. 第二道工序：加上泛光特效（讓畫面中發光或亮部的部分暈開）
 		this.bloomPass = new UnrealBloomPass(
 			new THREE.Vector2(window.innerWidth, window.innerHeight),
-			0.00000001,   // 強度拉大（例如 2.0 ~ 3.0）
-			0.00618,   // 半徑
-			0.00618   // 閾值壓到極低，讓幾乎所有帶點顏色的地方都開始暈開
+			0.005,   // 強度拉大（例如 2.0 ~ 3.0）
+			0.005,   // 半徑
+			0.005   // 閾值壓到極低，讓幾乎所有帶點顏色的地方都開始暈開
 		);
 		//this.bloomPass.enabled = false;
-		//this.composer.addPass(this.bloomPass);
+		this.composer.addPass(this.bloomPass);
 		
 		this.rgbShiftPass = new ShaderPass(RGBShiftShader);
 		this.rgbShiftPass.uniforms['amount'].value = 0; // 偏移強度
@@ -2416,11 +2416,11 @@ class AudioMap {
 								this.zOrder[maxIndex] = 'speed';
 							}
 							
-							/*if(this.feedback) {
-								this.bloomPass.strength = this.tuneEffect(this.bloomPass.strength, this.feedback.R);
-								this.bloomPass.radius = this.tuneEffect(this.bloomPass.radius, this.feedback.G);
-								this.bloomPass.threshold = this.tuneEffect(this.bloomPass.threshold, this.feedback.B);
-							}*/
+							if(this.feedback) {
+								this.bloomPass.strength = this.smoothEffect(this.bloomPass.strength, this.feedback.R * 0.09, 0.0031, 0.0081);
+								this.bloomPass.radius = this.smoothEffect(this.bloomPass.radius, this.feedback.G * 0.09, 0.0031, 0.0081);
+								this.bloomPass.threshold = this.smoothEffect(this.bloomPass.threshold, this.feedback.B * 0.09, 0.0031, 0.0081);
+							}
 						}
 					}
 					else {
@@ -2859,7 +2859,7 @@ class FeedbackManager {
 		
 		this.fftLv = this.smoothstep(0.0, 1.0, gainVal * reverbVal * qVal * distVal);
 		
-		//console.log([gainVal, reverbVal, qVal, distVal]);
+		//console.log([this.R, this.G, this.B, this.A]);
 		//console.log(this.fftIndex);
     }
 	
