@@ -55,8 +55,8 @@ void main() {
 
     // --- COMPLEXITY 控制形狀 ---
     // 網格密度隨 complexity 變化，並產生扭曲
-    float shapeNoise = sin(d * g1() - time) + signPow(u_complexity * g4, g1());
-    float gridFactor = g1() + pow(u_complexity * g4, g1());
+    float shapeNoise = sin(d * g1() - time) + signPow(u_complexity * g1(), g1());
+    float gridFactor = g1() + pow(u_complexity * g1(), g1());
 	// 讓 gridFactor 會隨音樂 Peak 抖動
 	gridFactor *= (g2() + u_peak * g1());
     
@@ -67,8 +67,8 @@ void main() {
 
     // 在 p *= m; 旋轉之後，計算網格 id 之前加入：
 	// 這會打破完美的同心圓，讓它變成「螺旋狀的數位廢墟」
-	float spiral = sin(d * g1() * g4 / g5 - u_time * g4) * u_complexity;
-	p += (p / d) * spiral * g5; 
+	float spiral = sin(d * g1() * g4 - u_time * g1()) * u_complexity;
+	p += (p / d) * spiral; 
 
 	vec2 g_id = floor(p * gridFactor);
     vec2 g_uv = fract(p * gridFactor) - g2();
@@ -78,7 +78,7 @@ void main() {
 
     // --- VOL 控制亮度 ---
     float h = hash(g_id);
-    float flicker = signPow(u_volume * g1(), g2()) * g3();
+    float flicker = signPow(u_volume * g2(), g3()) * g3();
 	float brightness = smoothstep(g2() - flicker, g2(), h);
     
     // 粒子形狀
@@ -114,11 +114,11 @@ void main() {
 		
 		// 最終混合：底色 - (侵蝕深度)
 		finalCol = vec3(g2()) - (erosionColor * (1.0 + u_volume_smooth));
-		finalCol -= d * (g5 + pulseDirty); // 邊緣陰影隨震動擴散
+		finalCol -= d * (g3() + pulseDirty); // 邊緣陰影隨震動擴散
     } else {
         // 暗模式 (發光感)
-        finalCol = circ * brightness * baseCol * (g2() + u_volume_smooth);
-        finalCol += baseCol * (g5 / d) * u_volume_smooth; // 中心光暈
+        finalCol = circ * brightness * baseCol * (g3() + u_volume_smooth);
+        finalCol += baseCol * (g3() / d) * u_volume_smooth; // 中心光暈
     }
 
     gl_FragColor = vec4(finalCol, g2());
