@@ -102,7 +102,7 @@ void main() {
     finalCol += vec3(g5, 0.0, g3()) * (g2() / (distToCenter + g3())) * u_volume_smooth;
     
     // 增加邊緣整體的質感與環境光
-    finalCol *= (g2() + g5 * sin(u_time * g1() * g4 / g5));
+    finalCol *= (g2() + g5 * sin(u_time * g1() * g4));
 	
 	if (u_darkGlow > 0.618) {
 		float luma = dot(finalCol, vec3(g2(), g3(), g5));
