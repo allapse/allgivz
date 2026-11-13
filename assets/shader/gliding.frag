@@ -22,8 +22,8 @@ void main() {
     float g2 = signPow(0.618, 0.0 + (u_speed - 0.5) * 0.618);
 	float g1 = signPow(0.618, -2.0 - u_intensity * 0.618);
 	float g3 = signPow(0.618, 2.0 + u_complexity * 0.618);
-	float g4 = signPow(0.618, -3.0 + uv.x * 0.618);
-    float g5 = signPow(0.618, 3.0 + uv.y * 0.618);
+	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
+    float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
     
     // --- 視角偏轉優化版 ---
 	vec2 look = (u_orient - g3) * g2; 

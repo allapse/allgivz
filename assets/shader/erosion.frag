@@ -42,8 +42,8 @@ void main() {
     uv += (hash(uv + u_time) - g3()) * vibration; // 隨機震盪
     uv *= 1.0 - vibration; // 瞬間縮放
 	
-	float g4 = signPow(0.618, -3.0 - uv.x * 0.618);
-    float g5 = signPow(0.618, 3.0 + uv.y * 0.618);
+	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
+    float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
     
     // 陀螺儀重心偏移
     vec2 drift = u_orient * g3();

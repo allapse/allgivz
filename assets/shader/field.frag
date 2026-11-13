@@ -69,8 +69,8 @@ float map(vec3 p, float filteredVol) {
 void main() {
     vec2 uv = (gl_FragCoord.xy - g2() * u_res.xy) / min(u_res.y, u_res.x);
 	
-	float g4 = signPow(0.618, -3.0 + uv.x * 0.618);
-    float g5 = signPow(0.618, 3.0 + uv.y * 0.618);
+	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
+    float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
 	
 	float filteredVol = g2() + u_last_volume + clamp(u_volume - u_last_volume, -g5, g5);
     

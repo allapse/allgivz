@@ -41,8 +41,8 @@ void main() {
     // --- 1. 基礎坐標與視角控制 ---
     vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / min(u_res.y, u_res.x);
 	
-	float g4 = signPow(0.618, -3.0 + uv.x * 0.618);
-    float g5 = signPow(0.618, 3.0 + uv.y * 0.618);
+	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
+    float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
     
     // 視角旋轉：使用 u_orient.x 進行全平面旋轉
     uv *= rot(u_orient.x * 3.14159);

@@ -69,8 +69,8 @@ void main() {
 	}
     vec2 uv = ((gl_FragCoord.xy - 1.0 * res) / min(res.y, res.x) + shake);
 	
-	float g4 = signPow(0.618, -3.0 + uv.x * 0.618);
-    float g5 = signPow(0.618, 3.0 + uv.y * 0.618);
+	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
+    float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
     
     vec2 look = u_orient; 
     

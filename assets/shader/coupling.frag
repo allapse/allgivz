@@ -66,8 +66,8 @@ void main() {
     vec2 uv = gl_FragCoord.xy / u_res / 3.0;
     uv.x *= u_res.x / u_res.y;
 	
-	float g4 = signPow(0.618, -3.0 + uv.x * 0.618);
-    float g5 = signPow(0.618, 3.0 + uv.y * 0.618);
+	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
+    float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
 
     // 陀螺儀影響
     uv += u_orient * g3();
