@@ -123,12 +123,12 @@ void main() {
     // 6. 中心發光 (隨音量與透視點偏移)
     float centerScale = g3() / (r + g5);
     vec3 centerGlow = vec3(g3(), g2(), g2()) * signPow(centerScale, g2()) * (g2() + u_volume * g1());
-    finalCol += centerGlow;
+    finalCol -= centerGlow;
 
     // 7. 最終消散與暗角
     // 讓邊緣暗角也跟著 perspective 走
     float vignette = smoothstep(g2(), g3(), r * perspective);
     finalCol *= vignette;
 
-    gl_FragColor = vec4(finalCol, g2());
+    gl_FragColor = vec4(finalCol, 1.0);
 }
