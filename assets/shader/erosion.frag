@@ -34,16 +34,16 @@ float hash(vec2 p) {
 
 void main() {
     // 1. 座標基礎設定
-    vec2 uv = (gl_FragCoord.xy * 2.0 - u_res) / min(u_res.x, u_res.y) * g1();
-	
-	float g4 = signPow(0.618, -3.0 + uv.x * 0.618);
-    float g5 = signPow(0.618, 3.0 + uv.y * 0.618);
+    vec2 uv = (gl_FragCoord.xy * 2.0 - u_res) / min(u_res.x, u_res.y) * 3.0;
     
     // --- PEAK 控制震動 ---
     // 利用 peak 產生瞬間的縮放與位移感
     float vibration = u_peak * g2(); 
     uv += (hash(uv + u_time) - g3()) * vibration; // 隨機震盪
-    uv *= g2() - vibration; // 瞬間縮放
+    uv *= 1.0 - vibration; // 瞬間縮放
+	
+	float g4 = signPow(0.618, -3.0 - uv.x * 0.618);
+    float g5 = signPow(0.618, 3.0 + uv.y * 0.618);
     
     // 陀螺儀重心偏移
     vec2 drift = u_orient * g3();
@@ -55,10 +55,10 @@ void main() {
 
     // --- COMPLEXITY 控制形狀 ---
     // 網格密度隨 complexity 變化，並產生扭曲
-    float shapeNoise = sin(d * g1() - time) + signPow(u_complexity * g1(), g1());
-    float gridFactor = g1() + pow(u_complexity * g1(), g1());
+    float shapeNoise = sin(d * g1() - time) + pow(u_complexity * g4, g1());
+    float gridFactor = g4 + pow(u_complexity * g4, g1());
 	// 讓 gridFactor 會隨音樂 Peak 抖動
-	gridFactor *= (g2() + u_peak * g1());
+	gridFactor *= (g2() + u_peak * g2());
     
     // 旋轉矩陣
     float rot = time * g3() + d * u_complexity;
@@ -67,22 +67,22 @@ void main() {
 
     // 在 p *= m; 旋轉之後，計算網格 id 之前加入：
 	// 這會打破完美的同心圓，讓它變成「螺旋狀的數位廢墟」
-	float spiral = sin(d * g1() * g4 - u_time * g1()) * u_complexity;
-	p += (p / d) * spiral; 
+	float spiral = sin(d * g4 - u_time * g1()) * u_complexity;
+	p += (p / d) * spiral * g3(); 
 
 	vec2 g_id = floor(p * gridFactor);
-    vec2 g_uv = fract(p * gridFactor) - g2();
+    vec2 g_uv = fract(p * gridFactor) - g3();
 	float distortion = sin(u_time * u_speed + d * g4) * u_peak;
 	p += (g_uv * distortion * u_intensity);
 	
 
     // --- VOL 控制亮度 ---
     float h = hash(g_id);
-    float flicker = signPow(u_volume * g2(), g3()) * g3();
+    float flicker = pow(u_volume * g1(), g1()) * g3();
 	float brightness = smoothstep(g2() - flicker, g2(), h);
     
     // 粒子形狀
-    float circ = smoothstep(g3(), 0.0, length(g_uv));
+    float circ = smoothstep(g3(), g3(), length(g_uv));
     
     // --- INTENSITY 控制顏色 ---
     // 從青藍色 (Low) 到 亮橘紅色 (High)
@@ -92,17 +92,17 @@ void main() {
     
     // 最終色彩計算
     vec3 finalCol;
-    if (u_darkGlow > 0.618) {
+    if (u_darkGlow > 0.5) {
         // --- 亮模式修正：強化侵蝕刻痕 ---
     
 		// 1. 強制放大粒子感 (讓微小的點也能被看見)
 		// 即使 gridFactor 極大，我們也讓點的邊緣變硬
-		float edge = g2() + u_complexity * g3(); 
+		float edge = g3() + u_complexity * g3(); 
 		float stroke = smoothstep(edge, edge - g3(), length(g_uv));
 		
 		// 2. 增加顯現機率 (讓 brightness 不要那麼邊緣)
 		// 當 complexity 高時，讓更多粒子參與減法
-		float coverage = g2() - u_complexity * g3(); // 越複雜，覆蓋率越高
+		float coverage = g3() - u_complexity * g3(); // 越複雜，覆蓋率越高
 		float visibleSource = smoothstep(coverage, coverage + g5, h);
 		
 		// 3. 減法運算 (這就是你的侵蝕色彩)
@@ -113,14 +113,13 @@ void main() {
 		float pulseDirty = u_peak * g3();
 		
 		// 最終混合：底色 - (侵蝕深度)
-		finalCol = vec3(g2()) - (erosionColor * (1.0 + u_volume_smooth));
+		finalCol = vec3(g2()) - (erosionColor * (g2() + u_volume_smooth));
 		finalCol -= d * (g3() + pulseDirty); // 邊緣陰影隨震動擴散
     } else {
         // 暗模式 (發光感)
-        finalCol = circ * brightness * baseCol * (g3() + u_volume_smooth);
-        finalCol += baseCol * (g3() / d) * u_volume_smooth; // 中心光暈
+        finalCol = circ * brightness * baseCol * u_volume_smooth;
+        finalCol += baseCol * (0.01 / d) * u_volume_smooth; // 中心光暈
     }
 
-    gl_FragColor = vec4(finalCol, g2());
-
+    gl_FragColor = vec4(finalCol, 1.0);
 }
