@@ -121,7 +121,7 @@ void main() {
     col += vec3(g3(), g2(), 1.0) * pow(u_volume_smooth, g4) * fog;
 
     // 後處理：光暈補償
-    col = pow(col, vec3(g2())); // Gamma correction 模擬
+    //col = pow(col, vec3(g2())); // Gamma correction 模擬
 	
 	// 2. 量子採樣 (Raymarching + Chromatic Aberration)
     vec3 sceneCol = col;
