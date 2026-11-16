@@ -12,7 +12,6 @@ uniform float u_darkGlow;    // 模式切換
 uniform sampler2D u_camera;
 uniform float u_useCamera;
 
-
 float signPow(float val, float pt){
 	return sign(val) * pow(abs(val), pt);
 }
@@ -42,8 +41,8 @@ void main() {
     vec2 uv = (gl_FragCoord.xy - 0.5 * u_res) / min(u_res.y, u_res.x);
     vec2 oriUV = gl_FragCoord.xy / u_res;
 	
-	float g4 = signPow(0.618, -3.0 + uv.x * 0.618);
-    float g5 = signPow(0.618, 3.0 + uv.y * 0.618);
+	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
+    float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
     
     // 1. 動態步長：利用質數與聲音重心建立「空間步長」
     // 這讓每一秒鐘的空間結構都因為質數的干涉而不重複
@@ -66,7 +65,7 @@ void main() {
 			uv = abs(uv) / (dot(uv, uv)) - (p1.xy / p2.xy);
 		}
 		
-		uv *= rot(u_time * g5 + i * g1() + u_orient.x);
+		uv *= rot(u_time * g3() + i * g1() + u_orient.x);
 		
 		// 軌跡捕捉也乘上權重
 		orbit += log(length(uv) + g2()) * weight;
@@ -74,10 +73,10 @@ void main() {
 
     // 3. 現實映射：讓聲音的「厚度」決定相機畫面的「折射深度」
     // 使用 fract(orbit) 創造出類似等高線的視覺效果，這能反映質數分布的細節
-    float shade = fract(orbit * g3() + u_time * g5);
+    float shade = fract(orbit * g3() + u_time * g3());
     
     // 4. 顏色：不再用預設顏色，讓質數向量 p1, p2 決定色彩通道
-    vec3 color = sin(p1 * orbit * g5 + u_intensity * g4) * g3() + g3();
+    vec3 color = sin(p1 * orbit * g3() + u_intensity * g4) * g3() + g3();
     color *= shade;
 
 	// 宣告 scene 並初始化為黑
