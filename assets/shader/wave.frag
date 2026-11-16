@@ -37,12 +37,12 @@ float hash(float n) { return fract(sin(n) * 39650.94552); }
 float map(vec3 p) {
     // 速度影響 Z 軸相位，增加流動感
     float baseZ = p.z + u_time; 
-    float pulse = u_speed * 0.382; // 直接用 speed 做微小的相位偏移，不要乘 u_time
+    float pulse = u_speed * g2(); // 直接用 speed 做微小的相位偏移，不要乘 u_time
 
-    float zLoop = mod(baseZ + pulse, g2());
+    float zLoop = mod(baseZ + pulse, g1());
     
     float angle = atan(p.y, p.x + g3());
-    float mirrorAngle = abs(abs(angle) - PI * g2());
+    float mirrorAngle = abs(abs(angle) - PI * g3());
 
     // 基礎隧道半徑
     float tunnel = -(length(p.xy + g3()) - g2());
@@ -55,7 +55,7 @@ float map(vec3 p) {
     
     // 增加細節扭曲
     float noise = hash(floor(p.z * g1())) * u_complexity * g2();
-    wave += sin(mirrorAngle * freq * g2() - u_time + noise) * g1();
+    wave += sin(mirrorAngle * freq * g2() - u_time + noise) * g3();
 
     return tunnel + (wave * amp);
 }
@@ -117,5 +117,3 @@ void main() {
 
     gl_FragColor = vec4(finalCol, g2());
 }
-
-
