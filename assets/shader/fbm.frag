@@ -127,7 +127,7 @@ void main() {
 
     // 7. 最終消散與暗角
     // 讓邊緣暗角也跟著 perspective 走
-    float vignette = smoothstep(g2(), g3(), r * perspective);
+    float vignette = smoothstep(g1(), g2(), r * perspective);
     finalCol *= vignette;
 
     gl_FragColor = vec4(finalCol, 1.0);
