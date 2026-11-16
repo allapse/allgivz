@@ -3,6 +3,7 @@ precision highp float;
 uniform vec2 u_res;
 uniform float u_time;
 uniform float u_volume_smooth;
+uniform float u_peak;
 uniform float u_intensity;   
 uniform float u_complexity;  
 uniform float u_speed;       
@@ -10,7 +11,6 @@ uniform vec2 u_orient;
 uniform float u_darkGlow;    // 模式切換
 uniform sampler2D u_camera;
 uniform float u_useCamera;
-uniform sampler2D u_prevFrame;
 
 float signPow(float val, float pt){
 	return sign(val) * pow(abs(val), pt);
@@ -28,103 +28,69 @@ float g3() {
 	return signPow(0.618, 2.0 + u_complexity * 0.618);
 }
 
-// 旋轉函數
+// 利用質數構造的非週期性向量 (Primes: 13, 17, 19, 23, 29...)
+const vec3 p1 = vec3(13.1, 17.3, 19.7);
+const vec3 p2 = vec3(23.9, 29.1, 31.7);
+
 mat2 rot(float a) {
     float s = sin(a), c = cos(a);
     return mat2(c, -s, s, c);
 }
 
 void main() {
-    vec2 uv = (gl_FragCoord.xy - 0.5 * u_res) / min(u_res.y, u_res.x) * 6.856;
+    vec2 uv = (gl_FragCoord.xy - 0.5 * u_res) / min(u_res.y, u_res.x);
     vec2 oriUV = gl_FragCoord.xy / u_res;
 	
 	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
     float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
+    
+    // 1. 動態步長：利用質數與聲音重心建立「空間步長」
+    // 這讓每一秒鐘的空間結構都因為質數的干涉而不重複
+    float step_factor = mix(p1.x, p2.z, u_intensity);
+    
+    // 1. 將迭代次數改為浮點數，不使用 floor
+    float targetIter = g1() + u_complexity * g4;
+    
+    float orbit = 0.0;
+    for(float i = 0.0; i < 15.0; i++) {
+		// 計算每一層的貢獻權重，讓第 N+1 層慢慢浮現
+		float weight = clamp(targetIter - i, 0.0, g2());
+		if(weight <= 0.0) break; 
 
-    // 1. 建立「無偏見」的初始場
-    // 我們將聲音的三個維度映射為空間的三個軸 (x, y, 扭曲度)
-    // 讓音樂自己去決定座標系的彎曲方式
-    float angle = u_intensity * g1() + u_orient.x;
-    vec2 dir = vec2(cos(angle), sin(angle));
-    
-    // 2. 核心：全頻率波形干涉 (Interference Pattern)
-    // 這裡我們不疊加固定次數，而是讓聲音的「飽滿度 (speed)」決定疊加的密度
-    float d = 0.0;
-    float layers = g1() + u_speed * g1(); 
-    
-    for(float i = 1.0; i < 16.0; i++) {
-        if(i > layers) break;
-        
-        // 這是最底層的物理：平面波干涉
-        // 每一層的波長由 u_intensity 決定，擾動由 u_complexity 決定
-        float freq = i * (u_intensity * g2() + g5) * g1();
-		vec2 p = uv * rot(u_orient.y + i * g3());
-        float wave = sin(dot(p, dir) * freq + u_time);
-        
-        // 讓波隨複雜度產生「相位破碎」
-        wave += sin(uv.x * g4 * u_complexity) * u_complexity;
-        
-        // 能量疊加
-        d += wave / i;
-        
-        // 旋轉座標系，讓下一層波從不同角度進入
-        uv *= mat2(g3(), g3(), -g3(), g3()); // 45度固定旋轉，確保公平覆蓋
+		if(u_darkGlow < 0.5) {
+			// 保護措施：防止 dot(uv, uv) 趨近於 0 導致的畫面瞬間噴發
+			uv = abs(uv) / (dot(uv, uv) + g5) - (p1.xy / p2.xy);
+		}
+		else {
+			uv = abs(uv) / (dot(uv, uv)) - (p1.xy / p2.xy);
+		}
 		
-		// 讓音樂的「飽滿度」去推動鏡像的偏移距離
-		uv = abs(uv) - (u_volume_smooth * g3());
-    }
+		uv *= rot(u_time * g3() + i * g1() + u_orient.x);
+		
+		// 軌跡捕捉也乘上權重
+		orbit += log(length(uv) + g2()) * weight;
+	}
 
-    // 3. 呈現：音樂的「張力圖」
-    // d 是所有波干涉後的結果，它直接代表了這首歌在該點的「能量勢能」
-    float final_map = sin(d + u_volume_smooth * g4);
+    // 3. 現實映射：讓聲音的「厚度」決定相機畫面的「折射深度」
+    // 使用 fract(orbit) 創造出類似等高線的視覺效果，這能反映質數分布的細節
+    float shade = fract(orbit * g3() + u_time * g3());
     
-    // 4. 顏色：純粹的能量映射
-    // 我們不定義顏色，而是定義「光譜偏移」
-    vec3 color = g3() + g3() * cos(vec3(0.0, g1(), g4) + d * g1() + u_intensity * g4);
-  
+    // 4. 顏色：不再用預設顏色，讓質數向量 p1, p2 決定色彩通道
+    vec3 color = sin(p1 * orbit * g3() + u_intensity * g4) * g3() + g3();
+    color *= shade;
+
 	// 宣告 scene 並初始化為黑
-	vec3 scene = vec3(0.0);
+	vec3 cam = vec3(0.0);
 
 	// 只有當開關開啟時，才去取相機畫面並進行扭曲
 	if (u_useCamera > 0.5) {
-		vec2 distortion = uv * final_map * g5 * u_volume_smooth;
-		scene = texture2D(u_camera, oriUV + distortion).rgb;
-	}
-  
-	// 讀取過去
-    vec3 past = texture2D(u_prevFrame, oriUV).rgb;
-    
-    // 這裡就是「值得」的地方：
-    // 如果 mix 比例是 0.9，舊畫面會慢慢淡去，形成流動感
-    // 如果加上一點點位移，畫面就會像液體一樣擴散
-	vec3 emission = color * abs(final_map) * (u_volume_smooth * g3() + g3()) * g4;
-	// 將新顏色與場景先融合，再與過去的畫面做混合
-	vec3 currentFrame = mix(emission, scene, g3()); 
-	
-	vec3 finalColor = vec3(0.0);
-	
-	if(u_darkGlow > 0.5) {
-		finalColor = mix(currentFrame, past, g2());
-	
-		// Step A: 提高對比度，讓暗部深邃
-		finalColor *= finalColor * g1(); 
-		
-		// Step B: 定義發光色彩（根據 intensity 動態偏移）
-		vec3 neon = vec3(u_intensity, g3(), g2() - u_intensity);
-		
-		// Step C: 讓 final_map 變成銳利的發光點
-		float glow = smoothstep(g3(), g2(), abs(final_map));
-		
-		// Step D: 結合，並將沒發光的地方壓黑
-		finalColor = finalColor * neon * glow * g4;
-		
-		// Step E: 最終曝光壓縮，維持發光質感
-		finalColor = 1.0 - exp(-finalColor * g1());
-	}
-	else {
-		finalColor = mix(currentFrame, past, g3());
+		cam = texture2D(u_camera, oriUV + uv * g5).rgb;
 	}
 
-    // 最終輸出：當音樂強烈時，干涉條紋清晰且明亮；當音樂溫柔時，條紋會變寬、變慢
-    gl_FragColor = vec4(finalColor, g2());
+    vec3 finalColor = mix(color, cam, u_intensity);
+    
+    // 5. 強度修正：讓 Peak 決定最後的「數學清晰度」
+    finalColor += (g2() - smoothstep(0.0, g5, abs(shade - g3()))) * u_peak;
+	
+    gl_FragColor = vec4(g2() - exp(-finalColor * g1()), g2());
 }
