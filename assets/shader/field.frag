@@ -102,8 +102,8 @@ void main() {
         // 累積輝光：當光線靠近物體時，吸收能量
         glow += (1.0 / (d + g3())) * filteredVol;
         
-        if(d < g5 || t > g1() * g3() * g4) break;
-        t += d * g2();
+        if(d < g5 * g5 || t > g4 * g4) break;
+        t += d * g3();
     }
 
     // --- 4. 色彩與深度演化 ---
@@ -169,8 +169,8 @@ void main() {
 
 	if (u_darkGlow < 0.618) {
 		// 透過極坐標或 P 座標產生掃描線感
-		float scanline = smoothstep(g5, 0.0, abs(fract(p.y * 11.09 * g2()) - g3()));
-		float grid = smoothstep(g5, 0.0, abs(fract(p.x * 11.09 * g2()) - g3()));
+		float scanline = smoothstep(g5, 0.0, abs(fract(p.y * g4 * g1() * g2()) - g3()));
+		float grid = smoothstep(g5, 0.0, abs(fract(p.x * g4 * g1() * g2()) - g3()));
 		col += (scanline + grid) * vec3(0.0, g2(), g3()) * fog;
 		// 讓背景完全漆黑，只留綠色線條
 		col *= g3(); 
