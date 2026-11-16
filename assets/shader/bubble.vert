@@ -57,7 +57,7 @@ void main() {
     
     // 1. 生命週期：每個粒子都有不同的出生偏移
     // 用 mod 讓它們循環：0.0 是剛出生，1.0 是消失
-    float life = mod(u_time * g3() + vS1, g2()) / (g3() + g2() * u_speed); 
+    float life = mod(u_time * g5 + vS1, g2()) / (g3() + g2() * u_speed); 
     vLife = life;
 
     // 2. 誕生路徑：從中心噴出
@@ -79,7 +79,7 @@ void main() {
     vec3 noise = vec3(hash(vS1), hash(vS2), hash(vS1 + vS2)) * u_peak * g3() * (g2() - life);
     vec3 pos = spherePos * r + noise;
 	
-	pos.yz *= rotate(u_orient.y * g1() + (u_time / vS2 + vS1) * u_darkGlow * g3()); // 繞 X 軸轉
+	pos.yz *= rotate(u_orient.y * g1() + (u_time / vS2 + vS1) * u_darkGlow * g5); // 繞 X 軸轉
     pos.xz *= rotate(u_orient.x * g1() + (u_time / vS1 + vS2) * u_darkGlow * g3()); // 繞 Y 軸轉
 	pos.xy *= rotate(u_time / vS1 * vS2 + vS1 - vS2) * (g2() + g5 * u_complexity); // 繞 Y 軸轉
 
