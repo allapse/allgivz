@@ -47,11 +47,11 @@ mat2 rot(float a) {
 
 void main() {
     // 基礎座標縮放
-    vec2 uv = (gl_FragCoord.xy - g3() * u_res) / min(u_res.y, u_res.x) * 11.09 * g1();
+    vec2 uv = (gl_FragCoord.xy - 0.5 * u_res) / min(u_res.y, u_res.x) * 11.09 * g1();
     vec2 oriUV = gl_FragCoord.xy / u_res;
 	
-	float g4 = signPow(0.618, -3.0 + uv.x * 0.618);
-    float g5 = signPow(0.618, 3.0 + uv.y * 0.618);
+	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
+    float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
     
     // --- 加入 u_orient ---
     // 將方向參數映射到座標偏移，讓你有種「撥動」格子的感覺
@@ -66,10 +66,10 @@ void main() {
     
     // 2. 維度碎片 (7次疊加)
     // 這裡是產生「波動格子」的核心
-	float iterLimit = mix(g2(), g1(), pow(u_complexity * u_intensity * u_speed, g1())) * g4;
+	float iterLimit = mix(g2(), g1(), pow(u_complexity * u_intensity * u_speed, g1())) * g1() * g1();
     for(float i = 0.0; i < iterLimit; i++) {
         uv = abs(uv) - sin(u_complexity) - cos(u_intensity);
-		uv *= rot(u_complexity + u_time * g5);
+		uv *= rot(u_complexity + u_time * g3() * g3() * g3());
     }
 
     // 3. 核心形狀
