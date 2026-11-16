@@ -38,26 +38,26 @@ void main() {
     vec2 uv = (gl_FragCoord.xy - 0.5 * u_res) / min(u_res.y, u_res.x) * 6.856;
     vec2 oriUV = gl_FragCoord.xy / u_res;
 	
-	float g4 = signPow(0.618, -3.0 + uv.x * 0.618);
-    float g5 = signPow(0.618, 3.0 + uv.y * 0.618);
+	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
+    float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
 
     // 1. 建立「無偏見」的初始場
     // 我們將聲音的三個維度映射為空間的三個軸 (x, y, 扭曲度)
     // 讓音樂自己去決定座標系的彎曲方式
-    float angle = u_intensity * g4 + u_orient.x;
+    float angle = u_intensity * g1() + u_orient.x;
     vec2 dir = vec2(cos(angle), sin(angle));
     
     // 2. 核心：全頻率波形干涉 (Interference Pattern)
     // 這裡我們不疊加固定次數，而是讓聲音的「飽滿度 (speed)」決定疊加的密度
     float d = 0.0;
-    float layers = g4 + u_speed * g4; 
+    float layers = g1() + u_speed * g1(); 
     
     for(float i = 1.0; i < 16.0; i++) {
         if(i > layers) break;
         
         // 這是最底層的物理：平面波干涉
         // 每一層的波長由 u_intensity 決定，擾動由 u_complexity 決定
-        float freq = i * (u_intensity * g2() + g5) * g4;
+        float freq = i * (u_intensity * g2() + g5) * g1();
 		vec2 p = uv * rot(u_orient.y + i * g3());
         float wave = sin(dot(p, dir) * freq + u_time);
         
