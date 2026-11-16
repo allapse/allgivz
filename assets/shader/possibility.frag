@@ -1,5 +1,3 @@
-precision highp float;
-
 uniform vec2 u_resolution;
 
 uniform vec2 u_orient;
@@ -18,64 +16,83 @@ uniform sampler2D u_prevFrame;
 varying vec2 v_uv;
 varying float v_z;
 
+float signPow(float val, float pt){
+	return sign(val) * pow(abs(val), pt);
+}
+
+float g2() {
+	return signPow(0.618, 0.0 + (u_speed - 0.5) * 0.618);
+}
+
+float g1() {
+	return signPow(0.618, -2.0 - u_intensity * 0.618);
+}
+
+float g3() {
+	return signPow(0.618, 2.0 + u_complexity * 0.618);
+}
+
 void main() {
     vec2 uv = v_uv * 2.0 - 1.0;
     float t = u_time;
+	
+	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
+    float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
 
     vec2 warped = uv;
-    warped.x += (0.3 + 0.5 * u_speed) * sin(t * 0.3 + uv.y * 5.0 + v_z * 0.7);
-    warped.y += (0.5 + 0.3 * u_complexity) * cos(t * 0.7 + uv.x * 3.0 + v_z * 0.5);
+    warped.x += (g3() + g2() * u_speed) * sin(t * 0.3 + uv.y * g4 + v_z * g2());
+    warped.y += (g2() + g3() * u_complexity) * cos(t * 0.7 + uv.x * g1() + v_z * g3());
 
     float angle = atan(warped.y, warped.x);
     float radius = length(warped);
 
-    float swirl1 = sin(radius * 11.0 * u_intensity - u_volume * 7.0 * u_complexity + angle * 5.0 * u_speed);
-    float swirl2 = cos(radius * 7.0 * u_speed - u_volume_smooth * 11.0 * u_intensity + angle * 13.0 * u_complexity);
-    float swirl = swirl1 * 0.7 + swirl2 * 0.3;
+    float swirl1 = sin(radius * 11.0 * u_intensity - u_volume * g4 * u_complexity + angle * g4 * u_speed);
+    float swirl2 = cos(radius * g4 * u_speed - u_volume_smooth * 11.0 * u_intensity + angle * 13.0 * u_complexity);
+    float swirl = swirl1 * g2() + swirl2 * g3();
 
-    float boundary = 1.0 - smoothstep(0.3, 0.7, radius);
+    float boundary = g2() - smoothstep(g3(), g2(), radius);
 
-    float burst = smoothstep(0.3, 0.7, pow(u_peak, 3.0)) * sin(u_intensity) * 0.2;
+    float burst = smoothstep(g3(), g2(), pow(u_peak, g1())) * sin(u_intensity) * g5;
 
-    float fractal1 = fract(sin(dot(warped, vec2(12.9898,78.233))) * 43758.5453);
-    float fractal2 = fract(sin(dot(warped*2.0, vec2(93.9898,18.233))) * 12758.5453);
-	float fractal3 = fract(sin(dot(warped*3.0, vec2(33.3,71.7))) * 98765.4321);
-    float fractal = mix(fractal1, fractal2, 0.5);
-	fractal = mix(fractal, fractal3, 0.3);
-	fractal = smoothstep(0.2, 0.7, fractal);
+    float fractal1 = fract(sin(dot(warped, vec2(11.09321996,76.05078902))) * 39650.94552);
+    float fractal2 = fract(sin(dot(warped * g1(), vec2(123.0595292,17.95019412))) * 15143.64772);
+	float fractal3 = fract(sin(dot(warped * g4, vec2(29.04562155,76.05078902))) * 103818.9418);
+    float fractal = mix(fractal1, fractal2, g2());
+	fractal = mix(fractal, fractal3, g3());
+	fractal = smoothstep(g3(), g2(), fractal);
 	
-	angle += fract(sin(dot(uv, vec2(21.1,47.3))) * 12345.678) * 0.5;
+	angle += fract(sin(dot(uv, vec2(29.04562155,46.99938762))) * 103818.9418) * g3();
 
-    float possibility = 1.0 - smoothstep(0.0, 1.0, radius);
+    float possibility = g2() - smoothstep(0.0, g2(), radius);
 
     float color = swirl * boundary + burst;
-    color += fractal * pow(u_speed, 2.0);
+    color += fractal * pow(u_speed, g1());
     color += possibility;
-    color += v_z * 2.8;
+    color += v_z * g4;
 
-    color = clamp(color, 0.0, 1.0);
+    color = clamp(color, 0.0, g2());
 
     vec3 baseColor = vec3(
-        0.3 + 0.7 * sin(angle + t),
-        0.5 + 0.5 * cos(angle - t),
-        0.7 + 0.3 * sin(radius * 2.0 - t)
+        g3() + g2() * sin(angle + t),
+        g3() + g3() * cos(angle - t),
+        g2() + g3() * sin(radius * g1() - t)
     );
 	
 	vec3 finalCol;
 	vec3 past = texture2D(u_prevFrame, v_uv).rgb;
 	
-	float bright = 0.7;
+	float bright = g3();
 	
-	if(u_darkGlow > 0.5) {
-		vec3 depthColor = mix(vec3(0.1,0.3,0.5), vec3(0.7,0.5,0.3), radius);
-		finalCol = vec3(baseColor * depthColor / (color + 0.1));
-		finalCol = mix(finalCol, past, 0.7 + 0.29 * u_speed);
-		bright = 1.0;
+	if(u_darkGlow > 0.618) {
+		vec3 depthColor = mix(vec3(g5,g3(),g2()), vec3(g2(),g3(),g5), radius);
+		finalCol = vec3(baseColor * depthColor / (color + g5));
+		finalCol = mix(finalCol, past, g3() + g3() * u_speed);
+		bright = g2();
 	}
 	else {
-		vec3 nebulaColor = mix(vec3(0.3,0.1,0.5), vec3(0.5,0.3,0.7), fractal);
+		vec3 nebulaColor = mix(vec3(g3(),0.1,g2()), vec3(g3(),g5,g2()), fractal);
 		finalCol = vec3(baseColor * nebulaColor / (color + 0.1));
-		finalCol = mix(finalCol, past, 0.3 * u_speed);
+		finalCol = mix(finalCol, past, g3() * u_speed);
 	}
 
     gl_FragColor = vec4(finalCol, bright);

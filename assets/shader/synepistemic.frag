@@ -1,5 +1,3 @@
-precision highp float;
-
 uniform vec2 u_resolution;
 
 uniform vec2 u_orient;
@@ -18,6 +16,22 @@ uniform sampler2D u_prevFrame;
 varying vec2 v_uv;
 varying float v_z;
 
+float signPow(float val, float pt){
+	return sign(val) * pow(abs(val), pt);
+}
+
+float g2() {
+	return signPow(0.618, 0.0 + (u_speed - 0.5) * 0.618);
+}
+
+float g1() {
+	return signPow(0.618, -2.0 - u_intensity * 0.618);
+}
+
+float g3() {
+	return signPow(0.618, 2.0 + u_complexity * 0.618);
+}
+
 // 六個點位：上中下 × 左右
 int brailleCodes[7] = int[7](
     62, // ⠾
@@ -31,20 +45,20 @@ int brailleCodes[7] = int[7](
 
 float drawBraille(vec2 pos, vec2 base, float r, int code) {
     vec2 dots[6];
-    dots[0] = base + vec2(-0.1, 0.3);
+    dots[0] = base + vec2(-0.1, g3());
     dots[1] = base + vec2(-0.1, 0.0);
-    dots[2] = base + vec2(-0.1,-0.3);
-    dots[3] = base + vec2( 0.1, 0.3);
+    dots[2] = base + vec2(-0.1,-g3());
+    dots[3] = base + vec2( 0.1, g3());
     dots[4] = base + vec2( 0.1, 0.0);
-    dots[5] = base + vec2( 0.1,-0.3);
+    dots[5] = base + vec2( 0.1,-g3());
 
     float result = 0.0;
     for(int i=0; i<6; i++){
         if(((code >> i) & 1) == 1){
-			float pulse = 0.5 + 0.5 * sin(u_time * 5.0 + float(i));
-			float dynamicR = r * (1.0 + 0.5 * u_volume);
-			vec2 jitter = vec2(sin(u_time * 3.0+float(i)), cos(u_time * 2.0+float(i))) * 0.02;
-            result += float(((code >> i) & 1)) * smoothstep(dynamicR, dynamicR-0.01 *  u_volume, length(pos + jitter - dots[i])) * pulse ;
+			float pulse = g3() + g2() * sin(u_time * 4.237 + float(i));
+			float dynamicR = r * (g2() + g3() * u_volume);
+			vec2 jitter = vec2(sin(u_time * 2.618 + float(i)), cos(u_time * 1.618 + float(i))) * 0.02;
+            result += float(((code >> i) & 1)) * smoothstep(dynamicR, dynamicR - 0.01 *  u_volume, length(pos + jitter - dots[i])) * pulse ;
         }
     }
     return result;
@@ -52,44 +66,48 @@ float drawBraille(vec2 pos, vec2 base, float r, int code) {
 
 void main() {
     vec2 uv = v_uv - 0.5;
-    vec2 pos = uv * 17.0;
-	float punch = pow(0.1 + u_intensity * u_complexity * u_speed * u_peak, 3.0);
-	float freeze = 1.0 - (u_intensity + u_complexity + u_speed + u_peak) / 4.0;
+    vec2 pos = uv * 17.95;
+	
+	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
+    float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
+	
+	float punch = pow(g5 + u_intensity * u_complexity * u_speed * u_peak, g1());
+	float freeze = 1.0 - (u_intensity + u_complexity + u_speed + u_peak) / g4;
 	float bigZ = v_z * 77.0 * freeze;
 	
-	if(u_darkGlow > 0.5) {
-		bigZ /= (1.0 + u_volume_smooth);
+	if(u_darkGlow > 0.618) {
+		bigZ /= (g2() + u_volume_smooth);
 	}
 
-    float wave = pow(0.5 + 0.5 * sin(u_time + pos.x * u_complexity) / (0.3 + 0.7 * bigZ), 3.0);
+    float wave = pow(g3() + g2() * sin(u_time + pos.x * u_complexity) / (g3() + g2() * bigZ), g1());
     wave *= u_volume_smooth;
 
-    float sym = pow(sin(u_time + pos.x * u_complexity + bigZ) / (0.05 + 0.95 * cos(pos.y * u_intensity - bigZ)), 3.0);
+    float sym = pow(sin(u_time + pos.x * u_complexity + bigZ) / (g5 + g2() * cos(pos.y * u_intensity - bigZ)), 3.0);
 
-    float motion = pow(0.3 + 0.7 * sin(u_time + length(pos) * u_speed), 3.0);
+    float motion = pow(g3() + g2() * sin(u_time + length(pos) * u_speed), 3.0);
 
     vec3 baseColor   = vec3(0.1, 0.2, 0.3);
-    vec3 accentColor = vec3(0.7, 0.5, 0.3);
-    vec3 peakColor   = vec3(0.3, 0.5, 0.7);
+    vec3 accentColor = vec3(g2(), g3(), 0.3);
+    vec3 peakColor   = vec3(g5, g3(), g2());
 
     vec3 color = mix(baseColor, accentColor, wave);
     color = mix(color, peakColor, u_peak);
 	
-    color *= sym * motion * pow(0.3 + 0.7 * u_intensity, 3.0);
+    color *= sym * motion * pow(g3() + g2() * u_intensity, g1());
 	
-	float r = 0.07;
+	float r = g5;
     for(int i=0; i<7; i++){
-        vec2 base = vec2(-1.9 + float(i) * 0.7 + sin(freeze), 0.0);
-        color += vec3(drawBraille(pos, base, r, brailleCodes[i])) * pow(0.5 + 0.3 * u_volume_smooth / (0.1 + punch), 3.0);
+        vec2 base = vec2(-g1() + float(i) * g2() + sin(freeze), g5);
+        color += vec3(drawBraille(pos, base, r, brailleCodes[i])) * pow(g2() + g3() * u_volume_smooth / (g5 + punch), g1());
     }
 	
 	vec3 past = texture2D(u_prevFrame, v_uv).rgb;
 	
-	if(u_darkGlow > 0.5) {
+	if(u_darkGlow > 0.618) {
 		past += vec3(sin(u_intensity), cos(u_speed), sin(u_complexity));
-		color = mix(color, past, 0.5 + 0.5 * punch);
+		color = mix(color, past, g3() + g2() * punch);
 	}
     
-    gl_FragColor = vec4(color, 1.0);
+    gl_FragColor = vec4(color, g2());
 }
 
