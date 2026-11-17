@@ -332,7 +332,7 @@ void main() {
 		
 		vec3 past = texture2D(u_prevFrame, uv).rgb;
 		// choice
-		past += vec3(sin(u_intensity), cos(u_speed), sin(u_complexity));
+		past += vec3(sin(u_intensity), cos(u_speed), sin(u_complexity)) * g5;
 		vec3 emission = color * abs(sym) * (u_volume_smooth * g3() + g3()) * g4;
 		vec3 currentFrame = mix(emission, past, g3()); 
 		finalColor = mix(currentFrame, past, g2() + g5 * freeze);
@@ -344,5 +344,5 @@ void main() {
 		if (v_z > g2() * wave || g3() * stripes > bigZ) discard;
 	}
     
-    gl_FragColor = rotZW * vec4(color, g3());
+    gl_FragColor = rotZW * vec4(finalColor, g3());
 }

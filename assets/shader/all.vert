@@ -38,7 +38,7 @@ mat3 rotateY(float a) {
 }
 
 void main() {
-    v_uv = (uv - 0.5) * g1();
+    v_uv = (uv - 0.5) * g2();
 	
 	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
     float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
