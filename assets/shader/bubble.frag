@@ -46,7 +46,7 @@ void main() {
     // 2. 菲涅耳與彩虹
     float fresnel = signPow(g2() - dot(vNormal, vViewDir), g1());
     vec3 rainbow = g3() + g2() * cos(g1() * (vNormal.y + vLife + vec3(0.0, vS1, vS2)));
-    vec3 dustColor = vec3(g2() - u_intensity, u_speed, u_intensity);
+    vec3 dustColor = vec3(g2() - u_intensity, u_speed, u_intensity) * g3();
     
     // 讓顏色轉換更快一點，減少中心「白沫」的時間
     vec3 color = mix(dustColor, rainbow, smoothstep(g5 * vS1, g3() * vS2, vLife));

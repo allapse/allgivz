@@ -8,6 +8,7 @@ uniform float u_volume_smooth;
 uniform float u_speed;
 uniform float u_intensity;
 uniform float u_complexity;
+uniform float u_darkGlow;
 uniform vec2 u_orient;
 
 float signPow(float val, float pt){
@@ -37,14 +38,23 @@ mat3 rotateY(float a) {
 
 void main() {
     v_uv = uv;
-    vec2 ratio = vec2(max(u_res.x / u_res.y, g2()), max(u_res.y / u_res.x, g2()));
+    vec2 ratio = vec2(max(u_res.x / u_res.y, 1.618), max(u_res.y / u_res.x, 1.618));
     v_centered_uv = (uv - 0.5) * ratio;
+	
+	float dist = length(v_centered_uv);
+	float local_t = u_time;
+	if (u_darkGlow > 0.618) {
+		local_t += g2() * dist;
+	}
+	else {
+		local_t -= g1() * dist;
+	}
 	
 	float g4 = signPow(0.618, -3.0 - abs(v_centered_uv.x) * 0.618);
     float g5 = signPow(0.618, 3.0 + abs(v_centered_uv.y) * 0.618);
 
     // --- 讓紙張波動的靈魂：多頻率湍流波 ---
-    float t = u_time * 0.382; // 波動速度
+    float t = local_t * 0.382; // 波動速度
     float z = 0.0;
     
     // 用三個不同方向的波疊加，創造非線性的「紙張揉動感」
@@ -54,7 +64,7 @@ void main() {
     z += sin((p.x + p.y) * g3() + t * 0.618) * 0.382;
     
     // 加上音量的張力：音量大時，紙張抖動劇烈
-    z *= (g2() + u_volume_smooth * g4);
+    z *= (g3() + u_volume_smooth * g4);
     
     // 保留中心隆起感，但讓邊緣也有波動
     v_z = z; 

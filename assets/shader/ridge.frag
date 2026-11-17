@@ -90,6 +90,15 @@ void main() {
 	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
     float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
 	
+	float dist = length(uv);
+	float local_t = u_time;
+	if (u_darkGlow > 0.618) {
+		local_t += g2() * dist;
+	}
+	else {
+		local_t -= g1() * dist;
+	}
+	
 	// 2. 這是「全填充」修正：
     // 我們只修正 uv.y，讓它配合寬度的比例縮放
     // 這樣 x 軸永遠是 0~1 (填滿左右)，y 軸則會根據螢幕高矮自動調整
@@ -116,7 +125,7 @@ void main() {
     // 速度慢，稜線尖銳
     for(int i = 1; i <= 6; i++) {
         float fi = float(i);
-        float speed = u_time * (0.0556 * fi); // 視差
+        float speed = local_t * (0.0556 * fi); // 視差
         float scale = g2() + fi * g3();
         // 取得尖銳山脊雜訊
         float h = ridgeFBM(vec2(uv.x * scale + speed, sqrt(fi * g4 * g4))) * (g3() / fi);
@@ -137,7 +146,7 @@ void main() {
     // 速度快，形狀碎，用 u_complexity (流量) 增加擾動
     for(int i = 1; i <= 3; i++) {
         float fi = float(i);
-        float speed = u_time * (0.382 + fi * 0.236); // 飛速後移
+        float speed = local_t * (0.382 + fi * 0.236); // 飛速後移
         float forestScale = g4 + fi * g3();
         // 森林用一般的雜訊疊加，看起來比較碎
         float h = fbm(vec2(uv.x * forestScale + speed, fi * g4 * g4)) * (g3() / fi);
@@ -159,19 +168,19 @@ void main() {
     }
 	
 	// 假設 u_season 0:櫻花, 1:風(氣流), 2:楓葉(紅葉), 3:雪花
-	int season = int(mod(u_time * g5, g4)); 
+	int season = int(mod(local_t * g5, g4)); 
 
 	if (u_peak == 1.0) { // 稍微放寬門檻，讓效果更平滑
 		for(int j = 0; j < 2; j++) { // 增加粒子數量
 			float fj = float(j);
-			vec2 seed = vec2(fj, floor(u_time * g3() + fj));
+			vec2 seed = vec2(fj, floor(local_t * g3() + fj));
 			float rand = hash(seed);
 			
 			// 1. 飄落運動邏輯 (取代原本的直線噴發)
 			vec2 driftPos = uv;
 			float speed = g3() + rand * g2();
-			driftPos.y += u_time * u_complexity;           // 往下掉
-			driftPos.x += sin(u_time + rand * g4 * g4) * g3(); // 左右搖擺（風感）
+			driftPos.y += local_t * u_complexity;           // 往下掉
+			driftPos.x += sin(local_t + rand * g4 * g4) * g3(); // 左右搖擺（風感）
 			
 			vec2 p = fract(driftPos * g3()) - g2();
 			
@@ -188,7 +197,7 @@ void main() {
 			} 
 			else if (season == 1) { // 【夏：清風/螢火蟲】
 				seasonCol = vec3(g3(), g2(), g5); // 嫩綠/螢光
-				shape = smoothstep(g5, 0.0, length(p)) * (sin(u_time * g4 + rand * g4 * g4) * g2() + g3());
+				shape = smoothstep(g5, 0.0, length(p)) * (sin(local_t * g4 + rand * g4 * g4) * g2() + g3());
 			}
 			else if (season == 2) { // 【秋：楓葉】
 				seasonCol = mix(vec3(g2(), g3(), 0.0), vec3(g3(),5, 0.0), rand); // 紅橙交替
@@ -240,7 +249,7 @@ void main() {
 	finalEffectCol *= vignette;
 
 	// C. 隨機噪點 (Grain)：讓畫面像老電影
-	float grain = (hash(uv + u_time) - g3()) * g5;
+	float grain = (hash(uv + local_t) - g3()) * g5;
 	finalEffectCol += grain;
 
 	// D. 色彩飽和度增益 (利用 u_peak)：重音來時畫面會稍微閃白

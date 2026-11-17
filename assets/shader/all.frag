@@ -204,12 +204,21 @@ float iwave(vec3 p, vec3 center, float freq, float phase) {
 void main() {
     vec2 uv = v_uv;
 	
+	float dist = length(uv);
+	float local_t = u_time;
+	if (u_darkGlow > 0.618) {
+		local_t += g2() * dist;
+	}
+	else {
+		local_t -= g1() * dist;
+	}
+	
 	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
     float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
 	
 	// singularity
 	uv = abs(uv) - sin(g5 + g2() * u_complexity) - cos(g5 + g2() * u_intensity);
-	uv *= rot2(g5 + g2() * u_complexity + u_time * 0.09);
+	uv *= rot2(g5 + g2() * u_complexity + local_t * 0.09);
 	// freedom
 	uv = abs(uv) / (dot(uv, uv)) - (p1.xy / p2.xy);
 	// choice
@@ -218,8 +227,8 @@ void main() {
 	
 	// possibility
 	vec2 warped = uv;
-    warped.x += (g3() + g3() * u_speed) * sin(u_time * 0.382 + uv.y * g4 + v_z * g2());
-    warped.y += (g3() + g3() * u_complexity) * cos(u_time * 0.618 + uv.x * g1() + v_z * g3());
+    warped.x += (g3() + g3() * u_speed) * sin(local_t * 0.382 + uv.y * g4 + v_z * g2());
+    warped.y += (g3() + g3() * u_complexity) * cos(local_t * 0.618 + uv.x * g1() + v_z * g3());
 	
     vec2 pos = warped * 17.95;
 	
@@ -232,9 +241,9 @@ void main() {
 	}
 	
 	// gliding
-	float stripes = sin(abs(atan(pos.y, pos.x)) * floor(g4 + pow(u_complexity ,g1()) * 11.09)) * sin(g2() / (sqrt(length(pos) * length(pos) + g5)) + u_time * 2.618);
+	float stripes = sin(abs(atan(pos.y, pos.x)) * floor(g4 + pow(u_complexity ,g1()) * 11.09)) * sin(g2() / (sqrt(length(pos) * length(pos) + g5)) + local_t * 2.618);
 	// fbm
-    float pattern = fbm(pos + vec2(fbm(pos * g3() + u_time), fbm(pos * g3() - u_time)) + u_volume_smooth * g3());
+    float pattern = fbm(pos + vec2(fbm(pos * g3() + local_t), fbm(pos * g3() - local_t)) + u_volume_smooth * g3());
 	// erosion
 	float rot = g5 * length(pos) * punch;
 	
@@ -242,20 +251,20 @@ void main() {
 	
 	// coupling
 	vec2 cq = vec2(0.0);
-    cq.x = fbm(uv + 0.09 * u_time);
+    cq.x = fbm(uv + 0.09 * local_t);
     cq.y = fbm(uv + vec2(g2()));
     vec2 cr = vec2(0.0);
-    cr.x = fbm(uv + g2() * cq + vec2(g1(), 11.09) + 0.1459 * u_time);
-    cr.y = fbm(uv + g2() * cq + vec2(6.856, 2.618) + 0.09 * u_time);
+    cr.x = fbm(uv + g2() * cq + vec2(g1(), 11.09) + 0.1459 * local_t);
+    cr.y = fbm(uv + g2() * cq + vec2(6.856, 2.618) + 0.09 * local_t);
 	
     float cf = fbm(uv + cr);
 	
-    float wave = pow(g3() + 0.382 * sin(u_time + pos.x * u_complexity) / (g5 + g3() * bigZ), 3.0);
+    float wave = pow(g3() + 0.382 * sin(local_t + pos.x * u_complexity) / (g5 + g3() * bigZ), 3.0);
     wave *= u_volume_smooth;
 
-    float sym = pow(sin(u_time + pos.x * u_complexity + bigZ) / (0.382 + 0.618 * cos(pos.y * u_intensity - bigZ)), 3.0);
+    float sym = pow(sin(local_t + pos.x * u_complexity + bigZ) / (0.382 + 0.618 * cos(pos.y * u_intensity - bigZ)), 3.0);
 
-    float motion = pow(g3() + 0.382 * sin(u_time + length(pos) * u_speed), 3.0);
+    float motion = pow(g3() + 0.382 * sin(local_t + length(pos) * u_speed), 3.0);
 
     vec3 baseColor   = vec3(0.1, 0.2, 0.3);
     vec3 accentColor = vec3(g2(), g5, 0.3);
@@ -265,7 +274,7 @@ void main() {
     color = mix(color, peakColor, (g5 + u_peak));
 	
 	// regret
-	mat3 rrot = rotateY(u_orient.x + u_time * 0.618) * rotateX(u_orient.y + u_time * 0.382);
+	mat3 rrot = rotateY(u_orient.x + local_t * 0.618) * rotateX(u_orient.y + local_t * 0.382);
 	
     color *= sym * motion * pow(g3() + g2() * u_intensity, g1()) / (g5 + g2() * pattern) * stripes / (g5 + g2() * cf);
 	color *= rrot;
@@ -302,7 +311,7 @@ void main() {
         color.b += col.b * fade * g3();
 		
 		// prime
-		color += primeWave(col, color, u_time) * g3() + g3();
+		color += primeWave(col, color, local_t) * g3() + g3();
 		
 		// infinite
 		sum += iwave(col, color, stripes, pattern);
@@ -314,7 +323,7 @@ void main() {
 	finalColor /= g5 + (g2() - smoothstep(0.0, g2(), sym)) * g3();
 	
 	// water
-	float noise = sin(uv.x * g4 + u_time) * cos(uv.y * 6.856 - u_time);
+	float noise = sin(uv.x * g4 + local_t) * cos(uv.y * 6.856 - local_t);
     float turbulence = v_z * 11.09 + noise * (g3() + g2() * u_intensity);
 	
 	// torture

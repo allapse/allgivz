@@ -34,14 +34,22 @@ float g3() {
 
 void main() {
     vec2 uv = v_uv * 2.0 - 1.0;
-    float t = u_time;
+	
+	float dist = length(uv);
+	float local_t = u_time;
+	if (u_darkGlow > 0.618) {
+		local_t += g2() * dist;
+	}
+	else {
+		local_t -= g1() * dist;
+	}
 	
 	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
     float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
 
     vec2 warped = uv;
-    warped.x += (g3() + g2() * u_speed) * sin(t * 0.3 + uv.y * g4 + v_z * g2());
-    warped.y += (g2() + g3() * u_complexity) * cos(t * 0.7 + uv.x * g1() + v_z * g3());
+    warped.x += (g3() + g2() * u_speed) * sin(local_t * 0.3 + uv.y * g4 + v_z * g2());
+    warped.y += (g2() + g3() * u_complexity) * cos(local_t * 0.7 + uv.x * g1() + v_z * g3());
 
     float angle = atan(warped.y, warped.x);
     float radius = length(warped);
@@ -73,9 +81,9 @@ void main() {
     color = clamp(color, 0.0, g2());
 
     vec3 baseColor = vec3(
-        g3() + g2() * sin(angle + t),
-        g3() + g3() * cos(angle - t),
-        g2() + g3() * sin(radius * g1() - t)
+        g3() + g2() * sin(angle + local_t),
+        g3() + g3() * cos(angle - local_t),
+        g2() + g3() * sin(radius * g1() - local_t)
     );
 	
 	vec3 finalCol;

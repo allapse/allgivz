@@ -152,6 +152,15 @@ float bond(vec2 uv, vec2 a, vec2 b, float thickness)
 void main() {
     vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / u_res.y;
 	
+	float dist = length(uv);
+	float local_t = u_time;
+	if (u_darkGlow > 0.618) {
+		local_t += g2() * dist;
+	}
+	else {
+		local_t -= g1() * dist;
+	}
+	
 	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
     float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
 	
@@ -165,7 +174,7 @@ void main() {
 	vec3 colorHH = vec3(g3(), g2(), g3()) * (g3() + g2() * u_intensity);
 	
     // 碳原子在原點，整體旋轉
-    mat3 rot = rotateY(u_orient.x + u_time * g4) * rotateX(u_orient.y + u_time * g5);
+    mat3 rot = rotateY(u_orient.x + local_t * g4) * rotateX(u_orient.y + local_t * g5);
     vec3 carbon = rot * vec3(0.0);
 
     vec3 hydrogens[4];

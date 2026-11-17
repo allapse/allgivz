@@ -54,6 +54,15 @@ void main() {
 	float g4 = signPow(0.618, -3.0 - abs(v_centered_uv.x) * 0.618);
     float g5 = signPow(0.618, 3.0 + abs(v_centered_uv.y) * 0.618);
 	
+	float dist = length(v_centered_uv);
+	float local_t = u_time;
+	if (u_darkGlow > 0.618) {
+		local_t += g2() * dist;
+	}
+	else {
+		local_t -= g1() * dist;
+	}
+	
     // 讓半徑產生隨音量震動的「黑洞引力」
     r = pow(r, g3() + u_volume_smooth * g2()); 
     
@@ -63,8 +72,8 @@ void main() {
     
     // 模擬擺弄：旋轉空間（加入隨機微震動）
     float shake = u_peak * g5;
-    rd.yz *= rot(u_orient.y * g1() + u_time * 0.0557 + shake);
-    rd.xz *= rot(u_orient.x * g1() + u_time * 0.0344);
+    rd.yz *= rot(u_orient.y * g1() + local_t * 0.0557 + shake);
+    rd.xz *= rot(u_orient.x * g1() + local_t * 0.0344);
     
     vec3 finalCol = vec3(0.0);
     
@@ -75,18 +84,18 @@ void main() {
         
         // 增加不合理點 2：呼吸摺疊
         // foldSize 隨音量與時間擺動
-        float foldSize = (g3() + u_intensity * g3()) + sin(u_time * 0.618) * g5;
+        float foldSize = (g3() + u_intensity * g3()) + sin(local_t * 0.618) * g5;
         foldSize += u_volume_smooth * 0.2; 
 
         for (float j = 0.0; j < g1() + g4 * u_speed; j++) { 
             p = mix(abs(p), vec3(g2()), (g2() - sqrt(u_complexity)) * g3()) - foldSize;
             // 增加不合理點 3：非線性旋轉
             // 越深層的空間旋轉越快，產生螺旋感
-            p.xy *= rot(u_time * 0.0344 + fi * 0.005 + float(j) * 0.0344);
-            p.yz *= rot(u_time * 0.0557 + fi * 0.0031 + float(j) * 0.0557);
+            p.xy *= rot(local_t * 0.0344 + fi * 0.005 + float(j) * 0.0344);
+            p.yz *= rot(local_t * 0.0557 + fi * 0.0031 + float(j) * 0.0557);
             
             // 加入空間畸變：讓線條不是直的
-            p += sin(p.zxy * g1() + u_time) * g5;
+            p += sin(p.zxy * g1() + local_t) * g5;
         }
         
         // 線條計算
@@ -96,7 +105,7 @@ void main() {
         
         vec3 col;
 		float beam = 0.01314 / abs(p.x * p.y);
-		vec3 neon = vec3(g3(), g2(), 1.0) * (g3() + g2() * sin(u_time + float(i)));
+		vec3 neon = vec3(g3(), g2(), 1.0) * (g3() + g2() * sin(local_t + float(i)));
 		col = neon * beam * (g5 + u_volume_smooth) * g1();
 		
         if (u_useCamera > 0.618) {
@@ -113,7 +122,7 @@ void main() {
 		
 		if(u_darkGlow > 0.618){
 			float lineMatch = smoothstep(g3(), 0.0, d);
-			float colorIndex = fi * g3() + d * g1() - u_time * 0.09;
+			float colorIndex = fi * g3() + d * g1() - local_t * 0.09;
             finalCol += pow(heatmap(colorIndex) * lineMatch, vec3(g2()));
 		}
         

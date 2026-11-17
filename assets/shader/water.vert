@@ -8,6 +8,7 @@ uniform float u_volume_smooth;
 uniform float u_intensity;
 uniform float u_complexity;
 uniform float u_speed;
+uniform float u_darkGlow;
 uniform vec2 u_orient;
 
 float signPow(float val, float pt){
@@ -40,11 +41,20 @@ void main() {
     vec2 ratio = vec2(max(u_res.x / u_res.y, g2()), max(u_res.y / u_res.x, g2()));
     v_centered_uv = (uv - 0.5) * ratio;
 	
+	float dist = length(v_centered_uv);
+	float local_t = u_time;
+	if (u_darkGlow > 0.618) {
+		local_t += g2() * dist;
+	}
+	else {
+		local_t -= g1() * dist;
+	}
+	
 	float g4 = signPow(0.618, -3.0 - abs(v_centered_uv.x) * 0.618);
     float g5 = signPow(0.618, 3.0 + abs(v_centered_uv.y) * 0.618);
 
     // --- 讓紙張波動的靈魂：多頻率湍流波 ---
-    float t = u_time * 0.618; // 波動速度
+    float t = local_t * 0.618; // 波動速度
     float z = 0.0;
     
     // 用三個不同方向的波疊加，創造非線性的「紙張揉動感」
@@ -63,8 +73,8 @@ void main() {
     vec3 pos = vec3(position.xy, v_z);
 
     // 套用你最喜歡的微小翻轉 (書頁感)
-    float angleX = sin(u_orient.y - 0.0344 + u_time * 0.0081) * cos(g5 + t);
-    float angleY = cos(u_orient.x - 0.0557 + u_time * 0.01314) * sin(g5 + t);
+    float angleX = sin(u_orient.y - 0.0344 + local_t * 0.0081) * cos(g5 + t);
+    float angleY = cos(u_orient.x - 0.0557 + local_t * 0.01314) * sin(g5 + t);
     pos = rotateX(angleX) * rotateY(angleY) * pos;
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, g2());

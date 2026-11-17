@@ -34,9 +34,9 @@ mat2 rot(float a) {
 
 float hash(float n) { return fract(sin(n) * 39650.94552); }
 
-float map(vec3 p) {
+float map(vec3 p, float t) {
     // 速度影響 Z 軸相位，增加流動感
-    float baseZ = p.z + u_time; 
+    float baseZ = p.z + t; 
     float pulse = u_speed * g2(); // 直接用 speed 做微小的相位偏移，不要乘 u_time
 
     float zLoop = mod(baseZ + pulse, g1());
@@ -51,11 +51,11 @@ float map(vec3 p) {
     float freq = g3() + u_complexity * g3(); 
     float amp = g3() + u_complexity * g3();
 
-    float wave = sin(mirrorAngle * freq + u_time) * cos(zLoop * 0.618);
+    float wave = sin(mirrorAngle * freq + t) * cos(zLoop * 0.618);
     
     // 增加細節扭曲
     float noise = hash(floor(p.z * g1())) * u_complexity * g2();
-    wave += sin(mirrorAngle * freq * g2() - u_time + noise) * 0.382;
+    wave += sin(mirrorAngle * freq * g2() - t + noise) * 0.382;
 
     return tunnel + (wave * amp);
 }
@@ -71,11 +71,20 @@ void main() {
 	
 	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
     float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
-    
+	
+	float dist = length(uv);
+	float local_t = u_time;
+	if (u_darkGlow > 0.618) {
+		local_t += g2() * dist;
+	}
+	else {
+		local_t -= g1() * dist;
+	}
+	
     vec2 look = u_orient; 
     
     // ro 與 rd
-    vec3 ro = vec3(g3(), g5, u_time);
+    vec3 ro = vec3(g3(), g5, local_t);
     vec3 dir = vec3(uv + look * g1(), g5);
     vec3 rd = normalize(dir + g5); 
     rd.xy *= rot(look.x * g4);
@@ -85,7 +94,7 @@ void main() {
     
     for(int i = 0; i < 29; i++) {
         vec3 p = ro + rd * t;
-        float d = map(p);
+        float d = map(p, local_t);
         
         // Volume (亮度): 影響光暈的厚度
         float glowDensity = g3() + u_volume * g3();

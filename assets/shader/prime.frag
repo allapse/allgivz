@@ -72,13 +72,22 @@ void main() {
     vec2 uv = v_uv;
 	vec3 p = sphereCoord(uv);
 	
+	float dist = length(uv);
+	float local_t = u_time;
+	if (u_darkGlow > 0.618) {
+		local_t += g2() * dist;
+	}
+	else {
+		local_t -= g1() * dist;
+	}
+	
 	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
     float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
 	
 	// 模擬擺弄：旋轉空間（加入隨機微震動）
     float shake = u_peak * g5;
-    p.yz *= rot(u_orient.y * g2() + u_time * 0.0557 + shake);
-    p.xz *= rot(u_orient.x * g1() + u_time * 0.0344);
+    p.yz *= rot(u_orient.y * g2() + local_t * 0.0557 + shake);
+    p.xz *= rot(u_orient.x * g1() + local_t * 0.0344);
 	p.z += v_z;
 	
 	params[0] = u_volume;
@@ -94,13 +103,13 @@ void main() {
     float waveSum = 0.0;
     for (int i = 0; i < 7; i++) {
 		if (i % 2 == 0) { 
-			params[2] = sin(u_time); 
+			params[2] = sin(local_t); 
 		} else { 
-			params[2] = cos(u_time);
+			params[2] = cos(local_t);
 		}
 		float fi = g3() + sqrt(sqrt(float(i) * g3()));
 		primes[i] = vec3(g5 + pickTwoAndMultiply(i) * fi, g5 - pickTwoAndMultiply(i+1) * (fi + g5), g5 + pickTwoAndMultiply(i+2) * (fi + g5));
-        waveSum += primeWave(p, primes[i], u_time);
+        waveSum += primeWave(p, primes[i], local_t);
     }
 
     // 視覺化：亮區代表「覆蓋」，暗區代表「未覆蓋」

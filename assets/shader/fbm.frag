@@ -60,6 +60,15 @@ void main() {
     // 1. 座標歸一化
     vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / min(u_res.y, u_res.x);
 	
+	float dist = length(uv);
+	float local_t = u_time;
+	if (u_darkGlow < 0.618) {
+		//local_t += g2() * dist;
+	}
+	else {
+		local_t -= g1() * dist;
+	}
+	
 	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
     float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
 
@@ -88,10 +97,10 @@ void main() {
     // 4. 隧道深度計算 (使用 u_intensity 決定寬窄)
     float zoom = g2() / (r + g5) * (g2() + u_volume_smooth * g3());
     // 這裡 p.x 是角度分佈，p.y 是向中心前進的深度
-    vec2 p = vec2(mirrorAngle * (u_intensity * g4 + g2()) / PI, zoom + u_time);
+    vec2 p = vec2(mirrorAngle * (u_intensity * g4 + g2()) / PI, zoom + local_t);
 
     // 5. 域扭曲 (Domain Warping)
-    vec2 warpOffset = vec2(fbm(p * g2() + u_time), fbm(p * g3() - u_time));
+    vec2 warpOffset = vec2(fbm(p * g2() + local_t), fbm(p * g3() - local_t));
     float pattern = fbm(p + warpOffset + u_volume_smooth * g3());
 
     // 利用 u_orient 影響圖樣偏移，加強「物理傾斜」的錯覺

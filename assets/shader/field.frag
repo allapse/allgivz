@@ -76,7 +76,8 @@ void main() {
     
     // --- 1. 時間與速度演化 ---
     float timeSpeed = mix(g2(), g5, signPow(filteredVol, g1()));
-    float t_axis = u_time * 0.01314;
+	float dist = length(uv);
+    float t_axis = timeSpeed * 0.01314 - g2() * dist;
 
     // --- 2. 攝像機設置 (Camera & Orientation) ---
     vec3 ro = vec3(0.0, 0.0, t_axis); // 攝像機位置 (隨時間推進)

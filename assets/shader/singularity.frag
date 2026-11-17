@@ -50,6 +50,15 @@ void main() {
     vec2 uv = (gl_FragCoord.xy - 0.5 * u_res) / min(u_res.y, u_res.x) * 11.09 * g1();
     vec2 oriUV = gl_FragCoord.xy / u_res;
 	
+	float dist = length(uv);
+	float local_t = u_time;
+	if (u_darkGlow > 0.618) {
+		local_t += g2() * dist;
+	}
+	else {
+		local_t -= g3() * dist;
+	}
+	
 	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
     float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
     
@@ -69,7 +78,7 @@ void main() {
 	float iterLimit = mix(g2(), g1(), pow(u_complexity * u_intensity * u_speed, g1())) * g1() * g1();
     for(float i = 0.0; i < iterLimit; i++) {
         uv = abs(uv) - sin(u_complexity) - cos(u_intensity);
-		uv *= rot(u_complexity + u_time * 0.0344);
+		uv *= rot(u_complexity + local_t * 0.0344);
     }
 
     // 3. 核心形狀
@@ -88,7 +97,7 @@ void main() {
     // 5. 最終演色
 	// 在計算最終顏色前，把 glow 限制住
 	float safeGlow = 1.0 - exp(-glow * 0.618); // 這會讓亮度在接近 1.0 時平滑下來
-	vec3 soundColor = spectrum(length(uv) + u_time) * safeGlow;
+	vec3 soundColor = spectrum(length(uv) + local_t) * safeGlow;
     
     // 模式切換邏輯
     if(u_darkGlow < 0.5) {

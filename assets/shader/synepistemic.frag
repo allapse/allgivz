@@ -68,23 +68,32 @@ void main() {
     vec2 uv = v_uv - 0.5;
     vec2 pos = uv * 17.95;
 	
+	float dist = length(uv);
+	float local_t = u_time;
+	if (u_darkGlow > 0.618) {
+		local_t += g2() * dist;
+	}
+	else {
+		local_t -= g1() * dist;
+	}
+	
 	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
     float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
 	
 	float punch = pow(g5 + u_intensity * u_complexity * u_speed * u_peak, g1());
-	float freeze = 1.0 - (u_intensity + u_complexity + u_speed + u_peak) / g4;
+	float freeze = 1.0 - (u_intensity + u_complexity + u_speed + u_peak) / 4.237;
 	float bigZ = v_z * 77.0 * freeze;
 	
 	if(u_darkGlow > 0.618) {
 		bigZ /= (g2() + u_volume_smooth);
 	}
 
-    float wave = pow(g3() + 0.382 * sin(u_time + pos.x * u_complexity) / (g5 + g3() * bigZ), 3.0);
+    float wave = pow(g3() + 0.382 * sin(local_t + pos.x * u_complexity) / (0.382 * bigZ), 3.0);
     wave *= u_volume_smooth;
 
-    float sym = pow(sin(u_time + pos.x * u_complexity + bigZ) / (0.382 + 0.618 * cos(pos.y * u_intensity - bigZ)), 3.0);
+    float sym = pow(sin(local_t + pos.x * u_complexity + bigZ) / (0.382 + 0.618 * cos(pos.y * u_intensity - bigZ)), 3.0);
 
-    float motion = pow(g3() + 0.382 * sin(u_time + length(pos) * u_speed), 3.0);
+    float motion = pow(g3() + 0.382 * sin(local_t + length(pos) * u_speed), 3.0);
 
     vec3 baseColor   = vec3(0.1, 0.2, 0.3);
     vec3 accentColor = vec3(g2(), g3(), 0.3);
@@ -104,8 +113,8 @@ void main() {
 	vec3 past = texture2D(u_prevFrame, v_uv).rgb;
 	
 	if(u_darkGlow > 0.618) {
-		past += vec3(sin(u_intensity), cos(u_speed), sin(u_complexity));
-		color = mix(color, past, g5 + g3() * punch);
+		past += vec3(sin(u_intensity), cos(u_speed), sin(u_complexity)) * g3();
+		color = mix(past, color, g5 + g3() * punch);
 	}
     
     gl_FragColor = vec4(color, g2());

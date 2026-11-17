@@ -34,8 +34,8 @@ float g3() {
 vec2 refract_logic(vec2 uv, float t, float tension) {
     vec2 p = uv;
     for(float i = 1.0; i < g1() + 17.95 * u_complexity; i++) {
-        p.x += g3() / i * sin(i * 4.237 * p.y + t + (0.1459 + g3() * u_volume_smooth) * g3() * tension);
-        p.y += g3() / i * cos(i * 6.856 * p.x + t + (0.1459 + g3() * u_volume) * g3() * tension);
+        p.x += g3() / i * sin(i * 4.237 * p.y + t + (0.1459 + g3() * u_volume_smooth) * g2() * tension);
+        p.y += g3() / i * cos(i * 6.856 * p.x + t + (0.1459 + g3() * u_volume) * g2() * tension);
     }
     return p;
 }
@@ -44,7 +44,16 @@ void main() {
 	float g4 = signPow(0.618, -3.0 - abs(v_uv.x) * 0.618);
     float g5 = signPow(0.618, 3.0 + abs(v_uv.y) * 0.618);
 	
-    float t = u_time;
+	float dist = length(v_uv);
+	float local_t = u_time;
+	if (u_darkGlow > 0.618) {
+		local_t += g2() * dist;
+	}
+	else {
+		local_t -= g1() * dist;
+	}
+	
+    float t = local_t;
     
     // 1. 利用 Z 軸的變化率來計算「山脊線」
     // dFdx/dFdy 能抓到高度的劇烈變化，產生像毛筆刷出的「飛白」效果
@@ -78,7 +87,7 @@ void main() {
     finalColor = mix(finalColor, past, g3() + pow(u_speed, g4) * g3()); 
 	
 	// 2. 製造「湍流」擾動 (這是你的空間結構)
-    float noise = sin(v_uv.x * 11.09 + u_time) * cos(v_uv.y * 11.09 - u_time);
+    float noise = sin(v_uv.x * 11.09 + local_t) * cos(v_uv.y * 11.09 - local_t);
     float turbulence = v_z * 17.95 + noise * (g5 + g2() * u_intensity);
 
     // 3. 強化版光柵 (你的柵欄玩具，這裡用 371/373)
@@ -96,7 +105,7 @@ void main() {
     vec2 cameraUV = v_uv;
     
     // 讓相機畫面也跟隨你的 refract_logic 產生偏移
-    vec2 camDistortedUV = refract_logic(v_uv, u_time, (g5 + g2() * u_intensity));
+    vec2 camDistortedUV = refract_logic(v_uv, local_t, (g5 + g2() * u_intensity));
     vec4 camColor = texture2D(u_camera, camDistortedUV);
 
     // 2. 墨化處理：將彩色相機轉為「感性灰階」或「藍調水墨」

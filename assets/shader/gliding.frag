@@ -18,14 +18,21 @@ float signPow(float val, float pt){
 void main() {
     // 1. 座標歸一化
     vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / min(u_res.y, u_res.x);
-	float dist = length(uv);
-	float local_t = u_time - 0.618 * dist;
 	
     float g2 = signPow(0.618, 0.0 + (u_speed - 0.5) * 0.618);
 	float g1 = signPow(0.618, -2.0 - u_intensity * 0.618);
 	float g3 = signPow(0.618, 2.0 + u_complexity * 0.618);
 	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
     float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
+	
+	float dist = length(uv);
+	float local_t = u_time;
+	if (u_darkGlow < 0.618) {
+		local_t += g1 * dist;
+	}
+	else {
+		local_t -= g2 * dist;
+	}
     
     // --- 視角偏轉優化版 ---
 	vec2 look = (u_orient - g3) * g2; 

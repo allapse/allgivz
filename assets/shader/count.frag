@@ -41,6 +41,15 @@ void main() {
     // --- 1. 基礎坐標與視角控制 ---
     vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / min(u_res.y, u_res.x);
 	
+	float dist = length(uv);
+	float local_t = u_time;
+	if (u_darkGlow < 0.618) {
+		local_t += g2() * dist;
+	}
+	else {
+		local_t -= g1() * dist;
+	}
+	
 	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
     float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
     
@@ -54,7 +63,7 @@ void main() {
     
     // --- 2. 空間扭曲層 (Warping Layer) ---
     // 衝擊波現在會隨著你的視角轉動而同步位移
-    float shock = g5 + sin(distToCenter * g1() * g4 - u_time) * u_volume_smooth;
+    float shock = g5 + sin(distToCenter * g1() * g4 - local_t) * u_volume_smooth;
     uv += normalize(uv) * shock; 
     
     // --- 3. 物理場與粒子參數 ---
@@ -102,13 +111,13 @@ void main() {
     finalCol += vec3(g5, 0.0, g3()) * (g3() / (distToCenter + g2())) * u_volume_smooth;
     
     // 增加邊緣整體的質感與環境光
-    finalCol *= (g3() + g5 * sin(u_time * g2() * g4 / g5));
+    finalCol *= (g3() + g5 * sin(local_t * g2() * g4 / g5));
 	
 	if (u_darkGlow > 0.618) {
 		float luma = dot(finalCol, vec3(g2(), g3(), g5));
 		
 		// 產生隨時間移動的掃描線
-		float scanline = sin(gl_FragCoord.y * g2() + u_time * u_speed * g1() * g4) * g5;
+		float scanline = sin(gl_FragCoord.y * g2() + local_t * u_speed * g1() * g4) * g5;
 		
 		// 反轉亮度並疊加掃描線
 		float inverted = signPow(max(g5, g2() - luma), g1()) + scanline;

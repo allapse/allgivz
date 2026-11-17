@@ -51,6 +51,15 @@ void main() {
 	// 基礎座標校正
     vec2 uv = gl_FragCoord.xy / u_res.xy;
 	
+	float dist = length(uv);
+	float local_t = u_time;
+	if (u_darkGlow < 0.618) {
+		local_t += g2() * dist;
+	}
+	else {
+		local_t -= g1() * dist;
+	}
+	
 	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
     float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
 	
@@ -62,11 +71,11 @@ void main() {
     float givz = g4 - (g5 + signPow(u_complexity * g2(), g1())) * g4;
 
     // 定義兩個粒子的 3D 位置
-    vec3 pos1 = vec3(sin(u_time), cos(u_time * 0.382), sin(u_time * 0.618));
-    vec3 pos2 = vec3(cos(u_time * 0.618), sin(u_time * 0.382), cos(u_time));
+    vec3 pos1 = vec3(sin(local_t), cos(local_t * 0.382), sin(local_t * 0.618));
+    vec3 pos2 = vec3(cos(local_t * 0.618), sin(local_t * 0.382), cos(local_t));
 
     // 進行 3D 旋轉 (繞 Y 軸和 X 軸)
-    mat3 rot = rotateY(u_orient.x + u_time * 0.09) * rotateX(u_orient.y + u_time * 0.236);
+    mat3 rot = rotateY(u_orient.x + local_t * 0.09) * rotateX(u_orient.y + local_t * 0.236);
     pos1 *= rot;
     pos2 *= -rot;
 
@@ -88,7 +97,7 @@ void main() {
     float resonance = sin(dist1 * g4 * g4) * sin(dist2 * g4 * g4) * (g5 + g2() * u_intensity);
 
     // 3. 脆弱效果（閃爍/裂紋）
-    float fragility = step(u_peak, random(uv + u_time)) * (g5 + u_volume);
+    float fragility = step(u_peak, random(uv + local_t)) * (g5 + u_volume);
     resonance *= g2() - fragility * g3();
 
     // 4. 融合顏色（u_darkGlow 控制模式）

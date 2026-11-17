@@ -66,6 +66,15 @@ void main() {
     vec2 uv = gl_FragCoord.xy / u_res / 3.0;
     uv.x *= u_res.x / u_res.y;
 	
+	float dist = length(uv);
+	float local_t = u_time;
+	if (u_darkGlow < 0.618) {
+		local_t += g2() * dist;
+	}
+	else {
+		local_t -= g1() * dist;
+	}
+	
 	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
     float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
 
@@ -74,13 +83,13 @@ void main() {
 
     // 領域扭曲邏輯：讓空間自己扭動
     vec2 q = vec2(0.0);
-    q.x = fbm(uv + 0.382 * u_time);
+    q.x = fbm(uv + 0.382 * local_t);
     q.y = fbm(uv + vec2(g2()));
 
     vec2 r = vec2(0.0);
     // u_volume 影響扭曲的深度
-    r.x = fbm(uv + 0.382 * q + vec2(g2(), g4) + 0.382 * u_time);
-    r.y = fbm(uv + 0.618 * q + vec2(g4, g1()) + 0.382 * u_time);
+    r.x = fbm(uv + 0.382 * q + vec2(g2(), g4) + 0.382 * local_t);
+    r.y = fbm(uv + 0.618 * q + vec2(g4, g1()) + 0.382 * local_t);
 
     float f = fbm(uv + r);
 

@@ -9,6 +9,7 @@ uniform vec2 u_orient;
 uniform float u_speed;
 uniform float u_intensity;
 uniform float u_complexity;
+uniform float u_darkGlow;
 
 float signPow(float val, float pt){
 	return sign(val) * pow(abs(val), pt);
@@ -42,15 +43,24 @@ void main() {
 	
 	float g4 = signPow(0.618, -3.0 - abs(v_centered_uv.x) * 0.618);
     float g5 = signPow(0.618, 3.0 + abs(v_centered_uv.y) * 0.618);
+	
+	float dist = length(uv);
+	float local_t = u_time;
+	if (u_darkGlow > 0.618) {
+		local_t += g2() * dist;
+	}
+	else {
+		local_t -= g1() * dist;
+	}
 
     // --- 讓紙張波動的靈魂：多頻率湍流波 ---
-    float t = u_time * 0.382; // 波動速度
+    float t = local_t * 0.382; // 波動速度
     float z = 0.0;
     
     // 用三個不同方向的波疊加，創造非線性的「紙張揉動感」
     vec2 p = uv * g4; 
     z += sin(p.x + t) * g5;
-    z += cos(p.y + t * g2()) * g5;
+    z += cos(p.y + t * 0.618) * g5;
     z += sin((p.x + p.y) * g3() + t * 1.618) * g5;
     
     // 加上音量的張力：音量大時，紙張抖動劇烈

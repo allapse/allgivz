@@ -55,16 +55,25 @@ void main() {
 	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
     float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
 	
+	float dist = length(uv);
+	float local_t = u_time;
+	if (u_darkGlow > 0.618) {
+		local_t += g2() * dist;
+	}
+	else {
+		local_t -= g1() * dist;
+	}
+	
     vec3 p = vec3(uv - g3(), g3());
     p.x *= u_res.x / u_res.y; // 修正比例
-	mat3 rot = rotateY(u_orient.x + u_time * 0.09) * rotateX(u_orient.y + u_time * 0.236);
+	mat3 rot = rotateY(u_orient.x + local_t * 0.09) * rotateX(u_orient.y + local_t * 0.236);
 	p *= rot;
 	
     // 設定模擬的 Z 軸深度 (givz)
     // 這裡我們把 givz 當作一個動態的深度基礎
     float givz = g4 - (g5 + signPow(u_complexity * g2(), g1())) * g4;
     
-    float t = u_time * 0.236;
+    float t = local_t * 0.236;
     float vol = u_volume;
     float peak = u_peak;
     float intensity = u_intensity * (g3() + vol * g2() + peak * g2());
@@ -94,15 +103,15 @@ void main() {
     
     // ─── 扭曲底層座標 ────────────────────────────────────────
     float angle = atan(p.x/givz, p.y/givz);
-    float dist = length(p)/givz;
+    float dist2 = length(p)/givz;
     
     // 低頻驅動的放射狀波紋 + 旋轉
-    float wave = sin(dist * g4 - t * g5 + vol * g1()) * g2() + g3();
+    float wave = sin(dist2 * g4 - t * g5 + vol * g1()) * g2() + g3();
     float swirl = sin(angle * g4 + t + vol * g1()) * g5 * u_complexity;
     
-    p += vec3(cos(angle + t * 0.382), sin(angle - t * 0.618), cos(angle + t * 0.382)) * dist * 0.09 * vol;
+    p += vec3(cos(angle + t * 0.382), sin(angle - t * 0.618), cos(angle + t * 0.382)) * dist2 * 0.09 * vol;
     p *= g2() + vol * g5 + peak * g3();
-    p *= vec3(cos(swirl), sin(swirl), sin(wave)) * dist + p * (g2() + peak * g5);
+    p *= vec3(cos(swirl), sin(swirl), sin(wave)) * dist2 + p * (g2() + peak * g5);
     
     // ─── 多層圓形/環狀結構 ───────────────────────────────────
     vec3 col = vec3(0.0);

@@ -38,6 +38,15 @@ void main() {
     vec2 uv = (gl_FragCoord.xy - 0.5 * u_res) / min(u_res.y, u_res.x) * 6.856;
     vec2 oriUV = gl_FragCoord.xy / u_res;
 	
+	float dist = length(uv);
+	float local_t = u_time;
+	if (u_darkGlow < 0.618) {
+		local_t += g2() * dist;
+	}
+	else {
+		local_t -= g1() * dist;
+	}
+	
 	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
     float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
 
@@ -59,7 +68,7 @@ void main() {
         // 每一層的波長由 u_intensity 決定，擾動由 u_complexity 決定
         float freq = i * (u_intensity * g2() + g5) * g1();
 		vec2 p = uv * rot(u_orient.y + i * g3());
-        float wave = sin(dot(p, dir) * freq + u_time);
+        float wave = sin(dot(p, dir) * freq + local_t);
         
         // 讓波隨複雜度產生「相位破碎」
         wave += sin(uv.x * g4 * u_complexity) * u_complexity;

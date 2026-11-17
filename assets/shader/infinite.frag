@@ -45,6 +45,8 @@ void main() {
 	float g4 = signPow(0.618, -3.0 - abs(v_uv.x) * 0.618);
     float g5 = signPow(0.618, 3.0 + abs(v_uv.y) * 0.618);
 	
+	float dist = length(v_uv);
+	
     float sum = 0.0;
 
     int sources = int(g1() + u_complexity * g4);

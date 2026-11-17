@@ -35,11 +35,20 @@ float hash(vec2 p) {
 void main() {
     // 1. 座標基礎設定
     vec2 uv = (gl_FragCoord.xy * 2.0 - u_res) / min(u_res.x, u_res.y) * 3.0;
+	
+	float dist = length(uv);
+	float local_t = u_time;
+	if (u_darkGlow < 0.618) {
+		local_t += g2() * dist;
+	}
+	else {
+		local_t -= g1() * dist;
+	}
     
     // --- PEAK 控制震動 ---
     // 利用 peak 產生瞬間的縮放與位移感
     float vibration = u_peak * g2(); 
-    uv += (hash(uv + u_time) - g3()) * vibration; // 隨機震盪
+    uv += (hash(uv + local_t) - g3()) * vibration; // 隨機震盪
     uv *= 1.0 - vibration; // 瞬間縮放
 	
 	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
@@ -51,7 +60,7 @@ void main() {
     float d = length(p);
 
     // --- SPEED 控制時間 ---
-    float time = u_time * g5;
+    float time = local_t * g5;
 
     // --- COMPLEXITY 控制形狀 ---
     // 網格密度隨 complexity 變化，並產生扭曲
@@ -67,12 +76,12 @@ void main() {
 
     // 在 p *= m; 旋轉之後，計算網格 id 之前加入：
 	// 這會打破完美的同心圓，讓它變成「螺旋狀的數位廢墟」
-	float spiral = sin(d * g4 - u_time * g1()) * u_complexity;
+	float spiral = sin(d * g4 - local_t * g1()) * u_complexity;
 	p += (p / d) * spiral * g3(); 
 
 	vec2 g_id = floor(p * gridFactor);
     vec2 g_uv = fract(p * gridFactor) - g3();
-	float distortion = sin(u_time * u_speed + d * g4) * u_peak;
+	float distortion = sin(local_t * u_speed + d * g4) * u_peak;
 	p += (g_uv * distortion * u_intensity);
 	
 

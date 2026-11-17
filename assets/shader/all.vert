@@ -11,6 +11,7 @@ uniform vec2 u_orient;
 uniform float u_speed;
 uniform float u_intensity;
 uniform float u_complexity;
+uniform float u_darkGlow;
 
 float signPow(float val, float pt){
 	return sign(val) * pow(abs(val), pt);
@@ -38,7 +39,16 @@ mat3 rotateY(float a) {
 }
 
 void main() {
-    v_uv = (uv - 0.5) * g2();
+    v_uv = (uv - 0.5) * (g2() + g3());
+	
+	float dist = length(uv);
+	float local_t = u_time;
+	if (u_darkGlow > 0.618) {
+		local_t += g2() * dist;
+	}
+	else {
+		local_t -= g1() * dist;
+	}
 	
 	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
     float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
@@ -47,7 +57,7 @@ void main() {
     v_centered_uv = (uv - 0.5) * ratio;
 
     // --- 讓紙張波動的靈魂：多頻率湍流波 ---
-    float t = u_time * 0.5; // 波動速度
+    float t = local_t * 0.618; // 波動速度
     float z = 0.0;
     
     // 用三個不同方向的波疊加，創造非線性的「紙張揉動感」
