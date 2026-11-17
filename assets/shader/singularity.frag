@@ -73,7 +73,7 @@ void main() {
     }
 
     // 3. 核心形狀
-    float ring = abs(length(uv) * pow(u_intensity, g1()));
+    float ring = abs(length(uv) * pow(u_intensity, 1.618));
     float glow = g3() + (u_volume_smooth) / (ring + g5);
     
     // 4. 混合相機
@@ -92,7 +92,7 @@ void main() {
     
     // 模式切換邏輯
     if(u_darkGlow < 0.5) {
-        soundColor = g2() - exp(-soundColor * 1.618);
+        soundColor = g2() - exp(-soundColor * 0.618);
         soundColor *= vec3(u_intensity, 0.382, 0.618 - u_intensity);
     }
 

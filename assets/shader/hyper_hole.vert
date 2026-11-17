@@ -99,7 +99,7 @@ void main() {
     
     // 6. 顏色模式切換 (u_darkGlow)
     // 模式 0: 冷色調藍色 | 模式 1: 熾熱橙紅色
-    vec3 color0 = mix(vec3(0.0, g5 * s1, g3() * s2), vec3(g5, g3(), g2() * s3), u_speed * g2());
+    vec3 color0 = mix(vec3(0.0, g3() * s1, g2() * s2), vec3(g5, g3(), g2() * s3), u_speed * g2());
     vec3 color1 = mix(vec3(g3() * s3, g5 * s1, 0.0), vec3(g2() * s2, g3(), g5), u_speed);
 	
     vColor = mix(color0, color1, u_darkGlow);

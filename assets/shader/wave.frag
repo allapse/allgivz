@@ -51,7 +51,7 @@ float map(vec3 p) {
     float freq = g3() + u_complexity * g3(); 
     float amp = g3() + u_complexity * g3();
 
-    float wave = sin(mirrorAngle * freq + u_time) * cos(zLoop * g2());
+    float wave = sin(mirrorAngle * freq + u_time) * cos(zLoop * 0.618);
     
     // 增加細節扭曲
     float noise = hash(floor(p.z * g1())) * u_complexity * g2();

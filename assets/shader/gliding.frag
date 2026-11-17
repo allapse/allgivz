@@ -18,6 +18,8 @@ float signPow(float val, float pt){
 void main() {
     // 1. 座標歸一化
     vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / min(u_res.y, u_res.x);
+	float dist = length(uv);
+	float local_t = u_time - 0.618 * dist;
 	
     float g2 = signPow(0.618, 0.0 + (u_speed - 0.5) * 0.618);
 	float g1 = signPow(0.618, -2.0 - u_intensity * 0.618);
@@ -45,7 +47,7 @@ void main() {
 	p += look * (depth * g2); 
     
     // 4. 建立紋理與控制參數
-    float forward = depth + u_time * 2.618;
+    float forward = depth + local_t * 2.618;
     
     // 使用 u_complexity 控制隧道壁的瓣數
     float sides = floor(g4 + pow(g2, g1) * g4);
@@ -62,7 +64,7 @@ void main() {
     float pattern = smoothstep(spread, spread + g5, stripes + stripes2);
     
     // 5. 色彩計算 (原本的 col)
-    vec3 baseCol = mix(vec3(g5, g3, g2), vec3(g2, g5, g3), sin(depth * g3 + u_time) * g2 + g3);
+    vec3 baseCol = mix(vec3(g5, g3, g2), vec3(g2, g5, g3), sin(depth * g3 + local_t) * g2 + g3);
     
     // 結合音量與圖案
     float pulse = g2 + u_volume_smooth * g2;

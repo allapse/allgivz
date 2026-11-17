@@ -99,10 +99,10 @@ void main() {
 
     // --- 5. 最終光效 ---
     // 能量中心會隨著 uv 中心移動
-    finalCol += vec3(g5, 0.0, g3()) * (g2() / (distToCenter + g3())) * u_volume_smooth;
+    finalCol += vec3(g5, 0.0, g3()) * (g3() / (distToCenter + g2())) * u_volume_smooth;
     
     // 增加邊緣整體的質感與環境光
-    finalCol *= (g2() + g5 * sin(u_time * g1() * g4 / g5));
+    finalCol *= (g3() + g5 * sin(u_time * g2() * g4 / g5));
 	
 	if (u_darkGlow > 0.618) {
 		float luma = dot(finalCol, vec3(g2(), g3(), g5));

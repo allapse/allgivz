@@ -86,11 +86,11 @@ void main() {
 	if(u_darkGlow > 0.618) {
 		vec3 depthColor = mix(vec3(g5,g3(),g2()), vec3(g2(),g3(),g5), radius);
 		finalCol = vec3(baseColor * depthColor / (color + g5));
-		finalCol = mix(finalCol, past, g3() + g3() * u_speed);
+		finalCol = mix(finalCol, past, g2() * u_speed);
 		bright = g2();
 	}
 	else {
-		vec3 nebulaColor = mix(vec3(g3(),0.1,g2()), vec3(g3(),g5,g2()), fractal);
+		vec3 nebulaColor = mix(vec3(g3(),g5,g2()), vec3(g3(),g5,g2()), fractal);
 		finalCol = vec3(baseColor * nebulaColor / (color + 0.1));
 		finalCol = mix(finalCol, past, g3() * u_speed);
 	}

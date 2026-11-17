@@ -61,5 +61,5 @@ void main() {
     vec3 past = texture2D(u_prevFrame, vUv).rgb;
     finalColor = mix(finalColor * glow, past, vAlpha - vDist);
 
-    gl_FragColor = vec4(finalColor, vAlpha * glow * hole);
+    gl_FragColor = vec4(finalColor, vAlpha * glow * hole + g3());
 }

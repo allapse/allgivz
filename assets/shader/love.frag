@@ -92,8 +92,8 @@ void main() {
     resonance *= g2() - fragility * g3();
 
     // 4. 融合顏色（u_darkGlow 控制模式）
-    vec3 color1 = vec3(g2(), g3(), g3()); // 溫暖（愛）
-    vec3 color2 = vec3(g3(), g3(), g2()); // 冷靜（距離）
+    vec3 color1 = vec3(g2(), g3(), g5); // 溫暖（愛）
+    vec3 color2 = vec3(g5, g3(), g2()); // 冷靜（距離）
     vec3 mixedColor = mix(color1, color2, resonance * g3() + g3());
     if (u_darkGlow > 0.618) {
 		mixedColor = mix(color1, color2, resonance);
@@ -105,6 +105,6 @@ void main() {
     mixedColor = mix(mixedColor, camColor, u_useCamera * u_volume_smooth);
 
     // 6. 最終輸出（加入 u_volume 影響亮度）
-    float brightness = g3() + u_volume * g2();
+    float brightness = g2() + u_volume * g2();
     gl_FragColor = vec4(mixedColor * brightness, g2());
 }

@@ -107,13 +107,13 @@ void main() {
         float fade = pow(g2(), fi);
         
         // 色散模擬：對 RGB 進行微小的位置偏移
-        finalCol.r += col.r * fade * g2();
+        finalCol.r += col.r * fade * g3();
         finalCol.g += col.g * fade;
         finalCol.b += col.b * fade * g2();
 		
 		if(u_darkGlow > 0.618){
 			float lineMatch = smoothstep(g3(), 0.0, d);
-			float colorIndex = fi * g3() + d * g1() - u_time * g5;
+			float colorIndex = fi * g3() + d * g1() - u_time * 0.09;
             finalCol += pow(heatmap(colorIndex) * lineMatch, vec3(g2()));
 		}
         

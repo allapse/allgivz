@@ -100,7 +100,7 @@ void main() {
     float wave = sin(dist * g4 - t * g5 + vol * g1()) * g2() + g3();
     float swirl = sin(angle * g4 + t + vol * g1()) * g5 * u_complexity;
     
-    p += vec3(cos(angle + t * g3()), sin(angle - t * g2()), cos(angle + t * g3())) * dist * g5 * vol;
+    p += vec3(cos(angle + t * 0.382), sin(angle - t * 0.618), cos(angle + t * 0.382)) * dist * 0.09 * vol;
     p *= g2() + vol * g5 + peak * g3();
     p *= vec3(cos(swirl), sin(swirl), sin(wave)) * dist + p * (g2() + peak * g5);
     
@@ -115,13 +115,13 @@ void main() {
         float d = length(p * (g2() + fi * g3() * u_complexity));
         float ring = smoothstep(g5 * g5 * g5, 0.0, abs(d - radius));
         
-        float pulse = sin(t * (g2() + fi * 1.618) + fi * TAU * 0.618) * 0.618 + 0.382;
+        float pulse = sin(t * (0.618 + fi * 1.618) + fi * TAU * 0.618) * 0.618 + 0.382;
         pulse = mix(pulse, 1.0, peak * 0.618);
         
         vec3 hue = g2() + g3() * cos(TAU * vec3(0.0, g3(), g1()) + fi * g4 + t * 0.382);
         hue *= (g3() + vol * 1.2);
         
-        float glow = ring * (g3() + pulse * g2()) * (g1() - fi * g5);
+        float glow = ring * (g3() + pulse * 0.618) * (g1() - fi * g5);
         glow *= (1.0 + peak * g1() * (1.0 - fi));
         
         col += hue * glow * intensity * (g3() + vol * g2());

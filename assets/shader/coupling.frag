@@ -79,8 +79,8 @@ void main() {
 
     vec2 r = vec2(0.0);
     // u_volume 影響扭曲的深度
-    r.x = fbm(uv + g2() * q + vec2(g2(), g4) + 0.382 * u_time);
-    r.y = fbm(uv + g2() * q + vec2(g4, g1()) + 0.382 * u_time);
+    r.x = fbm(uv + 0.382 * q + vec2(g2(), g4) + 0.382 * u_time);
+    r.y = fbm(uv + 0.618 * q + vec2(g4, g1()) + 0.382 * u_time);
 
     float f = fbm(uv + r);
 
