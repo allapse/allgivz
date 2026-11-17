@@ -56,7 +56,7 @@ float fbm(vec2 p) {
     for (int i = 0; i < 7; i++) {
         if (i >= octaves) break;
         v += a * noise(p);
-        p *= g1();
+        p *= 2.618;
         a *= g3();
     }
     return v;
@@ -74,13 +74,13 @@ void main() {
 
     // 領域扭曲邏輯：讓空間自己扭動
     vec2 q = vec2(0.0);
-    q.x = fbm(uv + g3() * u_time);
+    q.x = fbm(uv + 0.382 * u_time);
     q.y = fbm(uv + vec2(g2()));
 
     vec2 r = vec2(0.0);
     // u_volume 影響扭曲的深度
-    r.x = fbm(uv + g2() * q + vec2(g2(), g4) + g3() * u_time);
-    r.y = fbm(uv + g2() * q + vec2(g4, g1()) + g3() * u_time);
+    r.x = fbm(uv + g2() * q + vec2(g2(), g4) + 0.382 * u_time);
+    r.y = fbm(uv + g2() * q + vec2(g4, g1()) + 0.382 * u_time);
 
     float f = fbm(uv + r);
 

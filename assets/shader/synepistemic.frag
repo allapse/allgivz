@@ -79,33 +79,33 @@ void main() {
 		bigZ /= (g2() + u_volume_smooth);
 	}
 
-    float wave = pow(g3() + g2() * sin(u_time + pos.x * u_complexity) / (g3() + g2() * bigZ), g1());
+    float wave = pow(g3() + 0.382 * sin(u_time + pos.x * u_complexity) / (g5 + g3() * bigZ), 3.0);
     wave *= u_volume_smooth;
 
-    float sym = pow(sin(u_time + pos.x * u_complexity + bigZ) / (g5 + g2() * cos(pos.y * u_intensity - bigZ)), 3.0);
+    float sym = pow(sin(u_time + pos.x * u_complexity + bigZ) / (0.382 + 0.618 * cos(pos.y * u_intensity - bigZ)), 3.0);
 
-    float motion = pow(g3() + g2() * sin(u_time + length(pos) * u_speed), 3.0);
+    float motion = pow(g3() + 0.382 * sin(u_time + length(pos) * u_speed), 3.0);
 
     vec3 baseColor   = vec3(0.1, 0.2, 0.3);
     vec3 accentColor = vec3(g2(), g3(), 0.3);
-    vec3 peakColor   = vec3(g5, g3(), g2());
+    vec3 peakColor   = vec3(0.2, g2(), g3());
 
     vec3 color = mix(baseColor, accentColor, wave);
     color = mix(color, peakColor, u_peak);
 	
-    color *= sym * motion * pow(g3() + g2() * u_intensity, g1());
+    color *= sym * motion * pow(g5 + g3() * u_intensity, g1());
 	
 	float r = g5;
     for(int i=0; i<7; i++){
-        vec2 base = vec2(-g1() + float(i) * g2() + sin(freeze), g5);
-        color += vec3(drawBraille(pos, base, r, brailleCodes[i])) * pow(g2() + g3() * u_volume_smooth / (g5 + punch), g1());
+        vec2 base = vec2(-g1() + float(i) * g2() + sin(freeze), 0.0);
+        color += vec3(drawBraille(pos, base, r, brailleCodes[i])) * pow(g5 + g3() * u_volume_smooth / (g5 + punch), g1());
     }
 	
 	vec3 past = texture2D(u_prevFrame, v_uv).rgb;
 	
 	if(u_darkGlow > 0.618) {
 		past += vec3(sin(u_intensity), cos(u_speed), sin(u_complexity));
-		color = mix(color, past, g3() + g2() * punch);
+		color = mix(color, past, g5 + g3() * punch);
 	}
     
     gl_FragColor = vec4(color, g2());

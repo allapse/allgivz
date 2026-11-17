@@ -75,7 +75,7 @@ void main() {
         
         // 增加不合理點 2：呼吸摺疊
         // foldSize 隨音量與時間擺動
-        float foldSize = (g3() + u_intensity * g3()) + sin(u_time * g2()) * g5;
+        float foldSize = (g3() + u_intensity * g3()) + sin(u_time * 0.618) * g5;
         foldSize += u_volume_smooth * 0.2; 
 
         for (float j = 0.0; j < g1() + g4 * u_speed; j++) { 

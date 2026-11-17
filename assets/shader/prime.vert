@@ -48,10 +48,10 @@ void main() {
     float z = 0.0;
     
     // 用三個不同方向的波疊加，創造非線性的「紙張揉動感」
-    vec2 p = uv * g4; 
-    z += sin(p.x + t) * g3();
-    z += cos(p.y + t * g2()) * g3();
-    z += sin((p.x + p.y) * g3() + t * 0.618) * g3();
+    vec2 p = uv * 4.237; 
+    z += sin(p.x + t) * 0.382;
+    z += cos(p.y + t * 0.618) * 0.382;
+    z += sin((p.x + p.y) * g3() + t * 0.618) * 0.382;
     
     // 加上音量的張力：音量大時，紙張抖動劇烈
     z *= (g2() + u_volume_smooth * g4);

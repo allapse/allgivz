@@ -65,7 +65,7 @@ void main() {
 			uv = abs(uv) / (dot(uv, uv)) - (p1.xy / p2.xy);
 		}
 		
-		uv *= rot(u_time * g3() + i * g1() + u_orient.x);
+		uv *= rot(u_time * 0.382 + i * g1() + u_orient.x);
 		
 		// 軌跡捕捉也乘上權重
 		orbit += log(length(uv) + g2()) * weight;
@@ -73,7 +73,7 @@ void main() {
 
     // 3. 現實映射：讓聲音的「厚度」決定相機畫面的「折射深度」
     // 使用 fract(orbit) 創造出類似等高線的視覺效果，這能反映質數分布的細節
-    float shade = fract(orbit * g3() + u_time * g3());
+    float shade = fract(orbit * g3() + u_time * 0.382);
     
     // 4. 顏色：不再用預設顏色，讓質數向量 p1, p2 決定色彩通道
     vec3 color = sin(p1 * orbit * g3() + u_intensity * g4) * g3() + g3();

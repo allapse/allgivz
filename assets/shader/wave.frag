@@ -45,7 +45,7 @@ float map(vec3 p) {
     float mirrorAngle = abs(abs(angle) - PI * g3());
 
     // 基礎隧道半徑
-    float tunnel = -(length(p.xy + g3()) - g2());
+    float tunnel = -(length(p.xy + g3()) - g1());
 
     // Complexity (形狀): 影響波形的複雜度與振幅
     float freq = g3() + u_complexity * g3(); 
@@ -55,7 +55,7 @@ float map(vec3 p) {
     
     // 增加細節扭曲
     float noise = hash(floor(p.z * g1())) * u_complexity * g2();
-    wave += sin(mirrorAngle * freq * g2() - u_time + noise) * g3();
+    wave += sin(mirrorAngle * freq * g2() - u_time + noise) * 0.382;
 
     return tunnel + (wave * amp);
 }
@@ -65,9 +65,9 @@ void main() {
     // Peak (震動): 在 UV 層級加入基於峰值的隨機抖動
 	float shake = 0.0;
 	if(u_peak == 1.0){
-		shake = (hash(u_time) * g3()) * u_peak;
+		shake = (hash(u_time) * 0.09) * u_peak;
 	}
-    vec2 uv = ((gl_FragCoord.xy - 1.0 * res) / min(res.y, res.x) + shake);
+    vec2 uv = ((gl_FragCoord.xy - 0.618 * res) / min(res.y, res.x) + shake) * g1();
 	
 	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
     float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);

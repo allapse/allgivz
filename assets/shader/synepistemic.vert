@@ -51,7 +51,7 @@ void main() {
     vec2 p = uv * g4; 
     z += sin(p.x + t) * g5;
     z += cos(p.y + t * g2()) * g5;
-    z += sin((p.x + p.y) * g3() + t * g1()) * g5;
+    z += sin((p.x + p.y) * g3() + t * 1.618) * g5;
     
     // 加上音量的張力：音量大時，紙張抖動劇烈
     z *= (g2() - u_volume_smooth * g4);

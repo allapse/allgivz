@@ -42,12 +42,12 @@ mat2 rot(float a) {
 vec3 sphereCoord(vec2 uv) { 
 	float theta = uv.x * 3.14159; // 0 ~ π 
 	float phi = uv.y * 3.14159; // 0 ~ π 
-	return vec3( sin(phi) * cos(theta), sin(phi) * sin(theta), cos(phi) ); 
+	return vec3( sin(phi) * cos(theta), sin(phi) * sin(theta), cos(phi)); 
 }
 
 // 簡單的「質數波動」函數：用 mesh 節點模擬質數位置
 float primeWave(vec3 p, vec3 center, float time) {
-    float dist = sin(length(p - center)) / (g3() + g2() * cos(dot(p, center)));
+    float dist = sin(length(p - center)) / (g3() + g3() * cos(dot(p, center)));
     // 波動：cosine + 衰減
     return cos(dist * 20.0 - time);
 }
@@ -99,14 +99,14 @@ void main() {
 			params[2] = cos(u_time);
 		}
 		float fi = g3() + sqrt(sqrt(float(i) * g3()));
-		primes[i] = vec3(g5 + pickTwoAndMultiply(i) * fi, g5 - pickTwoAndMultiply(i+1) * (fi + g5), g5 + pickTwoAndMultiply(i+2) * (fi + g3()));
+		primes[i] = vec3(g5 + pickTwoAndMultiply(i) * fi, g5 - pickTwoAndMultiply(i+1) * (fi + g5), g5 + pickTwoAndMultiply(i+2) * (fi + g5));
         waveSum += primeWave(p, primes[i], u_time);
     }
 
     // 視覺化：亮區代表「覆蓋」，暗區代表「未覆蓋」
-    vec3 color = vec3(g3() + g2() * sin(waveSum), g3() + g2() * cos(waveSum), g3() + g2() * sin(waveSum * g3()));
+    vec3 color = vec3(g5 + g3() * sin(waveSum), g5 + g3() * cos(waveSum), g5 + g3() * sin(waveSum * g3()));
     if (u_darkGlow > 0.618) {
-        color = vec3(waveSum * g2(), waveSum * g3(), waveSum);
+        color = vec3(waveSum * (g3() + g5), waveSum * g3(), waveSum);
     } else {
         color = vec3(abs(waveSum));
     }
