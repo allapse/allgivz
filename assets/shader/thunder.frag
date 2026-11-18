@@ -78,7 +78,7 @@ void main() {
     vec3 finalCol = vec3(0.0);
     
     // 2. 無限反射迭代
-    for (float i = 0.0; i < g4 + 17.95 * u_speed; i++) {
+    for (float i = 0.0; i < g4 + 11.09 * u_speed; i++) {
         float fi = float(i);
         vec3 p = ro + rd * (fi * g5);
         

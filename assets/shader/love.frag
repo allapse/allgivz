@@ -53,7 +53,7 @@ void main() {
 	
 	float dist = length(uv);
 	float local_t = u_time;
-	if (u_darkGlow < 0.618) {
+	if (u_darkGlow > 0.618) {
 		local_t += g2() * dist;
 	}
 	else {

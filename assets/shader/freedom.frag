@@ -61,7 +61,7 @@ void main() {
     float targetIter = g1() + u_complexity * g4;
     
     float orbit = 0.0;
-    for(float i = 0.0; i < 15.0; i++) {
+    for(float i = 0.0; i < 17.95; i++) {
 		// 計算每一層的貢獻權重，讓第 N+1 層慢慢浮現
 		float weight = clamp(targetIter - i, 0.0, g2());
 		if(weight <= 0.0) break; 

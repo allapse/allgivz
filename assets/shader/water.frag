@@ -71,7 +71,7 @@ void main() {
     // 4. 計算水墨鈍痛感（加入 Z 軸高度的加成）
     float tension = length(distortedUV - v_uv) * (g5 + g2() * u_intensity);
     // 山頂（v_z 高的地方）顏色更淡、更透；山谷更濃、更沉
-    vec3 waterColor = vec3(g5, g3(), g2()) * (g2() - tension * g3() + v_z * g3());
+    vec3 waterColor = vec3(g5, g3(), g2()) * (g2() - tension * g2() + v_z * g3());
     
     // 5. 混合邊界
     float boundary = smoothstep(g3(), g3() + g5, length(v_centered_uv / distortedUV) - v_z * g3());

@@ -99,18 +99,18 @@ void main() {
     if (u_darkGlow < 0.5) {
         // 模式 1：深淵黑金 (Dark Mode)
         colorA = vec3(g3(), g3(), g5);
-        colorB = vec4(vec3(g2(), g3(), g5) * u_intensity, g2()).rgb; // 金色受重心影響
+        colorB = vec4(vec3(g2(), g3(), g5) * u_intensity, g3()).rgb; // 金色受重心影響
     } else {
         // 模式 2：大理石白 (Light Mode)
-        colorA = vec3(0.95, 0.95, 1.0);
-        colorB = vec3(0.4, 0.5, 0.6) * (1.0 - u_intensity); // 翡翠色
+        colorA = vec3(g2(), g2(), g2());
+        colorB = vec3(g5, g3(), g2()) * (g2() - u_intensity); // 翡翠色
     }
 
     // 最終混合
-    vec3 col = mix(colorA, colorB, clamp((f * f) * g1(), 0.0, g2()));
+    vec3 col = mix(colorA, colorB, clamp((f * f) * g1(), 0.0, g3()));
 
     // 加入 Peak 閃光：當重音來時，裂紋發光
-    col += (f * f * f * g2()) * u_peak * vec3(1.0, g2(), g3());
+    col += (f * f * f * g3()) * u_peak * vec3(1.0, g2(), g3());
 
     // 邊緣壓暗 (Vignette) 受 volume 影響
     float vgn = smoothstep(g2(), g3() - u_volume * g5, length(uv));
@@ -159,7 +159,7 @@ void main() {
         // 5. 加上 HUD 效果：在 Peak 時讓現實世界產生色偏或強光
         finalCol += sceneColor * u_peak * g3();
     } else {
-        finalCol = col;
+        finalCol = col * 0.618;
     }
 
     gl_FragColor = vec4(finalCol, g2());
