@@ -339,9 +339,9 @@ void main() {
 	vec3 past = texture2D(u_prevFrame, uv).rgb;
 	// choice
 	past += vec3(sin(u_intensity), cos(u_speed), sin(u_complexity));
-	vec3 emission = color * abs(sym) * (u_volume_smooth * 0.5 + 0.5) * 5.0;
-	vec3 currentFrame = mix(emission, past, 0.5); 
-	finalColor = mix(currentFrame, past, 0.95 + 0.05 * freeze);
+	vec3 emission = color * abs(sym) * (u_volume_smooth * g3() + g3()) * g4;
+	vec3 currentFrame = mix(emission, past, g3()); 
+	finalColor = mix(currentFrame, past, g2() + g5 * freeze);
 	finalColor *= finalColor; 
 	
 	if(u_darkGlow > 0.618) {

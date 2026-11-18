@@ -14,51 +14,79 @@ uniform float u_speed;
 uniform float u_left;
 uniform float u_right;
 uniform vec2 u_orient;
+uniform float u_darkGlow;
+
+float signPow(float val, float pt){
+	return sign(val) * pow(abs(val), pt);
+}
+
+float g2() {
+	return signPow(0.618, 0.0 + (u_speed - 0.5) * 0.618);
+}
+
+float g1() {
+	return signPow(0.618, -2.0 - u_intensity * 0.618);
+}
+
+float g3() {
+	return signPow(0.618, 2.0 + u_complexity * 0.618);
+}
 
 void main() {
 	vec2 ratio = vec2(max(u_res.x / u_res.y, 1.0), max(u_res.y / u_res.x, 1.0));
-    v_uv = (uv - 0.5) * 1.618;
+    v_uv = (uv - 0.5) * g2();
 	
-	float punch = 0.7 + 0.3 * u_intensity * u_complexity * u_speed * u_peak;
+	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
+    float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
+	
+	float dist = length(uv);
+	float local_t = u_time;
+	if (u_darkGlow > 0.618) {
+		local_t += g2() * dist;
+	}
+	else {
+		local_t -= g1() * dist;
+	}
+	
+	float punch = g2() + g3() * u_intensity * u_complexity * u_speed * u_peak;
 
-    float t = u_time * 0.1;
+    float t = local_t * 0.09;
     float z = 0.0;
 
-    vec2 p = 9.382 * v_uv * punch; 
-    z += sin(p.x * (0.7 + 0.3 * u_intensity) + t) * 0.3;
-    z += cos(p.y * (0.3 + 0.7 * u_complexity) + u_time * 0.7) * 0.5;
-    z += sin(p.x * (0.7 + 0.3 * u_speed) + p.y * (0.3 + 0.7 * u_peak) + t * 0.3);
+    vec2 p = g4 * v_uv * punch; 
+    z += sin(p.x * (g2() + g3() * u_intensity) + t) * 0.3;
+    z += cos(p.y * (g3() + g2() * u_complexity) + local_t * 0.7) * 0.5;
+    z += sin(p.x * (g2() + g3() * u_speed) + p.y * (g3() + g2() * u_peak) + t * 0.3);
 	
 	vec2 offset = vec2(
-		sin(t * u_intensity) + cos(u_time * u_complexity),
-		cos(u_time * u_speed) + sin(t * u_peak)
+		sin(t * u_intensity) + cos(local_t * u_complexity),
+		cos(local_t * u_speed) + sin(t * u_peak)
 	);
 	
-	vec2 centered = v_uv - 0.5 + offset * 11.0;
+	vec2 centered = v_uv - 0.5 + offset * 11.09;
 	float r = length(centered);
-	float depth = 1.0 / (sqrt(r * r + 0.01)); 
-	float mask = pow(1.0 - smoothstep(0.0, 0.5, r), 3.0);
+	float depth = 1.0 / (sqrt(r * r + 0.008)); 
+	float mask = pow(g2() - smoothstep(0.0, 0.5, r), 3.0);
 	
 	p.xy *= mask;
 
+	float lrc = pow(u_left-u_right, g1());
 	
-	float lrc = pow(u_left-u_right, 2.0);
-	
-	z *= 1.0 - punch;
+	z *= g2() - punch;
 	
 	if(p.x < 0.5){
-		p.x *= pow((1.0 + lrc) * u_speed * (1.0 + abs(p.y)) * (1.0 + abs(z)), 3.0);
+		p.x *= pow((g2() + lrc) * u_speed * (g2() + abs(p.y)) * (g2() + abs(z)), g1());
 	} else {
-		p.x *= pow((1.0 - lrc) * u_speed * (1.0 + abs(p.y)) * (1.0 + abs(z)), 3.0);
+		p.x *= pow((g2() - lrc) * u_speed * (g2() + abs(p.y)) * (g2() + abs(z)), g1());
 	}
 	
-	p.y *= pow((1.0 - abs(lrc)) * u_complexity * (1.0 + abs(p.x)) * (1.0 + abs(z)), 2.0);
+	p.y *= pow((g2() - abs(lrc)) * u_complexity * (g2() + abs(p.x)) * (g2() + abs(z)), g1());
 
     v_z = z; 
 
 	vec3 pos = vec3(
 		position.xy,
-		v_z + pow(depth, 3.0) * punch
+		v_z + pow(depth, g1()) * punch
 	);
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
