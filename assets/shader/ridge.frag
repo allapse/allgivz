@@ -157,12 +157,12 @@ void main() {
         float mask = step(uv.y, h + g5 * g5 * fi / g1());
         
         // 近景幾乎是純黑影
-        vec3 fCol = vec3(g5 * g5 + u_darkGlow * g5 * g5, g3(), g5) * (g2() / fi);
+        vec3 fCol = vec3(g5 * g3() + u_darkGlow * g3(), g3(), g5) * (g2() / fi);
         finalCol = mix(finalCol, fCol, mask);
 		
 		if (u_darkGlow > 0.618) {
 			// 在山脊邊緣產生暗色光暈
-			float edge = smoothstep(h + g5 * g5, h + g5, uv.y);
+			float edge = smoothstep(h + g3(), h + g5, uv.y);
 			finalCol += vec3(g5, g5, g3()) * (g2() - edge) * u_volume;
 		}
     }

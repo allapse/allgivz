@@ -66,7 +66,7 @@ void main() {
     
     // 1. 生命週期：每個粒子都有不同的出生偏移
     // 用 mod 讓它們循環：0.0 是剛出生，1.0 是消失
-    float life = mod(local_t * 0.09 + vS1, 0.618) / (0.618 + 0.382 * u_speed); 
+    float life = mod(local_t * 0.382 + vS1, 0.618) / (0.382 + 0.618 * u_speed); 
     vLife = life;
 
     // 2. 誕生路徑：從中心噴出
@@ -88,9 +88,9 @@ void main() {
     vec3 noise = vec3(hash(vS1), hash(vS2), hash(vS1 + vS2)) * u_peak * g3() * (g2() - life);
     vec3 pos = spherePos * r + noise;
 	
-	pos.yz *= rotate(u_orient.y * g1() + (local_t / vS2 + vS1) * u_darkGlow * 0.09); // 繞 X 軸轉
-    pos.xz *= rotate(u_orient.x * g2() + (local_t / vS1 + vS2) * u_darkGlow * 0.382); // 繞 Y 軸轉
-	pos.xy *= rotate(local_t / vS1 * vS2 + vS1 - vS2) * (g2() + g3() * u_complexity); // 繞 Y 軸轉
+	pos.yz *= rotate(u_orient.y * g1() + (local_t / vS2 + vS1) * u_darkGlow * 0.382); // 繞 X 軸轉
+    pos.xz *= rotate(u_orient.x * g2() + (local_t / vS1 + vS2) * u_darkGlow * 0.618); // 繞 Y 軸轉
+	pos.xy *= rotate(local_t / vS1 * vS2 + vS1 - vS2) * (g2() + g5 * u_complexity); // 繞 Y 軸轉
 
     // 3. 視角運算
     vNormal = normalize(spherePos) * u_complexity; // 始終向外
@@ -109,19 +109,19 @@ void main() {
     // 讓靠近相機的點（pos.z 大）移動多一點，遠處的點移動少一點
     // 這會讓球體在移動時看起來像「立體的」在晃，而不是一張扁平的照片
 	offsetPos.x /= aspect;
-    offsetPos.xy += u_orient * pos.z * g2();
+    offsetPos.xy += u_orient * pos.z * g3();
 
 	gl_Position = vec4(offsetPos.xy * g2(), depthForGPU, g2());
 
 	// 計算 3D 遠近感的大小衰減
 	// 這裡假設一個虛擬的相機距離為 2.0
-	float perspective = (g1() + vS1 * u_peak + vS2 * u_darkGlow * g2())  / (g1() - pos.z); 
+	float perspective = (g2() + vS1 * u_peak + vS2 * u_darkGlow * g1()) / (g1() - pos.z); 
 	// 剛噴出時點很小，成形時變大，消失前變薄
-    float sizeGrowth = smoothstep(g3(), g2(), vLife); 
+    float sizeGrowth = smoothstep(0.0, g3(), vLife); 
 	gl_PointSize = (g1() + sizeGrowth * g2()) * perspective + vS1 - vS2;
 	
 	// 將 [-1, 1] 的裁剪空間轉為 [0, 1] 的螢幕空間
-    vScreenUv = gl_Position.xy * g2() + g3();
+    vScreenUv = gl_Position.xy * g3() + g3();
 
 }
 
