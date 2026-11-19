@@ -19,21 +19,46 @@ uniform vec2 u_orient;
 
 #define PI 3.14159265359
 
+float signPow(float val, float pt){
+	return sign(val) * pow(abs(val), pt);
+}
+
+float g2() {
+	return signPow(0.618, 0.0 + (u_speed - 0.5) * 0.618);
+}
+
+float g1() {
+	return signPow(0.618, -2.0 - u_intensity * 0.618);
+}
+
+float g3() {
+	return signPow(0.618, 2.0 + u_complexity * 0.618);
+}
+
 void main() {
 	vec2 ratio = vec2(max(u_res.x / u_res.y, 1.0), max(u_res.y / u_res.x, 1.0));
+	
+	float dist = length(uv);
+	float local_t = u_time;
+	if (u_darkGlow > 0.618) {
+		local_t += g2() * dist;
+	}
+	else {
+		local_t -= g1() * dist;
+	}
 	
 	float punch = pow(0.618 + 0.382 * u_intensity * u_complexity * u_speed * u_peak, 3.0);
 
     vec2 p = (uv * 16.18 - 8.09) * ratio * (0.618 + punch); 
 	
-	float t = u_time * (1.0 + 0.382 * sin(u_time * 2.0 * PI * u_fps * u_bpm * length(p)));
+	float t = local_t * (1.0 + 0.382 * sin(local_t * 2.0 * PI * u_fps * u_bpm * length(p)));
     float z = 0.0;
 
     z += sin(p.x * (0.618 + 0.382 * u_intensity) + t) * 0.118;
-    z += cos(p.y * (0.382 + 0.618 * u_complexity) + u_time * 0.618) * 0.382;
+    z += cos(p.y * (0.382 + 0.618 * u_complexity) + local_t * 0.618) * 0.382;
     z += sin(p.x * (0.618 + 0.382 * u_speed) + p.y * (0.382 + 0.618 * u_peak) + t * 0.382) * 0.618;
 	
-	float swing = cos(u_time * 2.0 * PI * u_fps * u_bpm * length(p));
+	float swing = cos(local_t * 2.0 * PI * u_fps * u_bpm * length(p));
     float lrx = clamp(pow(1.0 + clamp((u_left - u_right), -0.118, 0.118) , 1.0 + abs(8.09 - p.y)), 0.882, 1.118);
 	lrx = 0.882 + 0.382 * smoothstep(0.618, 1.382, lrx + 0.382 * swing);
 
@@ -53,8 +78,8 @@ void main() {
 	}
 
 	vec2 offset = vec2(
-		sin(t * u_intensity) + cos(u_time * u_complexity),
-		cos(u_time * u_speed) + sin(t * u_peak)
+		sin(t * u_intensity) + cos(local_t * u_complexity),
+		cos(local_t * u_speed) + sin(t * u_peak)
 	);
 	
 	vec2 centered = v_uv + offset * 16.18;
@@ -69,7 +94,7 @@ void main() {
 		punch
 	);
 
-    swing = 1.0 + 0.618 * sin(u_time * 2.0 * PI * u_fps * u_bpm * length(pos));
+    swing = 1.0 + 0.618 * sin(local_t * 2.0 * PI * u_fps * u_bpm * length(pos));
 
     if(punch < 0.382) {
         pos *= swing;

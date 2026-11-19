@@ -212,6 +212,7 @@ void main() {
 	else {
 		local_t -= g1() * dist;
 	}
+	
 	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
     float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
 	
@@ -340,7 +341,7 @@ void main() {
 	// choice
 	past += vec3(sin(u_intensity), cos(u_speed), sin(u_complexity));
 	vec3 emission = color * abs(sym) * (u_volume_smooth * g3() + g3()) * g4;
-	vec3 currentFrame = mix(emission, past, g3()); 
+	vec3 currentFrame = mix(past, emission, g3()); 
 	finalColor = mix(currentFrame, past, g2() + g5 * freeze);
 	finalColor *= finalColor; 
 	

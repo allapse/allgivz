@@ -206,7 +206,7 @@ float iwave(vec3 p, vec3 center, float freq, float phase) {
 void main() {
     vec2 uv = v_uv;
 	
-	float dist = length(uv);
+	float dist = length(vec3(uv, v_z));
 	float local_t = u_time;
 	if (u_darkGlow > 0.618) {
 		local_t += g2() * dist;
@@ -215,8 +215,8 @@ void main() {
 		local_t -= g1() * dist;
 	}
 	
-	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
-    float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
+	float g4 = signPow(0.618, -3.0 - abs(dist) * 0.618);
+    float g5 = signPow(0.618, 3.0 + abs(dist) * 0.618);
 	
 	// singularity
 	uv = abs(uv) - sin(g5 + g2() * u_complexity) - cos(g5 + g2() * u_intensity);
@@ -354,7 +354,7 @@ void main() {
 	// choice
 	past += vec3(sin(u_intensity), cos(u_speed), sin(u_complexity));
 	vec3 emission = color * abs(sym) * (u_volume_smooth * g3() + g3()) * g4;
-	vec3 currentFrame = mix(emission, past, g3()); 
+	vec3 currentFrame = mix(past, emission, g3()); 
 	finalColor = mix(currentFrame, past, g2() + g5 * freeze);
 	finalColor *= finalColor; 
 	
