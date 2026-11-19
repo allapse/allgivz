@@ -354,7 +354,7 @@ void main() {
 	// choice
 	past += vec3(sin(u_intensity), cos(u_speed), sin(u_complexity));
 	vec3 emission = color * abs(sym) * (u_volume_smooth * g3() + g3()) * g4;
-	vec3 currentFrame = mix(past, emission, g3()); 
+	vec3 currentFrame = mix(emission, past, g3()); 
 	finalColor = mix(currentFrame, past, g2() + g5 * freeze);
 	finalColor *= finalColor; 
 	
@@ -380,7 +380,7 @@ void main() {
 			// bubble
 			if (v_z > g3() * wave || g1() * stripes > bigZ) discard;
 		}
-		rightCol = g2() - exp(-finalColor * g3());
+		rightCol = g2() - exp(-finalColor * g1());
 	}
 	
 	float t = smoothstep(g3() - g3() * punch, g2() + g3() * punch, v_uv.x);

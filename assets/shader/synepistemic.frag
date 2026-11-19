@@ -114,7 +114,7 @@ void main() {
 	
 	if(u_darkGlow > 0.618) {
 		past += vec3(sin(u_intensity), cos(u_speed), sin(u_complexity)) * g3();
-		color = mix(past, color, g5 + g3() * punch);
+		color = mix(color, past, g5 + g3() * punch);
 	}
     
     gl_FragColor = vec4(color, g2());
