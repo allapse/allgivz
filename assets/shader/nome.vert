@@ -16,6 +16,7 @@ uniform float u_right;
 uniform float u_fps;
 uniform float u_bpm;
 uniform vec2 u_orient;
+uniform float u_darkGlow;
 
 #define PI 3.14159265359
 
