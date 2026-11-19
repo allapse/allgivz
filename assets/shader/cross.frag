@@ -428,7 +428,7 @@ void main() {
 
     finalColor /= g3() + colBg + colDissipation + colWinner;
 
-    finalColor /= g3() + (g2() - r * g3());
+    //finalColor /= g3() + (g2() - r * g3());
     
     gl_FragColor = vec4(finalColor, g2());
 	
