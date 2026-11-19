@@ -231,7 +231,7 @@ void main() {
 	
     vec2 pos = warped * 17.95;
 	
-	float punch = pow(g5 + g2() * u_intensity * u_complexity * u_speed * u_peak, g1());
+	float punch = signPow(g5 + g2() * u_intensity * u_complexity * u_speed * u_peak, g1());
 	float freeze = g2() - (u_intensity + u_complexity + u_speed + u_peak) / g4;
 	float bigZ = v_z * 76.05 * freeze;
 	
@@ -240,7 +240,7 @@ void main() {
 	}
 	
 	// gliding
-	float stripes = sin(abs(atan(pos.y, pos.x)) * floor(g4 + pow(u_complexity ,g1()) * 11.09)) * sin(g2() / (sqrt(length(pos) * length(pos) + g5)) + local_t * 2.618);
+	float stripes = sin(abs(atan(pos.y, pos.x)) * floor(g4 + signPow(u_complexity ,g1()) * 11.09)) * sin(g2() / (sqrt(length(pos) * length(pos) + g5)) + local_t * 2.618);
 	// fbm
     float pattern = fbm(pos + vec2(fbm(pos * g3() + local_t), fbm(pos * g3() - local_t)) + u_volume_smooth * g3());
 	// erosion
@@ -258,12 +258,12 @@ void main() {
 	
     float cf = fbm(uv + cr);
 	
-    float wave = pow(g3() + 0.382 * sin(local_t + pos.x * u_complexity) / (g5 + g3() * bigZ), 3.0);
+    float wave = signPow(g3() + 0.382 * sin(local_t + pos.x * u_complexity) / (g5 + g3() * bigZ), 3.0);
     wave *= u_volume_smooth;
 
-    float sym = pow(sin(local_t + pos.x * u_complexity + bigZ) / (0.382 + 0.618 * cos(pos.y * u_intensity - bigZ)), 3.0);
+    float sym = signPow(sin(local_t + pos.x * u_complexity + bigZ) / (0.382 + 0.618 * cos(pos.y * u_intensity - bigZ)), 3.0);
 
-    float motion = pow(g3() + 0.382 * sin(local_t + length(pos) * u_speed), 3.0);
+    float motion = signPow(g3() + 0.382 * sin(local_t + length(pos) * u_speed), 3.0);
 
     vec3 baseColor   = vec3(0.1, 0.2, 0.3);
     vec3 accentColor = vec3(g2(), g5, 0.3);
@@ -275,7 +275,7 @@ void main() {
 	// regret
 	mat3 rrot = rotateY(u_orient.x + local_t * 0.618) * rotateX(u_orient.y + local_t * 0.382);
 	
-    color *= sym * motion * pow(g3() + g2() * u_intensity, g1()) / (g5 + g2() * pattern) * stripes / (g5 + g2() * cf);
+    color *= sym * motion * signPow(g3() + g2() * u_intensity, g1()) / (g5 + g2() * pattern) * stripes / (g5 + g2() * cf);
 	color *= rrot;
 	
 	// synapse
@@ -292,7 +292,7 @@ void main() {
 		
 		vec3 col;
 		
-        col += vec3(drawBraille(pos, base, r, brailleCodes[i])) * pow(g3() + g3() * u_volume_smooth / (g5 + punch), g1());
+        col += vec3(drawBraille(pos, base, r, brailleCodes[i])) * signPow(g3() + g3() * u_volume_smooth / (g5 + punch), g1());
 		
 		// wave
 		col /= g5 + g2() * map_wave(color);
@@ -304,7 +304,7 @@ void main() {
 		col /= clamp(ridgeFBM(base), g5, g3());
 		
 		// thunder
-		float fade = pow(g2(), fi);
+		float fade = signPow(g2(), fi);
         color.r += col.r * fade * g2();
         color.g += col.g * fade;
         color.b += col.b * fade * g3();
