@@ -21,11 +21,11 @@ float g2() {
 }
 
 float g1() {
-	return signPow(0.618, -2.0 - u_intensity * 0.618);
+	return signPow(0.618, -1.618 - u_intensity * 0.618);
 }
 
 float g3() {
-	return signPow(0.618, 2.0 + u_complexity * 0.618);
+	return signPow(0.618, 1.618 + u_complexity * 0.618);
 }
 
 // 利用質數構造的非週期性向量 (Primes: 13, 17, 19, 23, 29...)
@@ -50,8 +50,8 @@ void main() {
 		local_t -= g1() * dist;
 	}
 	
-	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
-    float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
+	float g4 = signPow(0.618, -2.618 - abs(uv.x) * 0.618);
+    float g5 = signPow(0.618, 2.618 + abs(uv.y) * 0.618);
     
     // 1. 動態步長：利用質數與聲音重心建立「空間步長」
     // 這讓每一秒鐘的空間結構都因為質數的干涉而不重複

@@ -15,11 +15,11 @@ float g2() {
 }
 
 float g1() {
-	return signPow(0.618, -2.0 - u_intensity * 0.618);
+	return signPow(0.618, -1.618 - u_intensity * 0.618);
 }
 
 float g3() {
-	return signPow(0.618, 2.0 + u_complexity * 0.618);
+	return signPow(0.618, 1.618 + u_complexity * 0.618);
 }
 
 void main() {

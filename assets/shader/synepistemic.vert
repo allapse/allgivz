@@ -20,11 +20,11 @@ float g2() {
 }
 
 float g1() {
-	return signPow(0.618, -2.0 - u_intensity * 0.618);
+	return signPow(0.618, -1.618 - u_intensity * 0.618);
 }
 
 float g3() {
-	return signPow(0.618, 2.0 + u_complexity * 0.618);
+	return signPow(0.618, 1.618 + u_complexity * 0.618);
 }
 
 mat3 rotateX(float a) {
@@ -41,8 +41,8 @@ void main() {
     vec2 ratio = vec2(max(u_res.x / u_res.y, g2()), max(u_res.y / u_res.x, g2()));
     v_centered_uv = (uv - g3()) * ratio;
 	
-	float g4 = signPow(0.618, -3.0 - abs(v_centered_uv.x) * 0.618);
-    float g5 = signPow(0.618, 3.0 + abs(v_centered_uv.y) * 0.618);
+	float g4 = signPow(0.618, -2.618 - abs(v_centered_uv.x) * 0.618);
+    float g5 = signPow(0.618, 2.618 + abs(v_centered_uv.y) * 0.618);
 	
 	float dist = length(uv);
 	float local_t = u_time;

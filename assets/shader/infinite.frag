@@ -25,11 +25,11 @@ float g2() {
 }
 
 float g1() {
-	return signPow(0.618, -2.0 - u_intensity * 0.618);
+	return signPow(0.618, -1.618 - u_intensity * 0.618);
 }
 
 float g3() {
-	return signPow(0.618, 2.0 + u_complexity * 0.618);
+	return signPow(0.618, 1.618 + u_complexity * 0.618);
 }
 
 float hash(vec3 p) {
@@ -42,8 +42,8 @@ float wave(vec3 p, vec3 center, float freq, float phase) {
 }
 
 void main() {
-	float g4 = signPow(0.618, -3.0 - abs(v_uv.x) * 0.618);
-    float g5 = signPow(0.618, 3.0 + abs(v_uv.y) * 0.618);
+	float g4 = signPow(0.618, -2.618 - abs(v_uv.x) * 0.618);
+    float g5 = signPow(0.618, 2.618 + abs(v_uv.y) * 0.618);
 	
 	float dist = length(v_uv);
 	

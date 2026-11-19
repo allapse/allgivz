@@ -25,11 +25,11 @@ float g2() {
 }
 
 float g1() {
-	return signPow(0.618, -2.0 - u_intensity * 0.618);
+	return signPow(0.618, -1.618 - u_intensity * 0.618);
 }
 
 float g3() {
-	return signPow(0.618, 2.0 + u_complexity * 0.618);
+	return signPow(0.618, 1.618 + u_complexity * 0.618);
 }
 
 // 六個點位：上中下 × 左右
@@ -77,8 +77,8 @@ void main() {
 		local_t -= g1() * dist;
 	}
 	
-	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
-    float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
+	float g4 = signPow(0.618, -2.618 - abs(uv.x) * 0.618);
+    float g5 = signPow(0.618, 2.618 + abs(uv.y) * 0.618);
 	
 	float punch = signPow(g5 + u_intensity * u_complexity * u_speed * u_peak, g1());
 	float freeze = 1.0 - (u_intensity + u_complexity + u_speed + u_peak) / 4.237;

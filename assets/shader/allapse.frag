@@ -31,11 +31,11 @@ float g2() {
 }
 
 float g1() {
-	return signPow(0.618, -2.0 - u_intensity * 0.618);
+	return signPow(0.618, -1.618 - u_intensity * 0.618);
 }
 
 float g3() {
-	return signPow(0.618, 2.0 + u_complexity * 0.618);
+	return signPow(0.618, 1.618 + u_complexity * 0.618);
 }
 
 float hash(float n) { return fract(sin(n) * 39650.94552); }
@@ -215,8 +215,8 @@ void main() {
 		local_t -= g1() * dist;
 	}
 	
-	float g4 = signPow(0.618, -3.0 - abs(dist) * 0.618);
-    float g5 = signPow(0.618, 3.0 + abs(dist) * 0.618);
+	float g4 = signPow(0.618, -2.618 - abs(dist) * 0.618);
+    float g5 = signPow(0.618, 2.618 + abs(dist) * 0.618);
 	
 	// singularity
 	uv = abs(uv) - sin(g5 + g2() * u_complexity) - cos(g5 + g2() * u_intensity);

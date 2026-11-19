@@ -29,18 +29,18 @@ float g2() {
 }
 
 float g1() {
-	return signPow(0.618, -2.0 - u_intensity * 0.618);
+	return signPow(0.618, -1.618 - u_intensity * 0.618);
 }
 
 float g3() {
-	return signPow(0.618, 2.0 + u_complexity * 0.618);
+	return signPow(0.618, 1.618 + u_complexity * 0.618);
 }
 
 void main() {
 	vec2 ratio = vec2(max(u_res.x / u_res.y, 1.0), max(u_res.y / u_res.x, 1.0));
 	
-	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
-    float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
+	float g4 = signPow(0.618, -2.618 - abs(uv.x) * 0.618);
+    float g5 = signPow(0.618, 2.618 + abs(uv.y) * 0.618);
 	
 	float dist = length(uv);
 	float local_t = u_time;
@@ -53,7 +53,7 @@ void main() {
 	
 	float punch = signPow(g2() + g3() * u_intensity * u_complexity * u_speed * u_peak, g1());
 
-    vec2 p = (uv * 16.18 - 8.09) * ratio * (0.618 + punch); 
+    vec2 p = (uv - 0.5) * ratio * (0.618 + punch) * 17.95; 
 	
 	float t = local_t * (1.0 + 0.382 * sin(local_t * 2.0 * PI * u_fps * u_bpm * length(p)));
     float z = 0.0;
@@ -66,18 +66,18 @@ void main() {
     float lrx = clamp(signPow(g2() + clamp((u_left - u_right), -g5, g5) , g2() + abs(6.856 - p.y)), g3(), g2());
 	lrx = g2() + g3() * smoothstep(g3(), g2(), lrx + 0.382 * swing);
 
-	if(p.y < 16.18 * ratio.y * g3()){
+	if(p.y < 17.95 * ratio.y * g3()){
 		p.x /= lrx;
-	} else if(p.y > 16.18 * ratio.y * g2()){
+	} else if(p.y > 17.95 * ratio.y * g2()){
 		p.x *= lrx;
 	}
 	
 	float lry = smoothstep(signPow(g2() + smoothstep(0.0, g3(), abs(u_left - u_right)), (1.0 + abs(6.856 - p.x))), g3(), g2());
 	lry = g2() + g3() * smoothstep(g3(), g2(), lry + 0.0557 * swing);
 	
-	if(p.x < 16.18 * ratio.x * g3()){
+	if(p.x < 17.95 * ratio.x * g3()){
 		p.y *= lry;
-	} else if (p.x > 16.18 * ratio.x * g2()){
+	} else if (p.x > 17.95 * ratio.x * g2()){
 		p.y /= lry;
 	}
 
@@ -86,10 +86,10 @@ void main() {
 		cos(local_t * u_speed) + sin(t * u_peak)
 	);
 	
-	vec2 centered = v_uv + offset * 11.09;
+	vec2 centered = v_uv + offset * 17.95;
 	float r = length(centered);
 	float depth = g2() / (sqrt(r * r + g5)); 
-	float mask = signPow(g2() - smoothstep(0.0, 0.618, r), g1());
+	float mask = signPow(g2() - smoothstep(0.0, g3(), r), g1());
 	
 	//p.xy *= mask;
     
@@ -98,7 +98,7 @@ void main() {
 		punch
 	);
 
-    swing = g2() + g3() * sin(local_t * 1.618 * PI * u_fps * u_bpm * length(pos));
+    swing = (g1() + g2() * sin(local_t * 1.618 * PI * u_fps * u_bpm * length(pos))) * g2();
 
     if(punch < g3()) {
         pos *= swing;
@@ -106,7 +106,7 @@ void main() {
         pos /= swing;
     }
 
-    z *= 1.0 - pos.z;
+    z *= g2() - pos.z;
 
     v_uv = pos.xy;
     v_z = (z + signPow(depth, g1()));

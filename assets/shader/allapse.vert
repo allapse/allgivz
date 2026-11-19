@@ -25,19 +25,19 @@ float g2() {
 }
 
 float g1() {
-	return signPow(0.618, -2.0 - u_intensity * 0.618);
+	return signPow(0.618, -1.618 - u_intensity * 0.618);
 }
 
 float g3() {
-	return signPow(0.618, 2.0 + u_complexity * 0.618);
+	return signPow(0.618, 1.618 + u_complexity * 0.618);
 }
 
 void main() {
 	vec2 ratio = vec2(max(u_res.x / u_res.y, 1.0), max(u_res.y / u_res.x, 1.0));
     v_uv = (uv - 0.5) * g2();
 	
-	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
-    float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
+	float g4 = signPow(0.618, -2.618 - abs(uv.x) * 0.618);
+    float g5 = signPow(0.618, 2.618 + abs(uv.y) * 0.618);
 	
 	float dist = length(uv);
 	float local_t = u_time;

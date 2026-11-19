@@ -31,11 +31,11 @@ float g2() {
 }
 
 float g1() {
-	return signPow(0.618, -2.0 - u_intensity * 0.618);
+	return signPow(0.618, -1.618 - u_intensity * 0.618);
 }
 
 float g3() {
-	return signPow(0.618, 2.0 + u_complexity * 0.618);
+	return signPow(0.618, 1.618 + u_complexity * 0.618);
 }
 
 float hash(float n) { return fract(sin(n) * 39650.94552); }
@@ -49,8 +49,8 @@ mat2 rotate(float a) {
 void main() {
 	float aspect = u_res.x / u_res.y;
 	
-	float g4 = signPow(0.618, -3.0 - abs(u_res.x) * 0.618);
-    float g5 = signPow(0.618, 3.0 + abs(u_res.y) * 0.618);
+	float g4 = signPow(0.618, -2.618 - abs(u_res.x) * 0.618);
+    float g5 = signPow(0.618, 2.618 + abs(u_res.y) * 0.618);
 	
 	float dist = length(u_res);
 	float local_t = u_time;

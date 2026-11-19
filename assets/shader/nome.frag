@@ -33,11 +33,11 @@ float g2() {
 }
 
 float g1() {
-	return signPow(0.618, -2.0 - u_intensity * 0.618);
+	return signPow(0.618, -1.618 - u_intensity * 0.618);
 }
 
 float g3() {
-	return signPow(0.618, 2.0 + u_complexity * 0.618);
+	return signPow(0.618, 1.618 + u_complexity * 0.618);
 }
 
 float hash(float n) { return fract(sin(n) * 39650.94552); }
@@ -209,8 +209,8 @@ void main() {
     vec2 uv = v_uv;
 	float dist = length(vec3(uv, v_z));
 	
-	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
-    float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
+	float g4 = signPow(0.618, -2.618 - abs(uv.x) * 0.618);
+    float g5 = signPow(0.618, 2.618 + abs(uv.y) * 0.618);
 	float g6 = signPow(0.618, 4.237 + dist * 0.618);
 	
 	float local_t = u_time * (1.0 + 0.146 * cos(u_time * 1.618 * PI * u_fps * u_bpm * dist));
@@ -357,6 +357,7 @@ void main() {
 	vec3 leftCol = finalColor, rightCol = finalColor;
 	
 	vec3 past = texture2D(u_prevFrame, uv).rgb;
+	
 	// choice
 	past += vec3(sin(u_intensity), cos(u_speed), sin(u_complexity));
 	vec3 emission = color * abs(sym) * (u_volume_smooth * g3() + g3()) * g4;

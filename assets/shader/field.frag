@@ -20,11 +20,11 @@ float g2() {
 }
 
 float g1() {
-	return signPow(0.618, -2.0 - u_intensity * 0.618);
+	return signPow(0.618, -1.618 - u_intensity * 0.618);
 }
 
 float g3() {
-	return signPow(0.618, 2.0 + u_complexity * 0.618);
+	return signPow(0.618, 1.618 + u_complexity * 0.618);
 }
 
 // 旋轉矩陣函數
@@ -69,8 +69,8 @@ float map(vec3 p, float filteredVol) {
 void main() {
     vec2 uv = (gl_FragCoord.xy - g2() * u_res.xy) / min(u_res.y, u_res.x);
 	
-	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
-    float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
+	float g4 = signPow(0.618, -2.618 - abs(uv.x) * 0.618);
+    float g5 = signPow(0.618, 2.618 + abs(uv.y) * 0.618);
 	
 	float filteredVol = g2() + u_last_volume + clamp(u_volume - u_last_volume, -g5, g5);
     

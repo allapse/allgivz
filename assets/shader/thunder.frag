@@ -26,11 +26,11 @@ float g2() {
 }
 
 float g1() {
-	return signPow(0.618, -2.0 - u_intensity * 0.618);
+	return signPow(0.618, -1.618 - u_intensity * 0.618);
 }
 
 float g3() {
-	return signPow(0.618, 2.0 + u_complexity * 0.618);
+	return signPow(0.618, 1.618 + u_complexity * 0.618);
 }
 
 mat2 rot(float a) {
@@ -51,8 +51,8 @@ void main() {
     float r = length(v_centered_uv);
     float a = atan(v_centered_uv.y, v_centered_uv.x);
     
-	float g4 = signPow(0.618, -3.0 - abs(v_centered_uv.x) * 0.618);
-    float g5 = signPow(0.618, 3.0 + abs(v_centered_uv.y) * 0.618);
+	float g4 = signPow(0.618, -2.618 - abs(v_centered_uv.x) * 0.618);
+    float g5 = signPow(0.618, 2.618 + abs(v_centered_uv.y) * 0.618);
 	
 	float dist = length(v_centered_uv);
 	float local_t = u_time;

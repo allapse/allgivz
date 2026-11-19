@@ -22,13 +22,12 @@ float g2() {
 }
 
 float g1() {
-	return signPow(0.618, -2.0 - u_intensity * 0.618);
+	return signPow(0.618, -1.618 - u_intensity * 0.618);
 }
 
 float g3() {
-	return signPow(0.618, 2.0 + u_complexity * 0.618);
+	return signPow(0.618, 1.618 + u_complexity * 0.618);
 }
-
 
 // 虹彩函數
 vec3 spectrum(float t) {
@@ -59,8 +58,8 @@ void main() {
 		local_t -= g3() * dist;
 	}
 	
-	float g4 = signPow(0.618, -3.0 - abs(uv.x) * 0.618);
-    float g5 = signPow(0.618, 3.0 + abs(uv.y) * 0.618);
+	float g4 = signPow(0.618, -2.618 - abs(uv.x) * 0.618);
+    float g5 = signPow(0.618, 2.618 + abs(uv.y) * 0.618);
     
     // --- 加入 u_orient ---
     // 將方向參數映射到座標偏移，讓你有種「撥動」格子的感覺
