@@ -54,9 +54,9 @@ void main() {
     float z = 0.0;
 
     vec2 p = g4 * v_uv * punch; 
-    z += sin(p.x * (g2() + g3() * u_intensity) + t) * 0.3;
-    z += cos(p.y * (g3() + g2() * u_complexity) + local_t * 0.7) * 0.5;
-    z += sin(p.x * (g2() + g3() * u_speed) + p.y * (g3() + g2() * u_peak) + t * 0.3);
+    z += sin(p.x * (g2() + g3() * u_intensity) + t) * 0.382;
+    z += cos(p.y * (g3() + g2() * u_complexity) + local_t * 0.618) * 0.618;
+    z += sin(p.x * (g2() + g3() * u_speed) + p.y * (g3() + g2() * u_peak) + t * 0.382);
 	
 	vec2 offset = vec2(
 		sin(t * u_intensity) + cos(local_t * u_complexity),
@@ -66,27 +66,27 @@ void main() {
 	vec2 centered = v_uv - 0.5 + offset * 11.09;
 	float r = length(centered);
 	float depth = 1.0 / (sqrt(r * r + 0.008)); 
-	float mask = pow(g2() - smoothstep(0.0, 0.5, r), 3.0);
+	float mask = signPow(g2() - smoothstep(0.0, 0.5, r), 2.618);
 	
 	p.xy *= mask;
 
-	float lrc = pow(u_left-u_right, g1());
+	float lrc = signPow(u_left-u_right, g1());
 	
 	z *= g2() - punch;
 	
 	if(p.x < 0.5){
-		p.x *= pow((g2() + lrc) * u_speed * (g2() + abs(p.y)) * (g2() + abs(z)), g1());
+		p.x *= signPow((g2() + lrc) * u_speed * (g2() + abs(p.y)) * (g2() + abs(z)), g1());
 	} else {
-		p.x *= pow((g2() - lrc) * u_speed * (g2() + abs(p.y)) * (g2() + abs(z)), g1());
+		p.x *= signPow((g2() - lrc) * u_speed * (g2() + abs(p.y)) * (g2() + abs(z)), g1());
 	}
 	
-	p.y *= pow((g2() - abs(lrc)) * u_complexity * (g2() + abs(p.x)) * (g2() + abs(z)), g1());
+	p.y *= signPow((g2() - abs(lrc)) * u_complexity * (g2() + abs(p.x)) * (g2() + abs(z)), g1());
 
     v_z = z; 
 
 	vec3 pos = vec3(
 		position.xy,
-		v_z + pow(depth, g1()) * punch
+		v_z + signPow(depth, g1()) * punch
 	);
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
