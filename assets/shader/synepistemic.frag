@@ -88,12 +88,12 @@ void main() {
 		bigZ /= (g2() + u_volume_smooth);
 	}
 
-    float wave = signPow(g3() + 0.382 * sin(local_t + pos.x * u_complexity) / (0.382 * bigZ), g1());
+    float wave = signPow(g3() + 0.382 * sin(local_t + pos.x * u_complexity) / (0.146 * bigZ), g1());
     wave *= u_volume_smooth;
 
-    float sym = signPow(sin(local_t + pos.x * u_complexity + bigZ) / (0.382 + 0.618 * cos(pos.y * u_intensity - bigZ)), g1());
+    float sym = signPow(sin(local_t + pos.x * u_complexity + bigZ) * (g1() + 0.618 * cos(pos.y * u_intensity - bigZ)), g1());
 
-    float motion = signPow(g3() + 0.382 * sin(local_t + length(pos) * u_speed), g1());
+    float motion = signPow(g3() + 0.382 * sin(local_t + length(pos) * u_speed), 1.618);
 
     vec3 baseColor   = vec3(0.1, 0.2, g3());
     vec3 accentColor = vec3(g2(), g3(), g3());

@@ -153,13 +153,13 @@ float map_field(vec3 p, float filteredVol) {
 mat3 rotateX(float a) { 
 	float c = cos(a), 
 	s = sin(a); 
-	return mat3(g2(), 0.0, 0.0, 0.0, c, s,  0.0, -s, c); 
+	return mat3(g3(), 0.0, 0.0, 0.0, c, s,  0.0, -s, c); 
 }
 
 mat3 rotateY(float a) { 
 	float c = cos(a), 
 	s = sin(a); 
-	return mat3(c, 0.0, -s, 0.0, g2(), 0.0, s, 0.0, c); 
+	return mat3(c, 0.0, -s, 0.0, g3(), 0.0, s, 0.0, c); 
 }
 
 float quantize(float x, float levels){
@@ -280,18 +280,18 @@ void main() {
     cr.x = signPow(fbm(uv + g2() * cq + vec2(g1(), 11.09) + 0.1459 * timeswing), g1());
     cr.y = signPow(fbm(uv + g2() * cq + vec2(6.856, 2.618) + 0.09 * timeswing), g1());
 	
-    float cf = signPow(fbm(uv + cr), g1());
+    float cf = signPow(fbm(uv + cr), g2());
 	
     float wave = signPow(g3() + 0.382 * sin(timeswing + pos.x * u_complexity) / (g5 + g3() * bigZ), g1());
     wave *= (g5 + u_volume_smooth);
 	
-    float sym = signPow(sin(timeswing * 0.382 + pos.x * u_complexity + bigZ) / (0.0557 + 0.618 * cos(timeswing * 0.618 + pos.y * u_intensity - bigZ)), 2.618);
+    float sym = signPow(sin(timeswing * 0.382 + pos.x * u_complexity + bigZ) * (0.0557 + 0.618 * cos(timeswing * 0.618 + pos.y * u_intensity - bigZ)), 1.618) * 0.09;
 
-    float motion = signPow(g3() + 0.618 * sin(timeswing + length(pos) * u_speed), 2.618);
+    float motion = signPow(g3() + 0.382 * sin(timeswing + length(pos) * u_speed), 1.618);
 
     vec3 baseColor   = vec3(0.146, 0.236, 0.382);
     vec3 accentColor = vec3(g3(), g5, 0.382);
-    vec3 peakColor   = vec3(g3(), g3(), g5);
+    vec3 peakColor   = vec3(g5, g3(), g5);
 
     vec3 color = mix(baseColor, accentColor, wave);
     color = mix(color, peakColor, (g5 + u_peak));
@@ -299,14 +299,14 @@ void main() {
 	// regret
 	mat3 rrot = rotateY(u_orient.x + timeswing * 0.382) * rotateX(u_orient.y + timeswing * 0.236);
 	
-    color *= sym * motion * signPow(g3() + g2() * u_intensity, g1()) / (g5 + g2() * pattern) * stripes / (g5 + g2() * cf);
+    color *= sym * motion * signPow(g3() + g3() * u_intensity, g1()) / (g5 + g2() * pattern) * stripes / (g5 + g2() * cf);
 	color *= rrot;
 	
 	// synapse
-	color = quantizeVec3(color, 17.95);
+	color += g5 * quantizeVec3(color, 17.95);
 	
 	// love
-	float resonance = signPow(sin(cr.x * 11.09) * sin(cr.y * 17.95) * (g5 + g3() * u_intensity), g1());
+	float resonance = signPow(sin(cr.x * 11.09) * sin(cr.y * 17.95) * (g5 + g3() * u_intensity), g2());
 	
 	float swing = sin(timeswing * 1.618 * PI * u_fps * u_bpm * length(color));
 	
@@ -330,13 +330,13 @@ void main() {
 		col /= clamp(ridgeFBM(base), g5, g3());
 		
 		// thunder
-		float fade = signPow(g2(), fi);
-        color.r += col.r * fade * (g2() + u_left + 0.382 * swing);
-        color.g += col.g * fade * (g2() + 0.618 * swing);
-        color.b += col.b * fade * (g2() - u_right + 0.146 * swing);
+		float fade = signPow(g3(), fi);
+        color.r += col.r * fade * (g5 - u_left + 0.382 * swing);
+        color.g += col.g * fade * (g5 - 0.236 * swing);
+        color.b += col.b * fade * (g5 - u_right + 0.146 * swing);
 		
 		// prime
-		color += primeWave(col, color, timeswing);
+		color += g5 * primeWave(col, color, timeswing);
 		
 		// infinite
 		sum += iwave(col, color, stripes, pattern);
@@ -345,7 +345,7 @@ void main() {
 	vec3 finalColor = color * resonance;
 	
 	// HH
-	finalColor /= g5 + (g2() - smoothstep(0.0, g2(), sym)) * g3();
+	finalColor /= g3() + (g2() - smoothstep(0.0, g2(), sym)) * g3();
 	
 	// water
 	float noise = signPow(sin(uv.x * g4 + timeswing) * cos(uv.y * 6.856 - timeswing), g1());
@@ -366,10 +366,9 @@ void main() {
 	
 	// choice
 	past += vec3(sin(u_intensity), cos(u_speed), sin(u_complexity));
-	vec3 emission = color * abs(sym) * (u_volume_smooth * g3() + g3()) * g4;
+	vec3 emission = color * abs(sym) * (u_volume_smooth * g3() + g3()) * g3();
 	vec3 currentFrame = mix(past, emission, g3()); 
-	finalColor = mix(currentFrame, past, g2() + g5 * freeze);
-	finalColor *= finalColor; 
+	finalColor = mix(currentFrame, past, g3() + g5 * freeze);
 	
 	float v_z_st = 0.0;
 	float lrpunch = 0.382 + (u_left - u_right) * 6.856 * punch;
@@ -426,9 +425,9 @@ void main() {
     vec3 colDissipation = vec3(g2(), g3(), g5) * pattern * (g2() - a * g3());
     vec3 colWinner = vec3(1.0, g2(), g3()) * core * (g2() + corePulse * g3());
 
-    finalColor /= g2() + colBg + colDissipation + colWinner;
+    finalColor /= g1() + colBg + colDissipation + colWinner;
 
-    finalColor /= g2() + (g2() - r * g3());
+    finalColor /= g1() + (g2() - r * g3());
     
     gl_FragColor = vec4(finalColor, g3());
 	
