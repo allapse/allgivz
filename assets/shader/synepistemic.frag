@@ -102,7 +102,7 @@ void main() {
     vec3 color = mix(baseColor, accentColor, wave);
     color = mix(color, peakColor, u_peak);
 	
-    color *= sym * motion * signPow(g3() + g2() * u_intensity, g1());
+    color *= sym * motion;// * signPow(g3() + g2() * u_intensity, g1());
 	
 	float r = g5;
     for(int i=0; i<7; i++){
