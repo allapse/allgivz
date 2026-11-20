@@ -216,14 +216,14 @@ void main() {
 	float local_t = u_time * (1.0 + 0.146 * cos(u_time * 1.618 * PI * u_fps * u_bpm * dist));
 	
 	if (u_darkGlow > 0.618) {
-		local_t += g5 * dist;
+		local_t += g2() * dist;
 	}
 	else {
-		local_t -= g5 * dist;
+		local_t -= g1() * dist;
 	}
 	
-	float timeswing = local_t * (1.0 + 0.118 * cos(local_t * 2.0 * PI * u_fps * u_bpm * length(vec3(uv, v_z))));
-	float timeswing2 = local_t * (1.0 + 0.118 * sin(local_t * 2.0 * PI * u_fps * u_bpm * length(vec3(uv, v_z))));
+	float timeswing = local_t * (1.0 + 0.1459 * cos(local_t * 1.618 * PI * u_fps * u_bpm * length(vec3(uv, v_z))));
+	float timeswing2 = local_t * (1.0 + 0.1459 * sin(local_t * 1.618 * PI * u_fps * u_bpm * length(vec3(uv, v_z))));
 	
 	if(abs(uv.x) > g3() && abs(uv.y) > g3() && length(uv) > g3())
 	timeswing = mix(timeswing, timeswing2, v_z);
@@ -243,15 +243,15 @@ void main() {
     warped.y += (g3() + g3() * u_complexity) * cos(timeswing * 0.618 + uv.x * g1() + v_z * g3());
 	
 	if(u_darkGlow > 0.5) {
-		warped.x /= (g3() + g3() * u_speed) * sin(timeswing * 0.3 + uv.y * g4 + v_z * g2());
-		warped.y /= (g3() + g3() * u_complexity) * cos(timeswing * 0.7 + uv.x * g1() + v_z * g3());
+		warped.x /= (g3() + g3() * u_speed) * sin(timeswing * 0.382 + uv.y * g4 + v_z * g2());
+		warped.y /= (g3() + g3() * u_complexity) * cos(timeswing * 0.618 + uv.x * g1() + v_z * g3());
 	}
 	
     vec2 pos = warped * 17.95;
 	
 	float punch = signPow(g5 + g2() * u_intensity * u_complexity * u_speed * u_peak, g4);
-	float freeze =  signPow(g2() - (u_intensity + u_complexity + u_speed + u_peak) / g4, g4);
-	float bigZ =  signPow(v_z * 76.05 * freeze, g4);
+	float freeze = signPow(g2() - (u_intensity + u_complexity + u_speed + u_peak) / g4, g4);
+	float bigZ = signPow(v_z * 76.05 * freeze, g4);
 	
 	if(u_darkGlow > 0.618) {
 		bigZ /= (g2() + u_volume_smooth);
@@ -282,16 +282,16 @@ void main() {
 	
     float cf = signPow(fbm(uv + cr), g1());
 	
-    float wave = signPow(g3() + 0.382 * sin(timeswing + pos.x * u_complexity) / (g5 + g3() * bigZ), 3.0);
+    float wave = signPow(g3() + 0.382 * sin(timeswing + pos.x * u_complexity) / (g5 + g3() * bigZ), g1());
     wave *= (g5 + u_volume_smooth);
 	
-    float sym = signPow(sin(timeswing * 0.382 + pos.x * u_complexity + bigZ) / (0.0557 + 0.9382 * cos(timeswing * 0.618 + pos.y * u_intensity - bigZ)), 2.618);
+    float sym = signPow(sin(timeswing * 0.382 + pos.x * u_complexity + bigZ) / (0.0557 + 0.618 * cos(timeswing * 0.618 + pos.y * u_intensity - bigZ)), 2.618);
 
-    float motion = signPow(0.382 + 0.618 * sin(timeswing + length(pos) * u_speed), 2.618);
+    float motion = signPow(g3() + 0.618 * sin(timeswing + length(pos) * u_speed), 2.618);
 
-    vec3 baseColor   = vec3(0.1, 0.2, 0.3);
-    vec3 accentColor = vec3(g2(), g5, 0.3);
-    vec3 peakColor   = vec3(g3(), g2(), g5);
+    vec3 baseColor   = vec3(0.146, 0.236, 0.382);
+    vec3 accentColor = vec3(g3(), g5, 0.382);
+    vec3 peakColor   = vec3(g3(), g3(), g5);
 
     vec3 color = mix(baseColor, accentColor, wave);
     color = mix(color, peakColor, (g5 + u_peak));
@@ -367,12 +367,12 @@ void main() {
 	// choice
 	past += vec3(sin(u_intensity), cos(u_speed), sin(u_complexity));
 	vec3 emission = color * abs(sym) * (u_volume_smooth * g3() + g3()) * g4;
-	vec3 currentFrame = mix(emission, past, g2()); 
+	vec3 currentFrame = mix(past, emission, g3()); 
 	finalColor = mix(currentFrame, past, g2() + g5 * freeze);
 	finalColor *= finalColor; 
 	
 	float v_z_st = 0.0;
-	float lrpunch = 0.618 + (u_left - u_right) * 6.856 * punch;
+	float lrpunch = 0.382 + (u_left - u_right) * 6.856 * punch;
 	
 	if(u_darkGlow > 0.5) {
 		if(v_uv.x < lrpunch) {
@@ -406,10 +406,10 @@ void main() {
 		rightCol = g2() - exp(-finalColor * g3());
 	}
 	
-	float t = smoothstep(g3() - g3() * punch, g3() + g3() * punch, length(vec3(v_uv, v_z)) * sin(timeswing));
+	float t = smoothstep(g3() - g3() * punch, g3() + g3() * punch, length(dist) * sin(timeswing));
 	finalColor = mix(leftCol, rightCol, t);
 	
-	finalColor = mix(finalColor, past, g2());
+	finalColor = mix(finalColor, past, g3());
 	
     r = length(vec3(v_uv * sin(timeswing), v_z * cos(timeswing)));
     float a = atan(v_uv.y * cos(timeswing), v_uv.x * sin(timeswing));
@@ -426,9 +426,9 @@ void main() {
     vec3 colDissipation = vec3(g2(), g3(), g5) * pattern * (g2() - a * g3());
     vec3 colWinner = vec3(1.0, g2(), g3()) * core * (g2() + corePulse * g3());
 
-    finalColor /= g3() + colBg + colDissipation + colWinner;
+    finalColor /= g2() + colBg + colDissipation + colWinner;
 
-    //finalColor /= g3() + (g2() - r * g3());
+    finalColor /= g2() + (g2() - r * g3());
     
     gl_FragColor = vec4(finalColor, g2());
 	
