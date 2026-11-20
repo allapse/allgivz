@@ -275,7 +275,7 @@ void main() {
     float wave = signPow(g3() + 0.382 * sin(local_t + pos.x * u_complexity) / (g5 + g3() * bigZ), 3.0);
     wave *= u_volume_smooth;
 
-    float sym = signPow(sin(local_t + pos.x * u_complexity + bigZ) / (0.382 + 0.618 * cos(pos.y * u_intensity - bigZ)), 3.0);
+    float sym = signPow(sin(local_t + pos.x * u_complexity + bigZ) * (0.382 + 0.618 * cos(pos.y * u_intensity - bigZ)), 3.0);
 
     float motion = signPow(g3() + 0.382 * sin(local_t + length(pos) * u_speed), 3.0);
 
