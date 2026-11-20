@@ -430,7 +430,7 @@ void main() {
 
     finalColor /= g2() + (g2() - r * g3());
     
-    gl_FragColor = vec4(finalColor, g2());
+    gl_FragColor = vec4(finalColor, g3());
 	
 	//gl_FragColor = vec4(0.118, 0.118, 0.118, 1.0);
 }

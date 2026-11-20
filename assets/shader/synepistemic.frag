@@ -95,14 +95,14 @@ void main() {
 
     float motion = signPow(g3() + 0.382 * sin(local_t + length(pos) * u_speed), g1());
 
-    vec3 baseColor   = vec3(0.1, 0.2, 0.3);
-    vec3 accentColor = vec3(0.7, 0.5, 0.3);
-    vec3 peakColor   = vec3(0.3, 0.5, 0.7);
+    vec3 baseColor   = vec3(0.1, 0.2, g3());
+    vec3 accentColor = vec3(g2(), g3(), g3());
+    vec3 peakColor   = vec3(g3(), g3(), g2());
 
     vec3 color = mix(baseColor, accentColor, wave);
     color = mix(color, peakColor, u_peak);
 	
-    color *= sym * motion * pow(0.3 + 0.7 * u_intensity, 3.0);
+    color *= sym * motion * signPow(g3() + g2() * u_intensity, g1());
 	
 	float r = g5;
     for(int i=0; i<7; i++){
@@ -117,6 +117,6 @@ void main() {
 		color = mix(color, past, g5 + g3() * punch);
 	}
     
-    gl_FragColor = vec4(color, g2());
+    gl_FragColor = vec4(color, 1.0);
 }
 
