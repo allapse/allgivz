@@ -259,28 +259,28 @@ void main() {
 	
     float cf = fbm(uv + cr);
 	
-    float wave = signPow(g3() + 0.382 * sin(local_t + pos.x * u_complexity) / (g5 + g3() * bigZ), 3.0);
+    float wave = signPow(g3() + 0.382 * sin(local_t + pos.x * u_complexity) / (g5 + g3() * bigZ), g1());
     wave *= u_volume_smooth;
 
-    float sym = signPow(sin(local_t + pos.x * u_complexity + bigZ) / (0.382 + 0.618 * cos(pos.y * u_intensity - bigZ)), 3.0);
+    float sym = signPow(sin(local_t + pos.x * u_complexity + bigZ) * (0.382 + 0.618 * cos(pos.y * u_intensity - bigZ)), 1.618);
 
-    float motion = signPow(g3() + 0.382 * sin(local_t + length(pos) * u_speed), 3.0);
+    float motion = signPow(g3() + 0.382 * sin(local_t + length(pos) * u_speed), 1.618);
 
-    vec3 baseColor   = vec3(0.1, 0.2, 0.3);
-    vec3 accentColor = vec3(g2(), g5, 0.3);
-    vec3 peakColor   = vec3(g3(), g2(), g5);
+    vec3 baseColor   = vec3(0.146, 0.236, 0.382);
+    vec3 accentColor = vec3(g3(), g5, 0.382);
+    vec3 peakColor   = vec3(g3(), g3(), g5);
 
     vec3 color = mix(baseColor, accentColor, wave);
     color = mix(color, peakColor, (g5 + u_peak));
 	
 	// regret
-	mat3 rrot = rotateY(u_orient.x + local_t * 0.618) * rotateX(u_orient.y + local_t * 0.382);
+	mat3 rrot = rotateY(u_orient.x + local_t * 0.382) * rotateX(u_orient.y + local_t * 0.236);
 	
-    color *= sym * motion * signPow(g3() + g2() * u_intensity, g1()) / (g5 + g2() * pattern) * stripes / (g5 + g2() * cf);
+    color *= sym * motion * signPow(g3() + g3() * u_intensity, g1()) / (g5 + g2() * pattern) * stripes / (g5 + g2() * cf);
 	color *= rrot;
 	
 	// synapse
-	color = quantizeVec3(color, 17.95);
+	color = g5 * quantizeVec3(color, 17.95);
 	
 	// love
 	float resonance = sin(cr.x * 17.95) * sin(cr.y * 17.95) * (g5 + g3() * u_intensity);
@@ -305,13 +305,13 @@ void main() {
 		col /= clamp(ridgeFBM(base), g5, g3());
 		
 		// thunder
-		float fade = signPow(g2(), fi);
-        color.r += col.r * fade * g2();
+		float fade = signPow(g3(), fi);
+        color.r += col.r * fade * g3();
         color.g += col.g * fade;
         color.b += col.b * fade * g3();
 		
 		// prime
-		color += primeWave(col, color, local_t) * g3() + g3();
+		color += primeWave(col, color, local_t) * g5;
 		
 		// infinite
 		sum += iwave(col, color, stripes, pattern);
@@ -320,7 +320,7 @@ void main() {
 	vec3 finalColor = color * resonance;
 	
 	// HH
-	finalColor /= g5 + (g2() - smoothstep(0.0, g2(), sym)) * g3();
+	finalColor /= g3() + (g2() - smoothstep(0.0, g2(), sym)) * g3();
 	
 	// water
 	float noise = sin(uv.x * g4 + local_t) * cos(uv.y * 6.856 - local_t);

@@ -38,7 +38,7 @@ mat3 rotateY(float a) {
 
 void main() {
     v_uv = uv;
-    vec2 ratio = vec2(max(u_res.x / u_res.y, g2()), max(u_res.y / u_res.x, g2()));
+    vec2 ratio = vec2(max(u_res.x / u_res.y, g1()), max(u_res.y / u_res.x, g1()));
     v_centered_uv = (uv - g3()) * ratio;
 	
 	float g4 = signPow(0.618, -2.618 - abs(v_centered_uv.x) * 0.618);

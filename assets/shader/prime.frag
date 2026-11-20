@@ -49,7 +49,7 @@ vec3 sphereCoord(vec2 uv) {
 float primeWave(vec3 p, vec3 center, float time) {
     float dist = sin(length(p - center)) / (g3() + g3() * cos(dot(p, center)));
     // 波動：cosine + 衰減
-    return cos(dist * 20.0 - time);
+    return cos(dist * 17.95 - time);
 }
 
 float params[7];
@@ -86,8 +86,8 @@ void main() {
 	
 	// 模擬擺弄：旋轉空間（加入隨機微震動）
     float shake = u_peak * g5;
-    p.yz *= rot(u_orient.y * g2() + local_t * 0.0557 + shake);
-    p.xz *= rot(u_orient.x * g1() + local_t * 0.0344);
+    p.yz *= rot(u_orient.y * 1.618 + local_t * 0.0557 + shake);
+    p.xz *= rot(u_orient.x * 1.618 + local_t * 0.0344);
 	p.z += v_z;
 	
 	params[0] = u_volume;
@@ -107,13 +107,13 @@ void main() {
 		} else { 
 			params[2] = cos(local_t);
 		}
-		float fi = g3() + sqrt(sqrt(float(i) * g3()));
+		float fi = g5 + sqrt(sqrt(float(i) * g5));
 		primes[i] = vec3(g5 + pickTwoAndMultiply(i) * fi, g5 - pickTwoAndMultiply(i+1) * (fi + g5), g5 + pickTwoAndMultiply(i+2) * (fi + g5));
         waveSum += primeWave(p, primes[i], local_t);
     }
 
     // 視覺化：亮區代表「覆蓋」，暗區代表「未覆蓋」
-    vec3 color = vec3(g5 + g3() * sin(waveSum), g5 + g3() * cos(waveSum), g5 + g3() * sin(waveSum * g3()));
+    vec3 color = vec3(g3() + g3() * sin(waveSum), g3() + g3() * cos(waveSum), g3() + g3() * sin(waveSum * g3()));
     if (u_darkGlow > 0.618) {
         color = vec3(waveSum * (g3() + g5), waveSum * g3(), waveSum);
     } else {
@@ -129,5 +129,5 @@ void main() {
 	vec3 past = texture2D(u_prevFrame, uv).rgb;
     color = mix(color, past, g3() + pow(u_speed, g1()) * g3()); 
 
-    gl_FragColor = vec4(color, 1.0);
+    gl_FragColor = vec4(color, g2());
 }

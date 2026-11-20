@@ -68,19 +68,19 @@ void main() {
     vec2 uv = v_uv - 0.5;
     vec2 pos = uv * 17.95;
 	
-	float dist = length(uv);
-	float local_t = u_time;
-	if (u_darkGlow > 0.618) {
-		local_t += g2() * dist;
-	}
-	else {
-		local_t -= g1() * dist;
-	}
-	
 	float g4 = signPow(0.618, -2.618 - abs(uv.x) * 0.618);
     float g5 = signPow(0.618, 2.618 + abs(uv.y) * 0.618);
 	
-	float punch = signPow(g5 + u_intensity * u_complexity * u_speed * u_peak, g1());
+	float dist = length(uv);
+	float local_t = u_time;
+	if (u_darkGlow > 0.618) {
+		local_t += g5 * dist;
+	}
+	else {
+		local_t -= g3() * dist;
+	}
+	
+	float punch = signPow(g5 + u_intensity * u_complexity * u_speed * u_peak, 4.236);
 	float freeze = 1.0 - (u_intensity + u_complexity + u_speed + u_peak) / 4.237;
 	float bigZ = v_z * 77.0 * freeze;
 	
@@ -88,12 +88,12 @@ void main() {
 		bigZ /= (g2() + u_volume_smooth);
 	}
 
-    float wave = signPow(g3() + 0.382 * sin(local_t + pos.x * u_complexity) / (0.146 * bigZ), g1());
+    float wave = signPow(g3() + 0.382 * sin(local_t + pos.x * u_complexity) / (0.146 * bigZ), 4.236);
     wave *= u_volume_smooth;
 
-    float sym = signPow(sin(local_t + pos.x * u_complexity + bigZ) * (g1() + 0.618 * cos(pos.y * u_intensity - bigZ)), g1());
+    float sym = signPow(sin(local_t + pos.x * u_complexity + bigZ) * (g1() + 0.618 * cos(pos.y * u_intensity - bigZ)), 4.36);
 
-    float motion = signPow(g3() + 0.382 * sin(local_t + length(pos) * u_speed), 1.618);
+    float motion = signPow(g3() + 0.382 * sin(local_t + length(pos) * u_speed), 4.236);
 
     vec3 baseColor   = vec3(0.1, 0.2, g3());
     vec3 accentColor = vec3(g2(), g3(), g3());
@@ -102,7 +102,7 @@ void main() {
     vec3 color = mix(baseColor, accentColor, wave);
     color = mix(color, peakColor, u_peak);
 	
-    color *= sym * motion;// * signPow(g3() + g2() * u_intensity, g1());
+    color *= sym * motion * signPow(g3() + g2() * u_intensity, g1());
 	
 	float r = g5;
     for(int i=0; i<7; i++){

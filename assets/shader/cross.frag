@@ -291,7 +291,7 @@ void main() {
 
     vec3 baseColor   = vec3(0.146, 0.236, 0.382);
     vec3 accentColor = vec3(g3(), g5, 0.382);
-    vec3 peakColor   = vec3(g5, g3(), g5);
+    vec3 peakColor   = vec3(g3(), g3(), g5);
 
     vec3 color = mix(baseColor, accentColor, wave);
     color = mix(color, peakColor, (g5 + u_peak));
@@ -310,7 +310,7 @@ void main() {
 	
 	float swing = sin(timeswing * 1.618 * PI * u_fps * u_bpm * length(color));
 	
-	float r = 0.0557;
+	float r = g5;
 	float sum = 0.0;
     for(int i=0; i<7; i++){
 		float fi = float(i);
@@ -331,9 +331,9 @@ void main() {
 		
 		// thunder
 		float fade = signPow(g3(), fi);
-        color.r += col.r * fade * (g5 - u_left + 0.382 * swing);
-        color.g += col.g * fade * (g5 - 0.236 * swing);
-        color.b += col.b * fade * (g5 - u_right + 0.146 * swing);
+        color.r += col.r * fade * (g3() - u_left + 0.382 * swing);
+        color.g += col.g * fade * (g3() - 0.236 * swing);
+        color.b += col.b * fade * (g3() - u_right + 0.146 * swing);
 		
 		// prime
 		color += g5 * primeWave(col, color, timeswing);
@@ -367,7 +367,7 @@ void main() {
 	// choice
 	past += vec3(sin(u_intensity), cos(u_speed), sin(u_complexity));
 	vec3 emission = color * abs(sym) * (u_volume_smooth * g3() + g3()) * g3();
-	vec3 currentFrame = mix(past, emission, g3()); 
+	vec3 currentFrame = mix(past, emission, g2()); 
 	finalColor = mix(currentFrame, past, g3() + g5 * freeze);
 	
 	float v_z_st = 0.0;
@@ -408,7 +408,7 @@ void main() {
 	float t = smoothstep(g3() - g3() * punch, g3() + g3() * punch, length(dist) * sin(timeswing));
 	finalColor = mix(leftCol, rightCol, t);
 	
-	finalColor = mix(finalColor, past, g3());
+	finalColor = mix(finalColor, past, g2());
 	
     r = length(vec3(v_uv * sin(timeswing), v_z * cos(timeswing)));
     float a = atan(v_uv.y * cos(timeswing), v_uv.x * sin(timeswing));
