@@ -723,14 +723,14 @@ class AudioMap {
 				<div id="fs-group">
 					<select id="fs-select">
 						<option value="" disabled selected>FFT SIZE</option>
-						<option value="256">256</option>
-						<option value="512">512</option>
-						<option value="1024">1024</option>
-						<option value="2048">2048</option>
-						<option value="4096">4096</option>
-						<option value="8192">8192</option>
-						<option value="16384">16384</option>
-						<option value="32768">32768</option>
+						<option value=256>256</option>
+						<option value=512>512</option>
+						<option value=1024>1024</option>
+						<option value=2048>2048</option>
+						<option value=4096>4096</option>
+						<option value=8192>8192</option>
+						<option value=16384>16384</option>
+						<option value=32768>32768</option>
 					</select>
 				</div>
 				<style>
@@ -1609,63 +1609,74 @@ class AudioMap {
 	
 	handleGivz(mapping, min, max) {
 		const data = this.uea.process(this.dataArray);
-		const N = data.length;
+		const bands = this.updateBandIndices(this.analyser.fftSize, this.audioContext.sampleRate, data.length);
+		const bandList = [bands.all, bands.low, bands.mid, bands.high];
+		let hasSignal = 0;
 		let result = 0;
+		
+		for (let b = 0; b < bandList.length; b++) {
+			const band = bandList[b];
+			if (band.count <= 0) continue;
 
-		// 先算總振幅判斷是否有訊號
-		let totalAmp = 0;
-		for(let i=0; i<N; i++) totalAmp += data[i];
-		const hasSignal = totalAmp > 1.0; 
+			const N = band.count;
+			
+			// 先算總振幅判斷是否有訊號
+			let totalAmp = 0;
+			for (let i = band.start; i < band.end; i++) totalAmp += data[i];
+			hasSignal = totalAmp > 1.0; 
 
-		// 各項特徵計算 (你原本的 Switch 內容)
-		switch (mapping.key) {
-			case 'intensity': // 全域重心 (Spectral Centroid)
-				let weightedSum = 0;
-				let totalAmplitude = 0;
-				for (let i = 0; i < N; i++) {
-					weightedSum += i * data[i];
-					totalAmplitude += data[i];
-				}
-				result = totalAmplitude > 0 ? (weightedSum / totalAmplitude) / N : 0;
-				break;
+			// 各項特徵計算 (你原本的 Switch 內容)
+			switch (mapping.key) {
+				case 'intensity': // 全域重心 (Spectral Centroid)
+					let weightedSum = 0;
+					let totalAmplitude = 0;
+					for (let i = band.start; i < band.end; i++) {
+						weightedSum += i * data[i];
+						totalAmplitude += data[i];
+					}
+					band.result = totalAmplitude > 0 ? (weightedSum / totalAmplitude) / N : 0;
+					break;
 
-			case 'speed': // 全域飽滿度 (Spectral Flatness)
-				let sumLog = 0;
-				let sumArithmetic = 0;
-				for (let i = 0; i < N; i++) {
-					const val = data[i];
-					const cleanVal = Math.max(val, 0.0001); 
-					sumLog += Math.log(cleanVal);
-					sumArithmetic += val;
-				}
-				// 計算算術平均 (Arithmetic Mean)
-				const am = sumArithmetic / N;
-				
-				// 計算幾何平均 (Geometric Mean) -> 使用 Exp(Avg(Log))
-				const gm = Math.exp(sumLog / N);
+				case 'speed': // 全域飽滿度 (Spectral Flatness)
+					let sumLog = 0;
+					let sumArithmetic = 0;
+					for (let i = band.start; i < band.end; i++) {
+						const val = data[i];
+						const cleanVal = Math.max(val, 0.0001); 
+						sumLog += Math.log(cleanVal);
+						sumArithmetic += val;
+					}
+					// 計算算術平均 (Arithmetic Mean)
+					const am = sumArithmetic / N;
+					
+					// 計算幾何平均 (Geometric Mean) -> 使用 Exp(Avg(Log))
+					const gm = Math.exp(sumLog / N);
 
-				// 計算平坦度 (0.0 ~ 1.0)
-				// 如果 am 為 0，平坦度設為 0
-				result = am > 0 ? (gm / am) : 0;
-				break;
+					// 計算平坦度 (0.0 ~ 1.0)
+					// 如果 am 為 0，平坦度設為 0
+					band.result = am > 0 ? (gm / am) : 0;
+					break;
 
-			case 'complexity': // 全域複雜度 (Spectral Flux)
-				if (!this.prevDataArray) this.prevDataArray = new Uint8Array(N);
-				let flux = 0;
-				for (let i = 0; i < N; i++) {
-					const diff = data[i] - this.prevDataArray[i];
-					flux += Math.max(0, diff);
-				}
-				this.prevDataArray.set(data);
+				case 'complexity': // 全域複雜度 (Spectral Flux)
+					if (!this.prevDataArray) this.prevDataArray = new Uint8Array(data.length);
+					let flux = 0;
+					for (let i = band.start; i < band.end; i++) {
+						const diff = data[i] - this.prevDataArray[i];
+						flux += Math.max(0, diff);
+					}
+					this.prevDataArray.set(data);
 
-				let rawComplexity = Math.min(flux / (N * 8), 1.0); 
-				let processedComplexity = Math.sqrt(rawComplexity); 
+					let rawComplexity = Math.min(flux / (N * 8), 1.0); 
+					let processedComplexity = Math.sqrt(rawComplexity); 
 
-				this.lastComplexity = (this.lastComplexity || 0) * 0.618 + processedComplexity * 0.382;
-				result = this.lastComplexity;
-				break;
+					this.lastComplexity = (this.lastComplexity || 0) * 0.618 + processedComplexity * 0.382;
+					band.result = this.lastComplexity;
+					break;
+			}
 		}
-
+		
+		result = this.resolveMetricWithVolumeAndPeak(bandList, this.material.uniforms.u_volume.value, this.material.uniforms.u_peak.value, this.material.uniforms.u_volume_smooth.value);
+		
 		// 初始化狀態對象 (防止 undefined 報錯)
 		if (!mapping.state) {
 			mapping.state = { min: result, max: result };
@@ -1717,6 +1728,63 @@ class AudioMap {
 			mapping.el.value = this.params[mapping.key];
 			mapping.el.style.setProperty('--peak', mapping.peak);
 		}
+	}
+	
+	updateBandIndices(fftSize, sampleRate, N) {
+		const safeN = Math.max(0, Math.floor(N));
+		const binHz = sampleRate / Math.max(2, fftSize);
+	
+		const toIdx = (hz) => Math.max(0, Math.min(safeN, Math.floor(hz / binHz)));
+	
+		// 預設切分：低音 20–250 Hz、中音 250–4000 Hz、高音 4000 Hz～上限
+		const lowStart = safeN > 0 ? Math.max(1, toIdx(20)) : 0;
+		const lowEnd = Math.max(lowStart, toIdx(250));
+	
+		const midStart = lowEnd;
+		const midEnd = Math.max(midStart, toIdx(4000));
+	
+		const highStart = midEnd;
+		const highEnd = safeN;
+	
+		return {
+			all:  { start: 0, end: N, count: N, result: 0},
+			low:  { start: lowStart, end: lowEnd, count: lowEnd - lowStart, result: 0 },
+			mid:  { start: midStart, end: midEnd, count: midEnd - midStart, result: 0 },
+			high: { start: highStart, end: highEnd, count: highEnd - highStart, result: 0 },
+		};
+	}
+	
+	// 假設 metric4 是 [mAll, mLow, mMid, mHigh]（同一個指標算出的 4 個值）
+	// currentTarget: 當下平均音量 (0..1)
+	// currentPeak:   當下峰值 (0..1)
+	// smoothedVol:   this.smoothedVolume (0..1)
+	resolveMetricWithVolumeAndPeak(metric4, currentTarget, currentPeak, smoothedVol) {
+		// 1. 音量太小時先收斂，避免小聲或底噪把畫面推高
+		if (currentTarget < 0.02) {
+			return 0;
+		}
+	
+		const vAll  = metric4[0].result;
+		const vLow  = metric4[1].result;
+		const vMid  = metric4[2].result;
+		const vHigh = metric4[3].result;
+	
+		// 2. 挑出低中高裡目前最高的一個，但不要讓它無條件獨吞
+		let maxSub = vLow;
+		if (vMid > maxSub) maxSub = vMid;
+		if (vHigh > maxSub) maxSub = vHigh;
+	
+		// 3. 用 peak 決定「局部最大值」跟「all」誰佔多一點
+		// peak 越高，代表有明顯尖峰，局部最大值權重略升；否則多留一點給 vAll，避免一直拉高
+		const peakBoost = Math.min(0.35, currentPeak * 0.45); // 0 ~ 0.35
+		const subWeight = 0.25 + peakBoost;                   // 0.25 ~ 0.60
+		const allWeight = 1 - subWeight;                      // 0.40 ~ 0.75
+	
+		let combined = vAll * allWeight + maxSub * subWeight;
+	
+		// 4. 結合整體音量動態，讓畫面跟著音量有起伏、不會死頂在高位
+		const envScale = Math.min(1, 0.382 + smoothedVol * 0.618 + currentTarget * 0.382);
+		return Math.max(0, Math.min(1, combined * envScale));
 	}
 	
 	async initAudio(audioPath = null) {
@@ -2567,7 +2635,9 @@ class AudioMap {
 			} else {
 				fftlv = Math.max(this.fftlvLabel.textContent - 1, 1);
 			}
+			
 			this.changeFS(this.fsSelect.options[fftlv].value);
+			
 			if (this.fftlvLabel) {
 				this.fftlvLabel.textContent = fftlv;
 			}
