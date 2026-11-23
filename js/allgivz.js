@@ -1760,9 +1760,9 @@ class AudioMap {
 	// smoothedVol:   this.smoothedVolume (0..1)
 	resolveMetricWithVolumeAndPeak(metric4, currentTarget, currentPeak, smoothedVol) {
 		// 1. 音量太小時先收斂，避免小聲或底噪把畫面推高
-		if (currentTarget < 0.02) {
+		/*if (currentTarget < 0.02) {
 			return 0;
-		}
+		}*/
 	
 		const vAll  = metric4[0].result;
 		const vLow  = metric4[1].result;
