@@ -1776,8 +1776,8 @@ class AudioMap {
 	
 		// 3. 用 peak 決定「局部最大值」跟「all」誰佔多一點
 		// peak 越高，代表有明顯尖峰，局部最大值權重略升；否則多留一點給 vAll，避免一直拉高
-		const peakBoost = Math.min(0.35, currentPeak * 0.45); // 0 ~ 0.35
-		const subWeight = 0.25 + peakBoost;                   // 0.25 ~ 0.60
+		const peakBoost = Math.min(0.382, currentPeak * 0.618); // 0 ~ 0.35
+		const subWeight = 0.236 + peakBoost;                   // 0.25 ~ 0.60
 		const allWeight = 1 - subWeight;                      // 0.40 ~ 0.75
 	
 		let combined = vAll * allWeight + maxSub * subWeight;
