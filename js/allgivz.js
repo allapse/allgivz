@@ -164,6 +164,8 @@ class AudioMap {
 		this.advMode = false;
 		this.fsSelect = null;
 		this.elvSelect = null;
+		this.verSelect = null;
+		this.verPath = "LATEST";
 		
 		this.cameraManager = null;
 		this.useCamera = null;
@@ -774,6 +776,25 @@ class AudioMap {
 						<option value="OFF">OFF</option>
 					</select>
 				</div>
+				<style>
+					#ver-group { margin-top: 20px; position: relative; display: none; }
+					#ver-select {
+						width: 100%; background: transparent; color: #999;
+						border: none; border-bottom: 1px solid #999;
+						font-size: 9px; outline: none; letter-spacing: 1px;
+						-webkit-appearance: none; padding: 0px; cursor: pointer;
+						 margin-left: 2px;
+					}
+					#ver-group::after { content: '▼'; font-size: 8px; color: #999; position: absolute; right: 0; bottom: 8px; pointer-events: none;}
+					#ver-select option { font-size: 9px; background: #000; color: #999;}
+				</style>
+				<div id="ver-group">
+					<select id="ver-select">
+						<option value="" disabled selected>VER</option>
+						<option value="LATEST">LATEST</option>
+						<option value="1">1</option>
+					</select>
+				</div>
 			</div>
 			<div class="info-labels" style="margin-top: 10px;">
 				<Label id="adv-label">▼</Label>
@@ -1081,6 +1102,19 @@ class AudioMap {
 				};
 			}
 			
+			this.verSelect = document.getElementById('ver-select');
+			if (this.verSelect) {
+				// 使用箭頭函數確保 this 指向你的主程式物件
+				this.verSelect.onchange = (e) => {
+					this.verPath = e.target.value;
+					if(this.verPath == "1") {
+						this.bloomPass.enabled = false;
+					} else {
+						this.bloomPass.enabled = true;
+					}
+				};
+			}
+			
 			this.volBar = document.getElementById('main-vol-bar');
 			this.lBar = document.getElementById('main-l-bar');
 			this.rBar = document.getElementById('main-r-bar');
@@ -1093,7 +1127,7 @@ class AudioMap {
 			if (advLabel) {
 				// 使用箭頭函數確保 this 指向你的主程式物件
 				advLabel.onclick = (e) => {
-					const uiElements = ['fs-group', 'elv-group', 'ari-group'];
+					const uiElements = ['fs-group', 'elv-group', 'ari-group', 'ver-group'];
 					let display = 'none';
 					let text = '▼';
 					
@@ -1306,12 +1340,19 @@ class AudioMap {
 			}
 			
 			// 從 assets 路徑抓取新的片段著色器
-			const vertPath = path.replace('.frag', '.vert');
+			let fragPath = path;
+			
+			if(this.verPath != "LATEST") {
+				fragPath = fragPath.replace('/shader/', '/shader/'+this.verPath+'/');
+			}
+			
+			let vertPath = fragPath.replace('.frag', '.vert');
+			
 			const defaultVert = `void main() { gl_Position = vec4(position, 1.0); }`;
 
 			// 2. 同時抓取兩者 (使用 Promise.all 比較快)
 			const [fragRes, vertRes] = await Promise.all([
-				fetch(`${path}?t=${Date.now()}`),
+				fetch(`${fragPath}?t=${Date.now()}`),
 				fetch(`${vertPath}?t=${Date.now()}`).catch(() => ({ ok: false })) // 抓不到也不要噴錯
 			]);
 
