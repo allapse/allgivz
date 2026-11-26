@@ -75,7 +75,7 @@ void main() {
 	}
 	
 	float g4 = signPow(0.618, -2.618 - abs(uv.x) * 0.618);
-    float g5 = signPow(0.618, 2.618 + abs(uv.y) * 0.618);
+    float g5 = signPow(0.618, 2.618 + dist * 0.618);
 	
 	dist = length(vec3(uv, sin(local_t)));
 	local_t = u_time * (1.0 + 0.09 * cos(u_time * 1.618 * PI * u_fps * u_bpm * dist));
@@ -84,13 +84,13 @@ void main() {
     vec3 cam = texture2D(u_camera, uv).rgb;
     vec3 past = texture2D(u_prevFrame, uv).rgb;
 
-    float baseStim = length(cam - past) * u_volume_smooth + swing;
+    float baseStim = length(cam - past + swing) * u_volume_smooth;
 
     float decision;
 
     if(u_darkGlow < 0.618){
         // 理智模式 → 局部連鎖
-        float offset = g1() / min(u_res.x, u_res.y) + swing;
+        float offset = g1() / min(u_res.x, u_res.y);
         float stimN = length(texture2D(u_camera, uv + vec2(0.0, offset)).rgb -
                              texture2D(u_prevFrame, uv + vec2(0.0, offset)).rgb) * u_volume_smooth;
         float stimS = length(texture2D(u_camera, uv - vec2(0.0, offset)).rgb -
@@ -99,18 +99,18 @@ void main() {
                              texture2D(u_prevFrame, uv + vec2(offset, 0.0)).rgb) * u_volume_smooth;
         float stimW = length(texture2D(u_camera, uv - vec2(offset, 0.0)).rgb -
                              texture2D(u_prevFrame, uv - vec2(offset, 0.0)).rgb) * u_volume_smooth;
-        decision = clamp(signPow(baseStim + g3() * (stimN+stimS+stimE+stimW), g1()), 0.0, g2()) + swing;
+        decision = clamp(signPow(baseStim + g3() * (stimN + stimS + stimE + stimW), g1()), 0.0, g2());
     } else {
         // 個性模式 → 單點 + 隨機
         float change = length(cam - past); // 當前 vs 過去的差異 → 環境變化
-		decision = clamp(signPow(change * u_volume_smooth * g4, g1()), 0.0, g2()) + swing; 
+		decision = clamp(signPow(change * u_volume_smooth * g4, g1()), 0.0, g2()); 
 		// 決策值 0~1 → 哪些粒子被加強
     }
 
     // 粒子旋轉
-    mat3 rot = rotateY(u_orient.x + local_t * 0.236) * rotateX(u_orient.y + local_t * 0.09) + swing;
+    mat3 rot = rotateY(u_orient.x + local_t * 0.236) * rotateX(u_orient.y + local_t * 0.09);
     vec2 uvCentered = uv - g3();
-    float angleOffset = decision * 6.856 + swing;
+    float angleOffset = decision * 6.856;
     vec3 particle = rot * normalize(vec3(
         uvCentered.x * cos(angleOffset) - uvCentered.y * sin(angleOffset),
         uvCentered.x * sin(angleOffset) + uvCentered.y * cos(angleOffset),
@@ -120,7 +120,7 @@ void main() {
     // 顏色
     vec3 baseColor = mix(past, cam, decision);
     baseColor = quantizeVec3(baseColor, g4 * g4);
-    float brightness = g3() + decision * g2() + swing;
+    float brightness = g3() + decision * g3();
     vec3 color = normalize(baseColor) * abs(particle) * brightness;
 
     gl_FragColor = vec4(color, g2());

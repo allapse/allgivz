@@ -7,11 +7,15 @@ uniform float u_volume;
 uniform float u_intensity;   
 uniform float u_complexity;
 uniform float u_speed;
+uniform float u_fps;
+uniform float u_bpm;
 uniform sampler2D u_camera;
 uniform sampler2D u_prevFrame;
 uniform vec2 u_orient;
 uniform float u_darkGlow;
 uniform float u_peak;
+
+#define PI 3.14159265359
 
 float signPow(float val, float pt){
 	return sign(val) * pow(abs(val), pt);
@@ -87,9 +91,6 @@ void main() {
     vec2 uv = gl_FragCoord.xy / u_res.xy;
 	float aspect = u_res.x / u_res.y;
 	
-	float g4 = signPow(0.618, -2.618 - abs(uv.x) * 0.618);
-    float g5 = signPow(0.618, 2.618 + abs(uv.y) * 0.618);
-	
 	float dist = length(uv);
 	float local_t = u_time;
 	if (u_darkGlow > 0.618) {
@@ -99,6 +100,13 @@ void main() {
 		local_t -= g1() * dist;
 	}
 	
+	float g4 = signPow(0.618, -2.618 - abs(uv.x) * 0.618);
+    float g5 = signPow(0.618, 2.618 + dist * 0.618);
+	
+	dist = length(vec3(uv, sin(local_t)));
+	local_t = u_time * (1.0 + 0.09 * cos(u_time * 1.618 * PI * u_fps * u_bpm * dist));
+	float swing = sin(local_t + dist) * g5;
+	
 	// 2. 這是「全填充」修正：
     // 我們只修正 uv.y，讓它配合寬度的比例縮放
     // 這樣 x 軸永遠是 0~1 (填滿左右)，y 軸則會根據螢幕高矮自動調整
@@ -106,7 +114,7 @@ void main() {
     
     // 3. 垂直置中 (選用)
     // 如果不加這行，山脈會貼在螢幕底部；加上這行，山脈會保持在垂直中央
-    uv.y -= (g2() / aspect - g2()) * g3();
+    uv.y -= (g2() / aspect - g2()) * g3() + swing;
 	
     vec3 finalCol = vec3(0.0);
 
@@ -128,7 +136,7 @@ void main() {
         float speed = local_t * (0.0556 * fi); // 視差
         float scale = g2() + fi * g3();
         // 取得尖銳山脊雜訊
-        float h = ridgeFBM(vec2(uv.x * scale + speed, sqrt(fi * g4 * g4))) * (g3() / fi);
+        float h = ridgeFBM(vec2(uv.x * scale + speed, sqrt(fi * g4 * g4))) * (g3() / fi) + swing;
         float mask = step(uv.y, h + g5 + (0.01314 * fi));
         
         // 顏色隨層數變深 (大氣透視)
@@ -149,7 +157,7 @@ void main() {
         float speed = local_t * (0.382 + fi * 0.236); // 飛速後移
         float forestScale = g4 + fi * g3();
         // 森林用一般的雜訊疊加，看起來比較碎
-        float h = fbm(vec2(uv.x * forestScale + speed, fi * g4 * g4)) * (g3() / fi);
+        float h = fbm(vec2(uv.x * forestScale + speed, fi * g4 * g4)) * (g3() / fi) + swing;
         
         // 加入音樂抖動 (u_complexity)
         h += u_complexity * g5 * g5 * g5 * fi; 
@@ -174,13 +182,13 @@ void main() {
 		for(int j = 0; j < 2; j++) { // 增加粒子數量
 			float fj = float(j);
 			vec2 seed = vec2(fj, floor(local_t * g3() + fj));
-			float rand = hash(seed);
+			float rand = hash(seed) + swing;
 			
 			// 1. 飄落運動邏輯 (取代原本的直線噴發)
 			vec2 driftPos = uv;
 			float speed = g3() + rand * g2();
-			driftPos.y += local_t * u_complexity;           // 往下掉
-			driftPos.x += sin(local_t + rand * g4 * g4) * g3(); // 左右搖擺（風感）
+			driftPos.y += local_t * u_complexity + swing;           // 往下掉
+			driftPos.x += sin(local_t + rand * g4 * g4) * g3() + swing; // 左右搖擺（風感）
 			
 			vec2 p = fract(driftPos * g3()) - g2();
 			
@@ -240,16 +248,16 @@ void main() {
 	vec3 finalEffectCol = processedCol;
 
 	// A. 掃描線 (Scanlines)：利用 uv.y 的正弦波產生
-	float scanline = sin(uv.y * u_res.y * g1()) * g5;
+	float scanline = sin(uv.y * u_res.y * g1()) * g5 + swing;
 	finalEffectCol -= scanline;
 
 	// B. 螢幕暗角 (Vignette)：讓邊緣變暗，增加壓抑感
-	float vignette = uv.x * uv.y * (g2() - uv.x) * (g2() - uv.y);
+	float vignette = uv.x * uv.y * (g2() - uv.x) * (g2() - uv.y) + swing;
 	vignette = signPow(vignette * g4 * g4, g3());
 	finalEffectCol *= vignette;
 
 	// C. 隨機噪點 (Grain)：讓畫面像老電影
-	float grain = (hash(uv + local_t) - g3()) * g5;
+	float grain = (hash(uv + local_t) - g3()) * g5 + swing;
 	finalEffectCol += grain;
 
 	// D. 色彩飽和度增益 (利用 u_peak)：重音來時畫面會稍微閃白
@@ -273,8 +281,8 @@ void main() {
     // [此處承接之前的 3 個 for 迴圈邏輯，並使用 uvR/uvB 混合]
     // 為了效能，我們直接在計算結果上疊加
     
-    vec2 eyePos = uv - vec2(g3(), g2() + sin(u_speed) * g5);
-    float eyeDist = length(eyePos);
+    vec2 eyePos = uv - vec2(g3(), g2() + sin(u_speed) * g5) + swing;
+    float eyeDist = length(eyePos) + swing;
     float eyeSize = g5 + u_peak * g5;
     float eyeGlow = smoothstep(eyeSize, 0.0, eyeDist);
     vec3 eyeCol = vec3(1.0, 0.0, 0.0) * eyeGlow * (u_intensity + g3());
