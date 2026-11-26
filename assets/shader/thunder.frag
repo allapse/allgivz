@@ -61,10 +61,10 @@ void main() {
 	float dist = length(v_centered_uv);
 	float local_t = u_time;
 	if (u_darkGlow > 0.618) {
-		local_t += g3() * dist;
+		local_t += g2() * dist;
 	}
 	else {
-		local_t -= g2() * dist;
+		local_t -= g1() * dist;
 	}
 	
 	dist = length(vec3(v_centered_uv, sin(local_t)));
@@ -126,12 +126,12 @@ void main() {
         // 色散模擬：對 RGB 進行微小的位置偏移
         finalCol.r += col.r * fade * g3();
         finalCol.g += col.g * fade;
-        finalCol.b += col.b * fade * g3();
+        finalCol.b += col.b * fade * g2();
 		
 		if(u_darkGlow > 0.618){
 			float lineMatch = smoothstep(g3(), 0.0, d) + swing;
-			float colorIndex = fi * g3() + d * g3() - local_t * 0.09;
-            finalCol += pow(heatmap(colorIndex) * lineMatch, vec3(g3())) * g5;
+			float colorIndex = fi * g3() + d * g2() - local_t * 0.09;
+            finalCol += pow(heatmap(colorIndex) + lineMatch, vec3(g5));
 		}
         
         if (fade < g5) break; 

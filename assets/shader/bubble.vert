@@ -9,13 +9,10 @@ uniform vec2 u_orient;
 uniform float u_complexity;
 uniform float u_intensity;
 uniform float u_speed;
-uniform float u_fps;
-uniform float u_bpm;
 uniform sampler2D u_camera; // 準備接入相機
 uniform float u_useCamera;
 uniform float u_darkGlow;      // 暗部輝光強度 (0~1)
-
-#define PI 3.14159265359
+uniform float u_bpm;
 
 varying vec2 vUv;
 varying vec3 vNormal;
@@ -63,50 +60,46 @@ void main() {
 	else {
 		local_t += g5 * dist;
 	}
-	    
-	dist = length(vec3(uv, sin(local_t)));
-	local_t = u_time * (1.0 + 0.09 * cos(u_time * 1.618 * PI * u_fps * u_bpm * dist));
-	float swing = sin(local_t + dist) * g5;
 	
-    vS1 = hash(a_id) + swing;
-    vS2 = hash(a_id + 0.382) + swing;
+    vS1 = hash(a_id);
+    vS2 = hash(a_id + 0.382);
     
     // 1. 生命週期：每個粒子都有不同的出生偏移
     // 用 mod 讓它們循環：0.0 是剛出生，1.0 是消失
-    float life = mod(local_t * 0.382 + vS1, 0.618) / (0.382 + 0.618 * u_speed) + swing; 
-    vLife = life + swing;
+    float life = mod(local_t * 0.382 + vS1, 0.618) / (0.382 + 0.618 * u_speed); 
+    vLife = life;
 
     // 2. 誕生路徑：從中心噴出
     // 剛出生時 (life 靠近 0)，它們只是隨機噴發的點
     // 隨著 life 增加，它們被強迫吸附到球面上
-    float phi = acos(g1() * vS1 - g2()) + swing;
-    float theta = vS2 * 6.856 + swing;
+    float phi = acos(g1() * vS1 - g2());
+    float theta = vS2 * 6.856;
     
     // 理想球體座標
-    vec3 spherePos = vec3(sin(phi)*cos(theta), sin(phi)*sin(theta), cos(phi)) * sqrt((u_volume * g3() + g2())) + swing;
+    vec3 spherePos = vec3(sin(phi)*cos(theta), sin(phi)*sin(theta), cos(phi)) * sqrt((u_volume * g2() + g3()));
     
     // 噴射邏輯：
     // 初期：半徑從 0 快速擴大
     // 中期：形成球體 (r=1.0)
     // 隨音量震盪
-    float r = smoothstep(g3(), g2(), life) * (g3() + u_volume_smooth * g2()) + swing;
+    float r = smoothstep(g3(), g2(), life) * (g3() + u_volume_smooth * g2());
     
     // 加上一點噴射時的抖動
-    vec3 noise = vec3(hash(vS1), hash(vS2), hash(vS1 + vS2)) * u_peak * g3() * (g2() - life) + swing;
-    vec3 pos = spherePos * r + noise + swing;
+    vec3 noise = vec3(hash(vS1), hash(vS2), hash(vS1 + vS2)) * u_peak * g3() * (g2() - life);
+    vec3 pos = spherePos * r + noise;
 	
-	pos.yz *= rotate(u_orient.y * g1() + (local_t / vS2 + vS1) * u_darkGlow * 0.382) + swing; // 繞 X 軸轉
-    pos.xz *= rotate(u_orient.x * g2() + (local_t / vS1 + vS2) * u_darkGlow * 0.618) + swing; // 繞 Y 軸轉
-	pos.xy *= rotate(local_t / vS1 * vS2 + vS1 - vS2) * (g2() + g5 * u_complexity) + swing; // 繞 Y 軸轉
+	pos.yz *= rotate(u_orient.y * g1() + (local_t / vS2 + vS1) * u_darkGlow * 0.382); // 繞 X 軸轉
+    pos.xz *= rotate(u_orient.x * g2() + (local_t / vS1 + vS2) * u_darkGlow * 0.618); // 繞 Y 軸轉
+	pos.xy *= rotate(local_t / vS1 * vS2 + vS1 - vS2) * (g2() + g5 * u_complexity); // 繞 Y 軸轉
 
     // 3. 視角運算
-    vNormal = normalize(spherePos) * u_complexity + swing; // 始終向外
-    vViewDir = normalize(vec3(g5, g3(), g2()) - pos) + swing;
+    vNormal = normalize(spherePos) * u_complexity; // 始終向外
+    vViewDir = normalize(vec3(g5, g3(), g2()) - pos);
 
     // 將 pos.z 傳給 gl_Position 的 z 分量
 	// 0.0 到 1.0 之間是 GPU 的標準深度範圍
 	// 我們把球體的 -1~1 對應到 0~1
-	float depthForGPU = pos.z * g3() + g3() + swing; 
+	float depthForGPU = pos.z * g3() + g3(); 
 	
 	// 1. 基礎位移：讓球體中心隨 u_orient 偏移
     // 乘以 0.5 是為了讓動作細微，不至於跑出螢幕
@@ -122,13 +115,13 @@ void main() {
 
 	// 計算 3D 遠近感的大小衰減
 	// 這裡假設一個虛擬的相機距離為 2.0
-	float perspective = (g2() + vS1 * u_peak + vS2 * u_darkGlow * g1()) / (g1() - pos.z) + swing; 
+	float perspective = (g2() + vS1 * u_peak + vS2 * u_darkGlow * g1()) / (g1() - pos.z); 
 	// 剛噴出時點很小，成形時變大，消失前變薄
-    float sizeGrowth = smoothstep(0.0, g3(), vLife) + swing; 
+    float sizeGrowth = smoothstep(0.0, g3(), vLife); 
 	gl_PointSize = (g1() + sizeGrowth * g2()) * perspective + vS1 - vS2;
 	
 	// 將 [-1, 1] 的裁剪空間轉為 [0, 1] 的螢幕空間
-    vScreenUv = gl_Position.xy * g2() + g2();
+    vScreenUv = gl_Position.xy * g3() + g3();
 
 }
 
