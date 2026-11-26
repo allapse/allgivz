@@ -6,6 +6,8 @@ uniform vec2 u_orient;
 uniform float u_intensity;
 uniform float u_complexity;
 uniform float u_speed;
+uniform float u_fps;
+uniform float u_bpm;
 uniform float u_peak;
 uniform float u_darkGlow;
 
@@ -69,11 +71,8 @@ void main() {
 	}
     vec2 uv = ((gl_FragCoord.xy - 0.618 * res) / min(res.y, res.x) + shake) * g1();
 	
-	float g4 = signPow(0.618, -2.618 - abs(uv.x) * 0.618);
-    float g5 = signPow(0.618, 2.618 + abs(uv.y) * 0.618);
-	
 	float dist = length(uv);
-	float local_t = u_time;
+	float local_t = u_time * (1.0 + 0.146 * cos(u_time * 1.618 * PI * u_fps * u_bpm * dist));
 	if (u_darkGlow > 0.618) {
 		local_t += g2() * dist;
 	}
@@ -81,27 +80,32 @@ void main() {
 		local_t -= g1() * dist;
 	}
 	
-    vec2 look = u_orient; 
+	float g4 = signPow(0.618, -2.618 - abs(uv.x) * 0.618);
+    float g5 = signPow(0.618, 2.618 + dist * 0.618);
+	
+	float swing = sin(local_t) * g5;
+	
+    vec2 look = u_orient + swing; 
     
     // ro 與 rd
-    vec3 ro = vec3(g3(), g5, local_t);
-    vec3 dir = vec3(uv + look * g1(), g5);
-    vec3 rd = normalize(dir + g5); 
-    rd.xy *= rot(look.x * g4);
+    vec3 ro = vec3(g3(), g5, local_t) + swing;
+    vec3 dir = vec3(uv + look * g1(), g5) + swing;
+    vec3 rd = normalize(dir + g5) + swing; 
+    rd.xy *= rot(look.x * g4) + swing;
 
-    float t = g3();
-    float glow = g3();
+    float t = g3() + swing;
+    float glow = g3() + swing;
     
     for(int i = 0; i < 29; i++) {
-        vec3 p = ro + rd * t;
-        float d = map(p, local_t);
+        vec3 p = ro + rd * t + swing;
+        float d = map(p, local_t) + swing;
         
         // Volume (亮度): 影響光暈的厚度
-        float glowDensity = g3() + u_volume * g3();
-        glow += glowDensity / (abs(d) + g3());
+        float glowDensity = g3() + u_volume * g3() + swing;
+        glow += glowDensity / (abs(d) + g3()) + swing;
         
         if (d < g5 || t > g4) break;
-        t += d * g2();
+        t += d * g2() + swing;
     }
     
     // Intensity (顏色): 控制顏色區間的切換
@@ -120,7 +124,7 @@ void main() {
 
     // DarkGlow 模式處理
     if (u_darkGlow < 0.618) {
-        float luminance = dot(finalCol, vec3(g3(), g2(), g5));
+        float luminance = dot(finalCol, vec3(g3(), g2(), g5)) + swing;
         finalCol = vec3(pow(max(g3(), g2() - luminance), g1())) * vec3(g2(), g3(), g5);
     }
 

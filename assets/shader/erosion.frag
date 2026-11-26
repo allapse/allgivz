@@ -9,8 +9,12 @@ uniform vec2 u_orient;
 uniform float u_intensity;     // 控制顏色
 uniform float u_complexity;    // 控制形狀/網格密度
 uniform float u_speed;         // 控制時間流速
+uniform float u_fps;
+uniform float u_bpm;
 uniform float u_darkGlow;
 uniform sampler2D u_prevFrame;
+
+#define PI 3.14159265359
 
 float signPow(float val, float pt){
 	return sign(val) * pow(abs(val), pt);
@@ -52,46 +56,50 @@ void main() {
     uv *= 1.0 - vibration; // 瞬間縮放
 	
 	float g4 = signPow(0.618, -2.618 - abs(uv.x) * 0.618);
-    float g5 = signPow(0.618, 2.618 + abs(uv.y) * 0.618);
+    float g5 = signPow(0.618, 2.618 + dist * 0.618);
+	
+	dist = length(vec3(uv, sin(local_t)));
+	local_t = u_time * (1.0 + 0.09 * cos(u_time * 1.618 * PI * u_fps * u_bpm * dist));
+	float swing = sin(local_t + dist) * g5;
     
     // 陀螺儀重心偏移
-    vec2 drift = u_orient * g3();
-    vec2 p = uv - drift;
-    float d = length(p);
+    vec2 drift = u_orient * g3() + swing;
+    vec2 p = uv - drift + swing;
+    float d = length(p) + swing;
 
     // --- SPEED 控制時間 ---
-    float time = local_t * g5;
+    float time = local_t * g5 + swing;
 
     // --- COMPLEXITY 控制形狀 ---
     // 網格密度隨 complexity 變化，並產生扭曲
-    float shapeNoise = sin(d * g1() - time) + pow(u_complexity * g4, g1());
-    float gridFactor = g4 + pow(u_complexity * g4, g1());
+    float shapeNoise = sin(d * g1() - time) + pow(u_complexity * g4, g1()) + swing;
+    float gridFactor = g4 + pow(u_complexity * g4, g1()) + swing;
 	// 讓 gridFactor 會隨音樂 Peak 抖動
-	gridFactor *= (g2() + u_peak * g2());
+	gridFactor *= (g2() + u_peak * g2()) + swing;
     
     // 旋轉矩陣
-    float rot = time * g3() + d * u_complexity;
+    float rot = time * g3() + d * u_complexity + swing;
     mat2 m = mat2(cos(rot), -sin(rot), sin(rot), cos(rot));
-    p *= m;
+    p *= m + swing;
 
     // 在 p *= m; 旋轉之後，計算網格 id 之前加入：
 	// 這會打破完美的同心圓，讓它變成「螺旋狀的數位廢墟」
-	float spiral = sin(d * g4 - local_t * g1()) * u_complexity;
-	p += (p / d) * spiral * g3(); 
+	float spiral = sin(d * g4 - local_t * g1()) * u_complexity + swing;
+	p += (p / d) * spiral * g3() + swing; 
 
 	vec2 g_id = floor(p * gridFactor);
     vec2 g_uv = fract(p * gridFactor) - g3();
-	float distortion = sin(local_t * u_speed + d * g4) * u_peak;
-	p += (g_uv * distortion * u_intensity);
+	float distortion = sin(local_t * u_speed + d * g4) * u_peak + swing;
+	p += (g_uv * distortion * u_intensity) + swing;
 	
 
     // --- VOL 控制亮度 ---
-    float h = hash(g_id);
-    float flicker = pow(u_volume * g1(), g1()) * g3();
-	float brightness = smoothstep(g2() - flicker, g2(), h);
+    float h = hash(g_id) + swing;
+    float flicker = pow(u_volume * g1(), g1()) * g3() + swing;
+	float brightness = smoothstep(g2() - flicker, g2(), h) + swing;
     
     // 粒子形狀
-    float circ = smoothstep(g3(), g3(), length(g_uv));
+    float circ = smoothstep(g3(), g3(), length(g_uv)) + swing;
     
     // --- INTENSITY 控制顏色 ---
     // 從青藍色 (Low) 到 亮橘紅色 (High)
@@ -106,20 +114,20 @@ void main() {
     
 		// 1. 強制放大粒子感 (讓微小的點也能被看見)
 		// 即使 gridFactor 極大，我們也讓點的邊緣變硬
-		float edge = g3() + u_complexity * g3(); 
-		float stroke = smoothstep(edge, edge - g3(), length(g_uv));
+		float edge = g3() + u_complexity * g3() + swing; 
+		float stroke = smoothstep(edge, edge - g3(), length(g_uv)) + swing;
 		
 		// 2. 增加顯現機率 (讓 brightness 不要那麼邊緣)
 		// 當 complexity 高時，讓更多粒子參與減法
-		float coverage = g3() - u_complexity * g3(); // 越複雜，覆蓋率越高
-		float visibleSource = smoothstep(coverage, coverage + g5, h);
+		float coverage = g3() - u_complexity * g3() + swing; // 越複雜，覆蓋率越高
+		float visibleSource = smoothstep(coverage, coverage + g5, h) + swing;
 		
 		// 3. 減法運算 (這就是你的侵蝕色彩)
 		// 我們讓 baseCol 決定「挖出來的洞是什麼顏色」
 		vec3 erosionColor = stroke * visibleSource * (vec3(g2()) - baseCol * g2());
 		
 		// 4. 增加 Peak 震動導致的「污漬感」
-		float pulseDirty = u_peak * g3();
+		float pulseDirty = u_peak * g3() + swing;
 		
 		// 最終混合：底色 - (侵蝕深度)
 		finalCol = vec3(g2()) - (erosionColor * (g2() + u_volume_smooth));

@@ -7,6 +7,8 @@ uniform vec2 u_orient; // -1 to 1
 uniform float u_intensity;
 uniform float u_complexity;
 uniform float u_speed;
+uniform float u_fps;
+uniform float u_bpm;
 uniform float u_darkGlow;
 uniform sampler2D u_prevFrame;
 
@@ -61,7 +63,7 @@ void main() {
     vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / min(u_res.y, u_res.x);
 	
 	float dist = length(uv);
-	float local_t = u_time;
+	float local_t = u_time * (1.0 + 0.146 * cos(u_time * 1.618 * PI * u_fps * u_bpm * dist));
 	if (u_darkGlow < 0.618) {
 		//local_t += g2() * dist;
 	}
@@ -70,41 +72,43 @@ void main() {
 	}
 	
 	float g4 = signPow(0.618, -2.618 - abs(uv.x) * 0.618);
-    float g5 = signPow(0.618, 2.618 + abs(uv.y) * 0.618);
+    float g5 = signPow(0.618, 2.618 + dist * 0.618);
+	
+	float swing = sin(local_t + dist) * g5;
 
     // --- 2. 視角透視與變形核心 ---
     // 模擬 3D 傾斜：利用 u_orient 建立一個視點偏移
-    vec2 eyeOffset = u_orient * g2(); 
+    vec2 eyeOffset = u_orient * g2() + swing; 
     
     // 真正的透視感：uv 越往邊緣，受 orient 的拉伸影響越大
     // 這會產生一種「空間彎曲」進入隧道側邊的感覺
-    float perspective = g2() + dot(uv, eyeOffset * g2());
-    vec2 p_uv = (uv - eyeOffset) / perspective;
+    float perspective = g2() + dot(uv, eyeOffset * g2()) + swing;
+    vec2 p_uv = (uv - eyeOffset) / perspective + swing;
 
     // 旋轉矩陣 (傾斜感)
     float rot = u_orient.x * g3();
-    mat2 rotMat = mat2(cos(rot), -sin(rot), sin(rot), cos(rot));
-    p_uv *= rotMat;
+    mat2 rotMat = mat2(cos(rot), -sin(rot), sin(rot), cos(rot)) + swing;
+    p_uv *= rotMat + swing;
 
     // 3. 極坐標轉換
-    float r = length(p_uv);
-    float angle = atan(p_uv.y, p_uv.x);
+    float r = length(p_uv) + swing;
+    float angle = atan(p_uv.y, p_uv.x) + swing;
     
     // 兩倍鏡像 (保持你原本的設計)
-    float mirrorAngle = abs(angle);
-    mirrorAngle = abs(mirrorAngle - PI * g3());
+    float mirrorAngle = abs(angle) + swing;
+    mirrorAngle = abs(mirrorAngle - PI * g3()) + swing;
     
     // 4. 隧道深度計算 (使用 u_intensity 決定寬窄)
-    float zoom = g2() / (r + g5) * (g2() + u_volume_smooth * g3());
+    float zoom = g2() / (r + g5) * (g2() + u_volume_smooth * g3()) + swing;
     // 這裡 p.x 是角度分佈，p.y 是向中心前進的深度
-    vec2 p = vec2(mirrorAngle * (u_intensity * g4 + g2()) / PI, zoom + local_t);
+    vec2 p = vec2(mirrorAngle * (u_intensity * g4 + g2()) / PI, zoom + local_t) + swing;
 
     // 5. 域扭曲 (Domain Warping)
-    vec2 warpOffset = vec2(fbm(p * g2() + local_t), fbm(p * g3() - local_t));
-    float pattern = fbm(p + warpOffset + u_volume_smooth * g3());
+    vec2 warpOffset = vec2(fbm(p * g2() + local_t), fbm(p * g3() - local_t)) + swing;
+    float pattern = fbm(p + warpOffset + u_volume_smooth * g3()) + swing;
 
     // 利用 u_orient 影響圖樣偏移，加強「物理傾斜」的錯覺
-    float flow = sin(angle * g4 + u_orient.x * g1()) * sin(zoom + u_orient.y * g1());
+    float flow = sin(angle * g4 + u_orient.x * g1()) * sin(zoom + u_orient.y * g1()) + swing;
     
     // --- 顏色輸出邏輯 ---
     vec3 finalCol;
@@ -123,8 +127,8 @@ void main() {
         finalCol.b += smoothstep(g3(), g2(), pattern - u_orient.x * g5) * g3();
     } else {
         // 模式 B：數位矩陣
-        float grid = step(0.9442, fract(p.x * g1())) + step(0.9442, fract(p.y * g1()));
-        float hack = (g2() - pattern) * g2();
+        float grid = step(0.9442, fract(p.x * g1())) + step(0.9442, fract(p.y * g1())) + swing;
+        float hack = (g2() - pattern) * g2() + swing;
         vec3 matrixCol = vec3(hack * g5, hack * g2(), hack * g3());
         finalCol = matrixCol + grid * g3() * vec3(g5, g2(), g3());
     }

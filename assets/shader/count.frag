@@ -8,8 +8,12 @@ uniform vec2 u_orient;      // x: 左右旋轉, y: 垂直位移/縮放
 uniform float u_intensity;  
 uniform float u_complexity; 
 uniform float u_speed;
+uniform float u_fps;
+uniform float u_bpm;
 uniform float u_darkGlow;
 uniform sampler2D u_prevFrame;
+
+#define PI 3.14159265359
 
 float signPow(float val, float pt){
 	return sign(val) * pow(abs(val), pt);
@@ -50,51 +54,56 @@ void main() {
 		local_t -= g1() * dist;
 	}
 	
+	dist = length(vec3(uv, sin(local_t)));
+	local_t = u_time * (1.0 + 0.09 * cos(u_time * 1.618 * PI * u_fps * u_bpm * dist));
+	
 	float g4 = signPow(0.618, -2.618 - abs(uv.x) * 0.618);
-    float g5 = signPow(0.618, 2.618 + abs(uv.y) * 0.618);
+    float g5 = signPow(0.618, 2.618 + dist * 0.618);
+	
+	float swing = sin(local_t + dist) * g5;
     
     // 視角旋轉：使用 u_orient.x 進行全平面旋轉
-    uv *= rot(u_orient.x * 3.14159);
+    uv *= rot(u_orient.x * 3.14159) + swing;
     
     // 視角位移：使用 u_orient.y 進行上下位移
-    uv.y += u_orient.y;
+    uv.y += u_orient.y - swing;
 
-    float distToCenter = length(uv);
+    float distToCenter = length(vec3(uv, swing));
     
     // --- 2. 空間扭曲層 (Warping Layer) ---
     // 衝擊波現在會隨著你的視角轉動而同步位移
-    float shock = g5 + sin(distToCenter * g1() * g4 - local_t) * u_volume_smooth;
-    uv += normalize(uv) * shock; 
+    float shock = g5 + sin(distToCenter * g1() * g4 - local_t) * u_volume_smooth + swing;
+    uv += normalize(uv) * shock + swing; 
     
     // --- 3. 物理場與粒子參數 ---
-    float gravity = -g3();
-    float explosion = pow(u_volume, g1()) * g4;
-    float grid = g1() * g4 / g5;
+    float gravity = -g3() + swing;
+    float explosion = pow(u_volume, g1()) * g4 - swing;
+    float grid = g1() * g4 / g5 + swing;
     
     // --- 4. 渲染循環與色彩分離 ---
     vec3 finalCol = vec3(0.0);
     
     for(int i = 0; i < 4; i++) {
-        float tOffset = float(i) * g3();
-        float fade = 1.0 - (float(i) / g1());
+        float tOffset = float(i) * g3() + swing;
+        float fade = 1.0 - (float(i) / g1()) + swing;
         
         // 色散偏移
-        vec2 shiftUv = uv + (float(i) * g5 * u_volume);
-        vec2 id = floor(shiftUv * grid);
-        vec2 gv = fract(shiftUv * grid) - g2();
-        float seed = hash21(id);
+        vec2 shiftUv = uv + (float(i) * g5 * u_volume) + swing;
+        vec2 id = floor(shiftUv * grid) - swing;
+        vec2 gv = fract(shiftUv * grid) - g2() + swing;
+        float seed = hash21(id) - swing;
         
         // 力的計算：加入 u_complexity 影響的波動頻率
-        float wave = sin(shiftUv.x * (g1() * g4 / g5 * u_complexity)) * cos(shiftUv.y * g4);
+        float wave = sin(shiftUv.x * (g1() * g4 / g5 * u_complexity)) * cos(shiftUv.y * g4) + swing;
         
         // 力的向量受旋轉後的 UV 影響，會產生跟隨視角的動態感
         vec2 force = mix(
-            vec2(dFdx(wave), dFdy(wave) + gravity * (g2() - u_volume)), 
-            normalize(shiftUv + (seed - g3())) * explosion, 
-            clamp(explosion, g5, g2())
+            vec2(dFdx(wave), dFdy(wave) + gravity * (g2() - u_volume)) - swing, 
+            normalize(shiftUv + (seed - g3())) * explosion + swing, 
+            clamp(explosion, g5, g2()) + swing
         );
         
-        float d = length(gv - force * (g2() + tOffset));
+        float d = length(gv - force * (g2() + tOffset)) + swing;
         float p = smoothstep(g3() * fade * (g2() + u_volume_smooth), 0.0, d);
         
         // 色彩分配
@@ -114,13 +123,13 @@ void main() {
     finalCol *= (g3() + g5 * sin(local_t * g2() * g4 / g5));
 	
 	if (u_darkGlow > 0.618) {
-		float luma = dot(finalCol, vec3(g2(), g3(), g5));
+		float luma = dot(finalCol, vec3(g2(), g3(), g5)) + swing;
 		
 		// 產生隨時間移動的掃描線
-		float scanline = sin(gl_FragCoord.y * g2() + local_t * u_speed * g1() * g4) * g5;
+		float scanline = sin(gl_FragCoord.y * g2() + local_t * u_speed * g1() * g4) * g5 - swing;
 		
 		// 反轉亮度並疊加掃描線
-		float inverted = signPow(max(g5, g2() - luma), g1()) + scanline;
+		float inverted = signPow(max(g5, g2() - luma), g1()) + scanline + swing;
 		
 		// 色彩受到 Intensity 影響，越高越紅，越低越藍
 		vec3 cyberColor = mix(vec3(g5, g5, g5), vec3(g2(), g2(), g2()), u_intensity);

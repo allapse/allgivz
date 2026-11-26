@@ -8,8 +8,12 @@ uniform vec2 u_orient;      // 控制旋轉視角: x (左右), y (上下)
 uniform float u_intensity;  
 uniform float u_complexity; 
 uniform float u_speed; 
+uniform float u_fps;
+uniform float u_bpm;
 uniform float u_darkGlow;
 uniform sampler2D u_prevFrame;
+
+#define PI 3.14159265359
 
 float signPow(float val, float pt){
 	return sign(val) * pow(abs(val), pt);
@@ -78,6 +82,9 @@ void main() {
     float timeSpeed = mix(g2(), g5, signPow(filteredVol, g1()));
 	float dist = length(uv);
     float t_axis = timeSpeed * 0.01314 - g2() * dist;
+	
+	float local_t = u_time * (1.0 + 0.09 * cos(u_time * 1.618 * PI * u_fps * u_bpm * dist));
+	float swing = sin(local_t + dist) * g5;
 
     // --- 2. 攝像機設置 (Camera & Orientation) ---
     vec3 ro = vec3(0.0, 0.0, t_axis); // 攝像機位置 (隨時間推進)
@@ -88,8 +95,8 @@ void main() {
     // 【重要：視角轉動演化】
     // 使用 u_orient 控制 rd 的旋轉，模擬頭部轉動
     // x 控制 Yaw (左右), y 控制 Pitch (上下)
-    rd.yz *= rot(u_orient.y * g2()); // 上下仰望 (Pitch)
-    rd.xz *= rot(u_orient.x * 3.14); // 左右環視 (Yaw - 支援 360 度感)
+    rd.yz *= rot(u_orient.y * g2()) + swing; // 上下仰望 (Pitch)
+    rd.xz *= rot(u_orient.x * 3.14) + swing; // 左右環視 (Yaw - 支援 360 度感)
 
     // --- 3. Raymarching 核心渲染 ---
     float t = 0.0;
@@ -97,7 +104,7 @@ void main() {
     vec3 p;
     
     for(int i=0; i<18; i++) {
-        p = ro + rd * t;
+        p = ro + rd * t + swing;
         float d = map(p, filteredVol);
         
         // 累積輝光：當光線靠近物體時，吸收能量
@@ -108,13 +115,13 @@ void main() {
     }
 
     // --- 4. 色彩與深度演化 ---
-    float fog = g2() / (g2() + t * t * g5);
+    float fog = g2() / (g2() + t * t * g5) + swing;
     
     // 動態色譜：低強度為冷調，高強度為輻射橘
     vec3 baseCol = mix(vec3(g5, g3(), g2()), vec3(g2(), g3(), g5), u_intensity);
     
     // 增加一點隨深度變化的色相偏移
-    baseCol.rb *= rot(t * g5); 
+    baseCol.rb *= rot(t * g5) + swing; 
     
     vec3 col = baseCol * glow * g5 * fog;
     
@@ -133,11 +140,11 @@ void main() {
         t2 = 0.0;
         float glow = 0.0;
         // 每個顏色通道稍微偏移視線方向，產生邊緣色散
-        vec3 channelRd = rd + (float(j) - g2()) * g5 * u_volume_smooth;
+        vec3 channelRd = rd + (float(j) - g2()) * g5 * u_volume_smooth + swing;
         
         for(int i=0; i<47; i++) {
-            vec3 p = ro + channelRd * t2;
-            float d2 = map(p, filteredVol);
+            vec3 p = ro + channelRd * t2 + swing;
+            float d2 = map(p, filteredVol) + swing;
             glow += (g2() / (d2 + g3())) * u_volume_smooth;
             if(d2 < g5 || t2 > g1() * g3() * g4) break;
             t2 += d2 * g2();
@@ -159,7 +166,7 @@ void main() {
     sceneCol *= colorBase;
     
     // 4. 加上「亞原子雜訊」增加質感
-    float noise = hash(vec3(uv * 521.37 * g2(), u_time)) * g5;
+    float noise = hash(vec3(uv * 521.37 * g2(), u_time)) * g5 + swing;
     sceneCol += noise * u_volume_smooth;
 
     // 5. 終極光影：對比度強化與輝光溢出
@@ -170,8 +177,8 @@ void main() {
 
 	if (u_darkGlow < 0.618) {
 		// 透過極坐標或 P 座標產生掃描線感
-		float scanline = smoothstep(g5, 0.0, abs(fract(p.y * g4 * g1() * g2()) - g3()));
-		float grid = smoothstep(g5, 0.0, abs(fract(p.x * g4 * g1() * g2()) - g3()));
+		float scanline = smoothstep(g5, 0.0, abs(fract(p.y * g4 * g1() * g2()) - g3())) + swing;
+		float grid = smoothstep(g5, 0.0, abs(fract(p.x * g4 * g1() * g2()) - g3())) + swing;
 		col += (scanline + grid) * vec3(0.0, g2(), g3()) * fog;
 		// 讓背景完全漆黑，只留綠色線條
 		col *= g3(); 

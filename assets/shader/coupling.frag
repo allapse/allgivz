@@ -9,10 +9,14 @@ uniform vec2 u_orient;      // x: 左右旋轉, y: 縮放
 uniform float u_intensity;  
 uniform float u_complexity; 
 uniform float u_speed;
+uniform float u_fps;
+uniform float u_bpm;
 uniform float u_darkGlow;
 uniform sampler2D u_camera;
 uniform float u_useCamera;
 uniform sampler2D u_prevFrame;
+
+#define PI 3.14159265359
 
 float signPow(float val, float pt){
 	return sign(val) * pow(abs(val), pt);
@@ -76,22 +80,26 @@ void main() {
 	}
 	
 	float g4 = signPow(0.618, -2.618 - abs(uv.x) * 0.618);
-    float g5 = signPow(0.618, 2.618 + abs(uv.y) * 0.618);
+    float g5 = signPow(0.618, 2.618 + dist * 0.618);
+	
+	dist = length(vec3(uv, sin(local_t)));
+	local_t = u_time * (1.0 + 0.09 * cos(u_time * 1.618 * PI * u_fps * u_bpm * dist));
+	float swing = sin(local_t + dist) * g5;
 
     // 陀螺儀影響
-    uv += u_orient * g3();
+    uv += u_orient * g3() + swing;
 
     // 領域扭曲邏輯：讓空間自己扭動
     vec2 q = vec2(0.0);
-    q.x = fbm(uv + 0.382 * local_t);
-    q.y = fbm(uv + vec2(g2()));
+    q.x = fbm(uv + 0.382 * local_t) + swing;
+    q.y = fbm(uv + vec2(g2())) + swing;
 
     vec2 r = vec2(0.0);
     // u_volume 影響扭曲的深度
-    r.x = fbm(uv + 0.382 * q + vec2(g2(), g4) + 0.382 * local_t);
-    r.y = fbm(uv + 0.618 * q + vec2(g4, g1()) + 0.382 * local_t);
+    r.x = fbm(uv + 0.382 * q + vec2(g2(), g4) + 0.382 * local_t) + swing;
+    r.y = fbm(uv + 0.618 * q + vec2(g4, g1()) + 0.382 * local_t) + swing;
 
-    float f = fbm(uv + r);
+    float f = fbm(uv + r) + swing;
 
     // 顏色設計
     vec3 colorA, colorB;
@@ -124,14 +132,14 @@ void main() {
     // --- 尋找隱藏的窗格 ---
     // 使用 f 的平方來增強對比度，這會讓大理石的紋路邊界變得很清晰
     // 這就是你看到的「窗格玻璃」邊緣
-    float kaleidoscopeMask = pow(f, g1()) * g2(); 
+    float kaleidoscopeMask = pow(f, g1()) * g2() + swing; 
     kaleidoscopeMask = clamp(kaleidoscopeMask, 0.0, g2());
     
     // --- 2. 處理現實世界的畫面與融合 ---
     vec3 finalCol;
     
     // 找到大理石的「窗口」：讓鏡頭畫面只出現在特定紋理區域
-    float mask = smoothstep(g3(), g2(), f); 
+    float mask = smoothstep(g3(), g2(), f) + swing; 
 
     if (u_useCamera > 0.5) {
         vec2 camUV = gl_FragCoord.xy / u_res;
@@ -147,7 +155,7 @@ void main() {
         // 3. 【關鍵修正】重新定義 Mask
         // 我們讓 f 較低的地方（也就是 colorA 的區域）透出鏡頭
         // 1.0 - f 代表選取了大理石的「空白處」
-        float revealMask = smoothstep(g5, g3(), g2() - f); 
+        float revealMask = smoothstep(g5, g3(), g2() - f) + swing; 
 
         // 4. 融合：讓大理石像雲霧一樣飄在鏡頭上面
         // 使用 Screen 或相加，讓鏡頭畫面不會被暗色完全吞掉

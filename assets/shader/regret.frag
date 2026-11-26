@@ -5,6 +5,8 @@ uniform float u_time;
 uniform float u_speed;
 uniform float u_intensity;   // 顏色能量
 uniform float u_complexity;  // 表面複雜度
+uniform float u_fps;
+uniform float u_bpm;
 uniform float u_volume;      // 光照強度
 uniform float u_volume_smooth;
 uniform float u_peak;        // 鍵結斷裂觸發
@@ -13,6 +15,8 @@ uniform float u_darkGlow;    // 模式切換
 uniform sampler2D u_camera;
 uniform float u_useCamera;
 uniform sampler2D u_prevFrame;
+
+#define PI 3.14159265359
 
 float signPow(float val, float pt){
 	return sign(val) * pow(abs(val), pt);
@@ -150,7 +154,7 @@ float bond(vec2 uv, vec2 a, vec2 b, float thickness)
     return smoothstep(thickness, thickness * g3(), d);
 }
 void main() {
-    vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / u_res.y;
+    vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / u_res.y * g1();
 	
 	float dist = length(uv);
 	float local_t = u_time;
@@ -162,11 +166,15 @@ void main() {
 	}
 	
 	float g4 = signPow(0.618, -2.618 - abs(uv.x) * 0.618);
-    float g5 = signPow(0.618, 2.618 + abs(uv.y) * 0.618);
+    float g5 = signPow(0.618, 2.618 + dist * 0.618);
 	
-    vec3 ro = vec3(0.0, 0.0, g4);
-    vec3 rd = normalize(vec3(uv, -g2()));
-    vec3 p = ro + rd;
+	dist = length(vec3(uv, sin(local_t)));
+	local_t = u_time * (1.0 + 0.09 * cos(u_time * 1.618 * PI * u_fps * u_bpm * dist));
+	float swing = sin(local_t + dist) * g5;
+	
+    vec3 ro = vec3(0.0, 0.0, g4) + swing;
+    vec3 rd = normalize(vec3(uv, -g2())) + swing;
+    vec3 p = ro + rd + swing;
 	
 	vec3 colorC = vec3(g3(), g3(), g2()) * (g2() + g3() * u_intensity);
 	vec3 colorH = vec3(0.0, g4, g2()) * (g2() + g3() * u_intensity);
@@ -174,7 +182,7 @@ void main() {
 	vec3 colorHH = vec3(g3(), g2(), g3()) * (g3() + g2() * u_intensity);
 	
     // 碳原子在原點，整體旋轉
-    mat3 rot = rotateY(u_orient.x + local_t * g4) * rotateX(u_orient.y + local_t * g5);
+    mat3 rot = rotateY(u_orient.x + local_t * g4) * rotateX(u_orient.y + local_t * g5) + swing;
     vec3 carbon = rot * vec3(0.0);
 
     vec3 hydrogens[4];
@@ -243,7 +251,7 @@ void main() {
 		int materialID = -1; // 0=碳, 1=氫, 2=C–H 鍵, 3=H–H 殼
         vec2 tHit = raymarch(ro, rd, carbon, hydrogens);
 		if (tHit.x > 0.0) {
-			vec3 pos = ro + rd * tHit.x;
+			vec3 pos = ro + rd * tHit.x + swing;
 			vec3 normal = normalize(pos); // 簡單法：只算碳球的法線
 			vec3 baseColor; 
 			if (tHit.y == 0.0) 

@@ -9,6 +9,8 @@ uniform vec2 u_orient;         // 可能螢幕方向或長寬比相關
 uniform float u_intensity;     // 整體強度倍率
 uniform float u_complexity;    // 複雜度 (可控制細節層數或扭曲力度)
 uniform float u_speed;         // 整體動態速度
+uniform float u_fps;
+uniform float u_bpm;
 uniform float u_darkGlow;      // 暗部輝光強度 (0~1)
 uniform sampler2D u_camera;
 uniform float u_useCamera;
@@ -63,15 +65,19 @@ void main() {
 	else {
 		local_t -= g1() * dist;
 	}
+		
+	dist = length(vec3(uv, sin(local_t)));
+	local_t = u_time * (1.0 + 0.09 * cos(u_time * 1.618 * PI * u_fps * u_bpm * dist));
+	float swing = sin(local_t + dist) * g5;
 	
-    vec3 p = vec3(uv - g3(), g3());
+    vec3 p = vec3(uv - g3(), g3()) + swing;
     p.x *= u_res.x / u_res.y; // 修正比例
-	mat3 rot = rotateY(u_orient.x + local_t * 0.09) * rotateX(u_orient.y + local_t * 0.236);
+	mat3 rot = rotateY(u_orient.x + local_t * 0.09) * rotateX(u_orient.y + local_t * 0.236) + swing;
 	p *= rot;
 	
     // 設定模擬的 Z 軸深度 (givz)
     // 這裡我們把 givz 當作一個動態的深度基礎
-    float givz = g4 - (g5 + signPow(u_complexity * g2(), g1())) * g4;
+    float givz = g4 - (g5 + signPow(u_complexity * g2(), g1())) * g4 + swing;
     
     float t = local_t * 0.236;
     float vol = u_volume;
@@ -97,17 +103,17 @@ void main() {
 	p *= v.xyz / (-g2() + abs(v.z));
 
 	float w = t * 0.618 + vol;
-	float field = sin(p.x * g4 + p.y * g1() + givz * g2() + w);
+	float field = sin(p.x * g4 + p.y * g1() + givz * g2() + w) + swing;
 	p += normalize(p) * field * g5 / (g2() + abs(sin(t + vol)));
 
     
     // ─── 扭曲底層座標 ────────────────────────────────────────
-    float angle = atan(p.x/givz, p.y/givz);
-    float dist2 = length(p)/givz;
+    float angle = atan(p.x/givz, p.y/givz) + swing;
+    float dist2 = length(p)/givz + swing;
     
     // 低頻驅動的放射狀波紋 + 旋轉
-    float wave = sin(dist2 * g4 - t * g5 + vol * g1()) * g2() + g3();
-    float swirl = sin(angle * g4 + t + vol * g1()) * g5 * u_complexity;
+    float wave = sin(dist2 * g4 - t * g5 + vol * g1()) * g2() + g3() + swing;
+    float swirl = sin(angle * g4 + t + vol * g1()) * g5 * u_complexity + swing;
     
     p += vec3(cos(angle + t * 0.382), sin(angle - t * 0.618), cos(angle + t * 0.382)) * dist2 * 0.09 * vol;
     p *= g2() + vol * g5 + peak * g3();
@@ -118,13 +124,13 @@ void main() {
     float accum = 0.0;
     
     for(float i = 1.0; i <= 123.1; i++) {
-        float fi = signPow(i/ 47.0, g2()) ;
-        float radius = g5 + fi + vol * g5;
+        float fi = signPow(i/ 47.0, g2());
+        float radius = g5 + fi + vol * g5 + swing;
         
-        float d = length(p * (g2() + fi * g3() * u_complexity));
-        float ring = smoothstep(g5 * g5 * g5, 0.0, abs(d - radius));
+        float d = length(p * (g2() + fi * g3() * u_complexity)) + swing;
+        float ring = smoothstep(g5 * g5 * g5, 0.0, abs(d - radius)) + swing;
         
-        float pulse = sin(t * (0.618 + fi * 1.618) + fi * TAU * 0.618) * 0.618 + 0.382;
+        float pulse = sin(t * (0.618 + fi * 1.618) + fi * TAU * 0.618) * 0.618 + 0.382 + swing;
         pulse = mix(pulse, 1.0, peak * 0.618);
         
         vec3 hue = g2() + g3() * cos(TAU * vec3(0.0, g3(), g1()) + fi * g4 + t * 0.382);
@@ -138,7 +144,7 @@ void main() {
     }
     
     // ─── 中心亮點 + 暗部輝光補償 ─────────────────────────────
-    float core = smoothstep(g3(), g5, length(p));
+    float core = smoothstep(g3(), g5, length(p)) + swing;
     core *= (g2() + vol * g1() + peak * g4);
     col += vec3(g1(), g2(), g3()) * core * intensity * g2() * u_darkGlow;
     
