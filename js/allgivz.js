@@ -1825,7 +1825,7 @@ class AudioMap {
 	
 		// 4. 結合整體音量動態，讓畫面跟著音量有起伏、不會死頂在高位
 		const envScale = Math.min(1, 0.382 + smoothedVol * 0.618 + currentTarget * 0.382);
-		return Math.max(0, Math.min(1, combined * envScale));
+		return combined;//Math.max(0, Math.min(1, combined * envScale));
 	}
 	
 	async initAudio(audioPath = null) {
