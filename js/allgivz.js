@@ -1821,7 +1821,7 @@ class AudioMap {
 		const subWeight = 0.236 + peakBoost;                   // 0.25 ~ 0.60
 		const allWeight = 1 - subWeight;                      // 0.40 ~ 0.75
 	
-		let combined = vAll * allWeight + maxSub * subWeight;
+		let combined = vAll * subWeight + maxSub * allWeight;
 	
 		// 4. 結合整體音量動態，讓畫面跟著音量有起伏、不會死頂在高位
 		const envScale = Math.min(1, 0.382 + smoothedVol * 0.618 + currentTarget * 0.382);
