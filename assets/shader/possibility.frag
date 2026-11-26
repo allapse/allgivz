@@ -8,6 +8,8 @@ uniform float u_peak;
 uniform float u_intensity;
 uniform float u_complexity;
 uniform float u_speed;
+uniform float u_fps;
+uniform float u_bpm;
 uniform float u_darkGlow;
 uniform sampler2D u_camera;
 uniform float u_useCamera;
@@ -15,6 +17,8 @@ uniform sampler2D u_prevFrame;
 
 varying vec2 v_uv;
 varying float v_z;
+
+#define PI 3.14159265359
 
 float signPow(float val, float pt){
 	return sign(val) * pow(abs(val), pt);
@@ -47,31 +51,35 @@ void main() {
 	float g4 = signPow(0.618, -2.618 - abs(uv.x) * 0.618);
     float g5 = signPow(0.618, 2.618 + abs(uv.y) * 0.618);
 
-    vec2 warped = uv;
-    warped.x += (g3() + g2() * u_speed) * sin(local_t * 0.3 + uv.y * g4 + v_z * g2());
-    warped.y += (g2() + g3() * u_complexity) * cos(local_t * 0.7 + uv.x * g1() + v_z * g3());
-
-    float angle = atan(warped.y, warped.x);
-    float radius = length(warped);
-
-    float swirl1 = sin(radius * 11.0 * u_intensity - u_volume * g4 * u_complexity + angle * g4 * u_speed);
-    float swirl2 = cos(radius * g4 * u_speed - u_volume_smooth * 11.0 * u_intensity + angle * 13.0 * u_complexity);
-    float swirl = swirl1 * g2() + swirl2 * g3();
-
-    float boundary = g2() - smoothstep(g3(), g2(), radius);
-
-    float burst = smoothstep(g3(), g2(), pow(u_peak, g1())) * sin(u_intensity) * g5;
-
-    float fractal1 = fract(sin(dot(warped, vec2(11.09321996,76.05078902))) * 39650.94552);
-    float fractal2 = fract(sin(dot(warped * g1(), vec2(123.0595292,17.95019412))) * 15143.64772);
-	float fractal3 = fract(sin(dot(warped * g4, vec2(29.04562155,76.05078902))) * 103818.9418);
-    float fractal = mix(fractal1, fractal2, g2());
-	fractal = mix(fractal, fractal3, g3());
-	fractal = smoothstep(g3(), g2(), fractal);
+	dist = length(vec3(uv, sin(local_t)));
+	local_t = u_time * (1.0 + 0.09 * cos(u_time * 1.618 * PI * u_fps * u_bpm * dist));
+	float swing = sin(local_t + dist) * g5;
 	
-	angle += fract(sin(dot(uv, vec2(29.04562155,46.99938762))) * 103818.9418) * g3();
+    vec2 warped = uv;
+    warped.x += (g3() + g2() * u_speed) * sin(local_t * 0.3 + uv.y * g4 + v_z * g2()) + swing;
+    warped.y += (g2() + g3() * u_complexity) * cos(local_t * 0.7 + uv.x * g1() + v_z * g3()) + swing;
 
-    float possibility = g2() - smoothstep(0.0, g2(), radius);
+    float angle = atan(warped.y, warped.x) + swing;
+    float radius = length(warped) + swing;
+
+    float swirl1 = sin(radius * 11.0 * u_intensity - u_volume * g4 * u_complexity + angle * g4 * u_speed) + swing;
+    float swirl2 = cos(radius * g4 * u_speed - u_volume_smooth * 11.0 * u_intensity + angle * 13.0 * u_complexity) + swing;
+    float swirl = swirl1 * g2() + swirl2 * g3() + swing;
+
+    float boundary = g2() - smoothstep(g3(), g2(), radius) + swing;
+
+    float burst = smoothstep(g3(), g2(), pow(u_peak, g1())) * sin(u_intensity) * g5 + swing;
+
+    float fractal1 = fract(sin(dot(warped, vec2(11.09321996,76.05078902))) * 39650.94552) + swing;
+    float fractal2 = fract(sin(dot(warped * g1(), vec2(123.0595292,17.95019412))) * 15143.64772) + swing;
+	float fractal3 = fract(sin(dot(warped * g4, vec2(29.04562155,76.05078902))) * 103818.9418) + swing;
+    float fractal = mix(fractal1, fractal2, g2()) + swing;
+	fractal = mix(fractal, fractal3, g3()) + swing;
+	fractal = smoothstep(g3(), g2(), fractal) + swing;
+	
+	angle += fract(sin(dot(uv, vec2(29.04562155,46.99938762))) * 103818.9418) * g3() + swing;
+
+    float possibility = g2() - smoothstep(0.0, g2(), radius) + swing;
 
     float color = swirl * boundary + burst;
     color += fractal * pow(u_speed, g1());

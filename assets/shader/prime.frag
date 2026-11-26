@@ -9,6 +9,8 @@ uniform float u_peak;
 uniform float u_intensity;
 uniform float u_complexity;
 uniform float u_speed;
+uniform float u_fps;
+uniform float u_bpm;
 uniform float u_darkGlow;
 uniform sampler2D u_camera;
 uniform float u_useCamera;
@@ -17,6 +19,8 @@ uniform sampler2D u_prevFrame;
 varying vec2 v_uv;
 varying vec2 v_centered_uv;
 varying float v_z;
+
+#define PI 3.14159265359
 
 float signPow(float val, float pt){
 	return sign(val) * pow(abs(val), pt);
@@ -84,6 +88,10 @@ void main() {
 	float g4 = signPow(0.618, -2.618 - abs(uv.x) * 0.618);
     float g5 = signPow(0.618, 2.618 + abs(uv.y) * 0.618);
 	
+	dist = length(vec3(v_centered_uv, sin(local_t)));
+	local_t = u_time * (1.0 + 0.09 * cos(u_time * 1.618 * PI * u_fps * u_bpm * dist));
+	float swing = sin(local_t + dist) * g5;
+	
 	// 模擬擺弄：旋轉空間（加入隨機微震動）
     float shake = u_peak * g5;
     p.yz *= rot(u_orient.y * 1.618 + local_t * 0.0557 + shake);
@@ -107,8 +115,8 @@ void main() {
 		} else { 
 			params[2] = cos(local_t);
 		}
-		float fi = g5 + sqrt(sqrt(float(i) * g5));
-		primes[i] = vec3(g5 + pickTwoAndMultiply(i) * fi, g5 - pickTwoAndMultiply(i+1) * (fi + g5), g5 + pickTwoAndMultiply(i+2) * (fi + g5));
+		float fi = g5 + sqrt(sqrt(float(i) * g5)) + swing;
+		primes[i] = vec3(g5 + pickTwoAndMultiply(i) * fi, g5 - pickTwoAndMultiply(i+1) * (fi + g5), g5 + pickTwoAndMultiply(i+2) * (fi + g5)) + swing;
         waveSum += primeWave(p, primes[i], local_t);
     }
 
