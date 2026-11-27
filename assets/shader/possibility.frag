@@ -97,7 +97,7 @@ void main() {
 	vec3 finalCol;
 	vec3 past = texture2D(u_prevFrame, v_uv).rgb;
 	
-	float bright = g3();
+	float bright = 0.382 + g3();
 	
 	if(u_darkGlow > 0.618) {
 		vec3 depthColor = mix(vec3(g5,g3(),g2()), vec3(g2(),g3(),g5), radius);

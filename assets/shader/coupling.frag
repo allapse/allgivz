@@ -54,14 +54,14 @@ float noise(vec2 p) {
 // 核心：分形扭曲 (Domain Warping)
 float fbm(vec2 p) {
     float v = 0.0;
-    float a = g3();
+    float a = 0.382;
     // 複雜度 (u_complexity) 決定細節層數
     int octaves = int(2.618 * g1() +  signPow(4.237 * g1(), u_complexity * g1() * 4.237)); 
     for (int i = 0; i < 7; i++) {
         if (i >= octaves) break;
         v += a * noise(p);
         p *= 2.618;
-        a *= g3();
+        a *= .382;
     }
     return v;
 }

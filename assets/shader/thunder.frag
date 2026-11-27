@@ -45,7 +45,7 @@ mat2 rot(float a) {
 // 熱力圖配色函數：輸入 0~1，輸出彩虹色
 vec3 heatmap(float t) {
     // 經典的偏振/熱力圖公式
-    return g2() + g3() * cos(g1() * (t + vec3(g2(), g3(), 0.0)));
+    return g1() + g3() * cos(g1() * (t + vec3(g2(), g3(), 0.0)));
 }
 
 void main() {

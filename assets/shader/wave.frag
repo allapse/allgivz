@@ -41,7 +41,7 @@ float map(vec3 p, float t) {
     float baseZ = p.z + t; 
     float pulse = u_speed * g2(); // 直接用 speed 做微小的相位偏移，不要乘 u_time
 
-    float zLoop = mod(baseZ + pulse, g1());
+    float zLoop = mod(baseZ + pulse, 1.618);
     
     float angle = atan(p.y, p.x + g3());
     float mirrorAngle = abs(abs(angle) - PI * g3());
@@ -69,7 +69,7 @@ void main() {
 	if(u_peak == 1.0){
 		shake = (hash(u_time) * 0.09) * u_peak;
 	}
-    vec2 uv = ((gl_FragCoord.xy - 0.618 * res) / min(res.y, res.x) + shake) * g1();
+    vec2 uv = ((gl_FragCoord.xy - 0.618 * res) / min(res.y, res.x) * g1() + shake);
 	
 	float dist = length(uv);
 	float local_t = u_time * (1.0 + 0.146 * cos(u_time * 1.618 * PI * u_fps * u_bpm * dist));

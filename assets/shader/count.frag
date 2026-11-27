@@ -63,17 +63,17 @@ void main() {
 	float swing = sin(local_t + dist) * g5;
     
     // 視角旋轉：使用 u_orient.x 進行全平面旋轉
-    uv *= rot(u_orient.x * 3.14159) + swing;
+    uv *= rot(u_orient.x * 3.14159);
     
     // 視角位移：使用 u_orient.y 進行上下位移
-    uv.y += u_orient.y - swing;
+    uv.y += u_orient.y;
 
     float distToCenter = length(vec3(uv, swing));
     
     // --- 2. 空間扭曲層 (Warping Layer) ---
     // 衝擊波現在會隨著你的視角轉動而同步位移
     float shock = g5 + sin(distToCenter * g1() * g4 - local_t) * u_volume_smooth + swing;
-    uv += normalize(uv) * shock + swing; 
+    uv += normalize(uv) * shock; 
     
     // --- 3. 物理場與粒子參數 ---
     float gravity = -g3() + swing;
@@ -88,7 +88,7 @@ void main() {
         float fade = 1.0 - (float(i) / g1()) + swing;
         
         // 色散偏移
-        vec2 shiftUv = uv + (float(i) * g5 * u_volume) + swing;
+        vec2 shiftUv = uv + (float(i) * g5 * u_volume) - swing;
         vec2 id = floor(shiftUv * grid) - swing;
         vec2 gv = fract(shiftUv * grid) - g2() + swing;
         float seed = hash21(id) - swing;

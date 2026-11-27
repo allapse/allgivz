@@ -128,7 +128,7 @@ void main() {
         float radius = g5 + fi + vol * g5 + swing;
         
         float d = length(p * (g2() + fi * g3() * u_complexity)) + swing;
-        float ring = smoothstep(g5 * g5 * g5, 0.0, abs(d - radius)) + swing;
+        float ring = smoothstep(g5 * g5 * g5, 0.0, abs(d - radius));
         
         float pulse = sin(t * (0.618 + fi * 1.618) + fi * TAU * 0.618) * 0.618 + 0.382 + swing;
         pulse = mix(pulse, 1.0, peak * 0.618);

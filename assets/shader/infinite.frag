@@ -8,6 +8,8 @@ uniform float u_peak;
 uniform float u_intensity;
 uniform float u_complexity;
 uniform float u_speed;
+uniform float u_fps;
+uniform float u_bpm;
 uniform float u_darkGlow;
 uniform sampler2D u_camera;
 uniform float u_useCamera;
@@ -15,6 +17,8 @@ uniform sampler2D u_prevFrame;
 
 varying vec2 v_uv;
 varying float v_z;
+
+#define PI 3.14159265359
 
 float signPow(float val, float pt){
 	return sign(val) * pow(abs(val), pt);
@@ -47,6 +51,9 @@ void main() {
 	
 	float dist = length(v_uv);
 	
+	float local_t = u_time * (1.0 + 0.09 * cos(u_time * 1.618 * PI * u_fps * u_bpm * dist));
+	float swing = sin(local_t + dist) * g5;
+	
     float sum = 0.0;
 
     int sources = int(g1() + u_complexity * g4);
@@ -60,8 +67,8 @@ void main() {
 			hash(vec3(float(i) + g1(), (0.11618 + g2() * u_peak) * u_time * 0.0618 + u_orient.x + u_orient.y, 0.1618 + u_peak * g2()))
         ) * g1() - g2();
 
-        float freq = 28.09 * (g5 + g2() * u_intensity * hash(center * (u_darkGlow + g2())));
-        float phase = g5 + (hash(center * (u_darkGlow + g2())));
+        float freq = 28.09 * (g5 + g2() * u_intensity * hash(center * (u_darkGlow + g2()))) + swing;
+        float phase = g5 + (hash(center * (u_darkGlow + g2()))) + swing;
 
         sum += wave(vec3(v_uv, g5), center, freq, phase);
     }
@@ -84,7 +91,7 @@ void main() {
 
     vec3 glowColor = vec3(0.382, 0.618, 0.809);
 	glowColor = mix(glowColor, neonColor, u_darkGlow);
-    vec3 col = mix(baseColor, glowColor, g3() + g2() * sin(sum));
+    vec3 col = mix(baseColor, glowColor, g3() + g1() * sin(sum));
 
     if (u_useCamera > 0.618) {
         vec3 cam = texture2D(u_camera, gl_FragCoord.xy / u_resolution.xy).rgb;
@@ -92,7 +99,7 @@ void main() {
     }
 
     vec3 prev = texture2D(u_prevFrame, gl_FragCoord.xy / u_resolution.xy).rgb;
-    col = mix(col, prev, g3() + pow(u_speed, g3()) * g3() - u_darkGlow * g3());
+    col = mix(col, prev, g3() + pow(u_speed, g3()) * g3() - u_darkGlow * g2());
 
-    gl_FragColor = vec4(col, g2());
+    gl_FragColor = vec4(col, 1.0);
 }

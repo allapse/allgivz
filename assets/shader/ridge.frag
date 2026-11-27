@@ -228,14 +228,14 @@ void main() {
     vec3 processedCol = finalCol;
 
 	// 模式 1：冰封雪夜 (Cyan/Blue)
-	if (u_darkGlow + u_peak >= g2()) {
-		processedCol = vec3(dot(finalCol, vec3(g3(), g2(), g5))); // 先轉灰階
-		processedCol *= vec3(g3(), g2(), 1.0); // 染上冰藍色
+	if (u_darkGlow + u_volume >= g2()) {
+		processedCol = vec3(dot(finalCol, vec3(g3(), g3(), g3()))); // 先轉灰階
+		processedCol *= vec3(g5, g3(), 1.0); // 染上冰藍色
 	} 
 	// 模式 2：賽博荒野 (Green/Purple)
-	else if (u_darkGlow + u_peak >= g3()) {
+	else if (u_darkGlow + u_volume >= g3()) {
 		processedCol.rb = finalCol.br; // 交換紅藍通道，產生異界感
-		processedCol *= vec3(g3(), g2(), g3());
+		processedCol *= vec3(g5, g3(), g5);
 	}
 	else {
 		processedCol = finalCol;

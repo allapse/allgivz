@@ -81,7 +81,7 @@ void main() {
     vec3 baseCol = mix(vec3(g5, g3, g2), vec3(g2, g5, g3), sin(depth * g3 + local_t) * g2 + g3);
     
     // 結合音量與圖案
-    float pulse = g2 + u_volume_smooth * g2 + swing;
+    float pulse = g2 + u_volume_smooth * g2;
     vec3 finalCol = baseCol * pattern * pulse;
     
     // 6. 模擬光暈 (glow)
@@ -100,7 +100,7 @@ void main() {
 		float luminance = dot(finalCol, vec3(g3, g2, g5)) + swing;
 		
 		// 2. 反相並調整對比度
-		float invLum = signPow(g2 - luminance, g1) + swing; // 提高到 2.5 讓黑色更純，綠色更亮
+		float invLum = signPow(g2 - luminance, g1); // 提高到 2.5 讓黑色更純，綠色更亮
 		
 		// 3. 設定為駭客綠：
 		// R: 0.0, G: 1.0, B: 0.2 (帶一點點青色的螢光綠最像)

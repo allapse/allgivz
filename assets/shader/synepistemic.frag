@@ -68,46 +68,46 @@ void main() {
     vec2 uv = v_uv - 0.5;
     vec2 pos = uv * 17.95;
 	
-	float g4 = signPow(0.618, -2.618 - abs(uv.x) * 0.618);
-    float g5 = signPow(0.618, 2.618 + abs(uv.y) * 0.618);
-	
 	float dist = length(uv);
 	float local_t = u_time;
 	if (u_darkGlow > 0.618) {
-		local_t += g5 * dist;
+		local_t += g3() * dist;
 	}
 	else {
-		local_t -= g3() * dist;
+		local_t -= g2() * dist;
 	}
 	
-	float punch = signPow(g5 + u_intensity * u_complexity * u_speed * u_peak, 4.236);
+	float g4 = signPow(0.618, -2.618 - abs(uv.x) * 0.618);
+    float g5 = signPow(0.618, 2.618 + dist * 0.618);
+	
+	float punch = signPow(g5 + u_intensity * u_complexity * u_speed * u_peak, 2.618);
 	float freeze = 1.0 - (u_intensity + u_complexity + u_speed + u_peak) / 4.237;
 	float bigZ = v_z * 77.0 * freeze;
 	
 	if(u_darkGlow > 0.618) {
-		bigZ /= (g2() + u_volume_smooth);
+		bigZ /= (g1() + u_volume_smooth);
 	}
 
-    float wave = signPow(g3() + 0.382 * sin(local_t + pos.x * u_complexity) / (0.146 * bigZ), 4.236);
+    float wave = signPow(g3() + 0.618 * sin(local_t + pos.x * u_complexity) / (0.382 + 0.618 * bigZ), 2.618);
     wave *= u_volume_smooth;
 
-    float sym = signPow(sin(local_t + pos.x * u_complexity + bigZ) * (g1() + 0.618 * cos(pos.y * u_intensity - bigZ)), 4.36);
+    float sym = signPow(sin(local_t + pos.x * u_complexity + bigZ) * (0.0557 + 1.0 * cos(pos.y * u_intensity - bigZ)), 2.618);
 
-    float motion = signPow(g3() + 0.382 * sin(local_t + length(pos) * u_speed), 4.236);
+    float motion = signPow(g3() + 0.618 * sin(local_t + length(pos) * u_speed), 2.618);
 
-    vec3 baseColor   = vec3(0.1, 0.2, g3());
-    vec3 accentColor = vec3(g2(), g3(), g3());
-    vec3 peakColor   = vec3(g3(), g3(), g2());
+    vec3 baseColor   = vec3(0.146, 0.236, 0.382);
+    vec3 accentColor = vec3(g2(), g5, 0.382);
+    vec3 peakColor   = vec3(g3(), g2(), g5);
 
     vec3 color = mix(baseColor, accentColor, wave);
     color = mix(color, peakColor, u_peak);
 	
-    color *= sym * motion * signPow(g3() + g2() * u_intensity, g1());
+    color *= sym * motion * signPow(g3() + g2() * u_intensity, 2.618);
 	
-	float r = g5;
+	float r = 0.07;
     for(int i=0; i<7; i++){
-        vec2 base = vec2(-g1() + float(i) * g2() + sin(freeze), 0.0);
-        color += vec3(drawBraille(pos, base, r, brailleCodes[i])) * signPow(g5 + g3() * u_volume_smooth / (g5 + punch), g1());
+        vec2 base = vec2(-1.9 + float(i) * 0.7 + sin(freeze), 0.0);
+        color += vec3(drawBraille(pos, base, r, brailleCodes[i])) * pow(0.5 + 0.3 * u_volume_smooth / (0.1 + punch), 3.0);
     }
 	
 	vec3 past = texture2D(u_prevFrame, v_uv).rgb;

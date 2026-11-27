@@ -79,7 +79,7 @@ void main() {
     float baseAngle = s2 * g1() + swing;
     float twist = (s1 + u_complexity + g2()) / (s2 + currentRadius + g5) + swing;
 	float chaos = u_darkGlow * sin(local_t + s1 * g2() + s2 * g3() + s3 * g3()) * 11.09 + swing;
-    float orbit = (local_t * g1()) + twist + (s3 * 17.95) + swing;
+    float orbit = (local_t * 1.618) + twist + (s3 * 17.95) + swing;
     float finalAngle = baseAngle + orbit + chaos + swing;
 
     // 4. 座標構建
@@ -88,7 +88,7 @@ void main() {
     p.y = sin(finalAngle) * currentRadius / (g3() + length(p.xyz)) - swing;
     
     // 5. Z 軸震盪：保底微動
-    float bpmSync = local_t * g5 * (u_bpm / 47.0) * g1() + swing;
+    float bpmSync = local_t * 0.146 * (u_bpm / 47.0) * g1() + swing;
 	float wave = sin((currentRadius - g2() * cos(s1 - s2 - s3)) * u_peak) + swing;
     float thickness = (signPow(s3, g1()) - g3() * s1) * currentRadius * (g3() + s2) + swing;
     p.z = thickness + wave;// + sin(dot(p.xyz, vec3(1.0)) * (1.0 - u_speed)) + swing;
@@ -111,7 +111,7 @@ void main() {
 
     vDist = currentRadius;
     // 讓 Alpha 隨時間產生一點隨機抖動，偽造出虛無的閃爍感
-	vAlpha = (g2() - pull) * smoothstep(0.0, g5, life) * (hash(local_t * g5 + a_id) * g2() + g3()) + swing;
+	vAlpha = (g2() - pull) * smoothstep(0.0, g5, life) * (hash(local_t * 0.146 + a_id) * g2() + g3()) + swing;
     
     // 6. 顏色模式切換 (u_darkGlow)
     // 模式 0: 冷色調藍色 | 模式 1: 熾熱橙紅色
@@ -122,7 +122,7 @@ void main() {
 	
 	vec3 offsetPos = p;
 	offsetPos.x /= aspect;
-    gl_Position = vec4(offsetPos.x, offsetPos.y, 0.0, g2());
+    gl_Position = vec4(offsetPos.x, offsetPos.y, 0.0, g2() + g3());
     
     // 8. 點的大小：保底尺寸 2.0，確保看得見
     gl_PointSize = (g1() * s1 + u_volume * 11.09 * s2 + s3 * g1()) * g1() * perspective;

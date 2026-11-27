@@ -65,7 +65,7 @@ void main() {
     
     // 1. 利用 Z 軸的變化率來計算「山脊線」
     // dFdx/dFdy 能抓到高度的劇烈變化，產生像毛筆刷出的「飛白」效果
-    float ridge = fwidth(v_z) * 123.06 + swing; 
+    float ridge = fwidth(v_z) * 123.06; 
     
     // 2. 你的核心折射邏輯
     vec2 distortedUV = refract_logic(v_uv, t, (g5 + g2() * u_intensity));
@@ -77,7 +77,7 @@ void main() {
     float b = texture2D(u_prevFrame, parallaxUV - vec2(u_darkGlow * g3() + 0.005, 0.0)).b;
     
     // 4. 計算水墨鈍痛感（加入 Z 軸高度的加成）
-    float tension = length(distortedUV - v_uv) * (g5 + g2() * u_intensity) + swing;
+    float tension = length(distortedUV - v_uv) * (g5 + g2() * u_intensity);
     // 山頂（v_z 高的地方）顏色更淡、更透；山谷更濃、更沉
     vec3 waterColor = vec3(g5, g3(), g2()) * (g2() - tension * g2() + v_z * g2());
     
@@ -100,12 +100,12 @@ void main() {
 
     // 3. 強化版光柵 (你的柵欄玩具，這裡用 371/373)
     // 讓光柵不只是顏色，它在切開空間
-    float grill = smoothstep(g3(), g3() + g5, fract(322.21 * v_uv.x + 521.37 * v_z)) + u_peak + swing;
+    float grill = smoothstep(g3(), g3() + g5, fract(322.21 * v_uv.x + 521.37 * v_z)) + u_peak;
     float tear = smoothstep(g2(), g5, length(fwidth(v_z * 17.95))) + swing;
     grill *= tear;
 
     // 4. 水墨的層次：墨色深淺
-    float inkStrand = fract(turbulence * g3()) + swing;
+    float inkStrand = fract(turbulence * g3());
     vec3 inkColor = mix(vec3(g5, g5, g5), vec3(g2(), g2(), g2()), inkStrand * g2());
 	
 	// 1. 取得相機影像
@@ -130,7 +130,7 @@ void main() {
     // --- 模擬壓力投影 (Pressure Projection) 開始 ---
     // 1. 計算局部「發散度」: 觀察你的 distortedUV 在空間中的擠壓程度
     // 如果 UV 變化劇烈，代表流體在那裡被拉扯或擠壓
-    float div = dFdx(distortedUV.x) + dFdy(distortedUV.y) + swing;
+    float div = dFdx(distortedUV.x) + dFdy(distortedUV.y);
     
     // 2. 取得壓力的梯度 (Pressure Gradient)
     // 我們假設壓力 p 與發散度 div 成正比
