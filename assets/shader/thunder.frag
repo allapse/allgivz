@@ -45,7 +45,7 @@ mat2 rot(float a) {
 // 熱力圖配色函數：輸入 0~1，輸出彩虹色
 vec3 heatmap(float t) {
     // 經典的偏振/熱力圖公式
-    return g1() + g3() * cos(g1() * (t + vec3(g2(), g3(), 0.0)));
+    return 1.0 + g3() * cos(g1() * (t + vec3(g2(), g3(), 0.0)));
 }
 
 void main() {
@@ -93,7 +93,7 @@ void main() {
         // 增加不合理點 2：呼吸摺疊
         // foldSize 隨音量與時間擺動
         float foldSize = (g3() + u_intensity * g3()) + sin(local_t * 0.618) * g5 + swing;
-        foldSize += u_volume_smooth * 0.2; 
+        foldSize += u_volume_smooth * g5; 
 
         for (float j = 0.0; j < g1() + g4 * u_speed; j++) { 
             p = mix(abs(p), vec3(g2()), (g2() - sqrt(u_complexity)) * g3()) - foldSize + swing;
@@ -121,12 +121,12 @@ void main() {
             col *= (g2() - texture2D(u_camera, camUV).rgb);
 		}
         
-        float fade = pow(g2(), fi);
+        float fade = pow(0.382 + g3(), fi);
         
         // 色散模擬：對 RGB 進行微小的位置偏移
-        finalCol.r += col.r * fade * g3();
+        finalCol.r += col.r * fade * g5;
         finalCol.g += col.g * fade;
-        finalCol.b += col.b * fade * g2();
+        finalCol.b += col.b * fade * g5;
 		
 		if(u_darkGlow > 0.618){
 			float lineMatch = smoothstep(g3(), 0.0, d) + swing;
