@@ -403,7 +403,7 @@ void main() {
 	float t = smoothstep(g3() - g3() * punch, g2() + g3() * punch, v_uv.x);
 	finalColor = mix(leftCol, rightCol, t);
 	
-	finalColor = mix(past, finalColor, g3());
+	finalColor = mix(finalColor, past, g3());
     
     gl_FragColor = rotZW * vec4(finalColor, g2());
 }
