@@ -53,7 +53,7 @@ void main() {
     float g5 = signPow(0.618, 2.618 + abs(u_res.y) * 0.618);
 	
 	float dist = length(u_res);
-	float local_t = u_time;
+	float local_t = u_time * 6.0;
 	if (u_darkGlow < 0.618) {
 		local_t -= g5 * dist;
 	}
