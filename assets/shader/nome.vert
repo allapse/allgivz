@@ -55,14 +55,14 @@ void main() {
 
     vec2 p = (uv - 0.5) * ratio * (0.618 + punch) * 17.95; 
 	
-	float t = local_t * (1.0 + 0.382 * sin(local_t * 2.0 * PI * u_fps * u_bpm * length(p)));
+	float t = local_t * (1.0 + 0.382 * sin(local_t * 2.0 * PI * u_fps * u_bpm * length(p) * 6.0));
     float z = 0.0;
 
     z += sin(p.x * (g2() + g3() * u_intensity) + t) * 0.09;
     z += cos(p.y * (g3() + g2() * u_complexity) + local_t * 0.618) * 0.382;
     z += sin(p.x * (g2() + g3() * u_speed) + p.y * (g3() + g2() * u_peak) + t * 0.382) * 0.618;
 	
-	float swing = cos(local_t * 1.618 * PI * u_fps * u_bpm * length(p));
+	float swing = cos(local_t * 1.618 * PI * u_fps * u_bpm * length(p) * 6.0);
     float lrx = clamp(signPow(g2() + clamp((u_left - u_right), -g5, g5) , g2() + abs(6.856 - p.y)), g3(), g2());
 	lrx = g2() + g3() * smoothstep(g3(), g2(), lrx + 0.382 * swing);
 
