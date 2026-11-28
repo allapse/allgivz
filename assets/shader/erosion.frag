@@ -59,8 +59,8 @@ void main() {
     float g5 = signPow(0.618, 2.618 + dist * 0.618);
 	
 	dist = length(vec3(uv, sin(local_t)));
-	local_t = local_t * (1.0 + 0.09 * cos(u_time * 1.618 * PI * u_fps * u_bpm * dist));
-	float swing = sin(local_t + dist) * g5;
+	float local_t2 = local_t * (1.0 + 0.09 * cos(local_t * 1.618 * PI * u_fps * u_bpm * dist));
+	float swing = sin(local_t2 + dist) * g5;
     
     // 陀螺儀重心偏移
     vec2 drift = u_orient * g3() + swing;
