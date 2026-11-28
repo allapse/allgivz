@@ -58,7 +58,7 @@ void main() {
 	}
 	
 	dist = length(vec3(v_centered_uv, sin(local_t)));
-	local_t = u_time * (1.0 + 0.09 * cos(u_time * 1.618 * PI * u_fps * u_bpm * dist));
+	local_t = u_time * (1.0 + 0.09 * cos(u_time * 1.618 * PI * u_fps * u_bpm * dist * 6.0));
 	float swing = sin(local_t + dist) * g5;
 	
     float t = local_t;
