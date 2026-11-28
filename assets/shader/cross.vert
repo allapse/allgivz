@@ -55,8 +55,8 @@ void main() {
 
     vec2 p = (uv - 0.5) * ratio * (0.618 + punch) * 17.95; 
 	
-	float swing = cos(local_t * 2.0 * PI * u_fps * u_bpm * length(p));
-	float swing2 = sin(local_t * 2.0 * PI * u_fps * u_bpm * length(p));
+	float swing = cos(local_t * 2.0 * PI * u_fps * u_bpm * length(p) * 6.0);
+	float swing2 = sin(local_t * 2.0 * PI * u_fps * u_bpm * length(p) * 6.0);
 	
 	float t = local_t * (1.0 + 0.09 * mix(swing, swing2, length(uv)));
     float z = 0.0;
