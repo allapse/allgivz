@@ -213,7 +213,7 @@ void main() {
     float g5 = signPow(0.618, 2.618 + length(vec2(uv.y, u_darkGlow * v_z)) * 0.618);
 	float g6 = signPow(0.618, 4.237 + dist * 0.618);
 	
-	float local_t = u_time * (1.0 + 0.146 * cos(u_time * 1.618 * PI * u_fps * u_bpm * dist));
+	float local_t = u_time * (1.0 + 0.146 * cos(u_time * 1.618 * PI * u_fps * u_bpm * dist * 6.0));
 	
 	if (u_darkGlow > 0.618) {
 		local_t += g5 * dist;
