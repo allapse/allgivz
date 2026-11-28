@@ -213,7 +213,7 @@ void main() {
     float g5 = signPow(0.618, 2.618 + abs(uv.y) * 0.618);
 	float g6 = signPow(0.618, 4.237 + dist * 0.618);
 	
-	float local_t = u_time * (1.0 + 0.146 * cos(u_time * 1.618 * PI * u_fps * u_bpm * dist));
+	float local_t = u_time * (1.0 + 0.146 * cos(u_time * 1.618 * PI * u_fps * u_bpm * dist * 6.0));
 	
 	if (u_darkGlow > 0.618) {
 		local_t += g2() * dist;
@@ -222,8 +222,8 @@ void main() {
 		local_t -= g1() * dist;
 	}
 	
-	float timeswing = local_t * (1.0 + 0.1459 * cos(local_t * 1.618 * PI * u_fps * u_bpm * length(vec3(uv, v_z))));
-	float timeswing2 = local_t * (1.0 + 0.1459 * sin(local_t * 1.618 * PI * u_fps * u_bpm * length(vec3(uv, v_z))));
+	float timeswing = local_t * (1.0 + 0.1459 * cos(local_t * 1.618 * PI * u_fps * u_bpm * length(vec3(uv, v_z)) * 6.0));
+	float timeswing2 = local_t * (1.0 + 0.1459 * sin(local_t * 1.618 * PI * u_fps * u_bpm * length(vec3(uv, v_z)) * 6.0));
 	
 	if(abs(uv.x) > g3() && abs(uv.y) > g3() && length(uv) > g3())
 	timeswing = mix(timeswing, timeswing2, v_z);
@@ -308,7 +308,7 @@ void main() {
 	// love
 	float resonance = signPow(sin(cr.x * 11.09) * sin(cr.y * 17.95) * (g5 + g3() * u_intensity), g2());
 	
-	float swing = sin(timeswing * 1.618 * PI * u_fps * u_bpm * length(color));
+	float swing = sin(timeswing * 1.618 * PI * u_fps * u_bpm * length(color) * 6.0);
 	
 	float r = g5;
 	float sum = 0.0;
