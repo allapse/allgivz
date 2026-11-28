@@ -169,7 +169,7 @@ void main() {
     float g5 = signPow(0.618, 2.618 + dist * 0.618);
 	
 	dist = length(vec3(uv, sin(local_t)));
-	local_t = u_time * (1.0 + 0.09 * cos(u_time * 1.618 * PI * u_fps * u_bpm * dist));
+	local_t = u_time * (1.0 + 0.09 * cos(u_time * 1.618 * PI * u_fps * u_bpm * dist * 6.0));
 	float swing = sin(local_t + dist) * g5;
 	
     vec3 ro = vec3(0.0, 0.0, g4) + swing;
